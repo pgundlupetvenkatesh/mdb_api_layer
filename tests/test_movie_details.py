@@ -1,6 +1,6 @@
 """Tests for OMDB API movie details functionality."""
 import pytest
-from src.utils import validate_movie_response, validate_error_response
+from src.utils import validate_error_response
 
 
 @pytest.mark.details
@@ -119,14 +119,18 @@ class TestMovieDetailsValidation:
     
     def test_movie_response_year_format(self, omdb_client, sample_movie_id):
         """Test that year is in expected format."""
+        import re
+        
         response = omdb_client.get_by_id(sample_movie_id)
         
         assert response.status_code == 200
         data = response.json()
         
         # Year should be a 4-digit string or a range (e.g., "2010-2015")
+        # Pattern matches: "2020", "2010-2015", "2010–2015"
         year = data['Year']
-        assert year.replace('-', '').replace('–', '').isdigit() or year.split('-')[0].isdigit()
+        year_pattern = r'^\d{4}(-|–)?\d{0,4}$'
+        assert re.match(year_pattern, year), f"Invalid year format: {year}"
     
     def test_movie_response_imdb_id_format(self, omdb_client, sample_movie_title):
         """Test that IMDB ID follows expected format."""
