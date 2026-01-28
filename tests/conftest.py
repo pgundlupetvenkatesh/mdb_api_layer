@@ -2,9 +2,42 @@ import json
 import pytest
 from pathlib import Path
 
+from tests.data.data_loader import load_test_data
+
 @pytest.fixture
 def load_schema():
+    """
+    Fixture that provides a schema loader function for JSON schema validation.
+
+    Returns a callable that loads JSON schema files from the 'tests/schemas'
+    directory. Used to validate API responses against expected structures.
+
+    :return: A function that accepts a schema name (without extension) and
+             returns the parsed JSON schema as a dictionary.
+
+    Usage:
+        def test_example(load_schema):
+            schema = load_schema('movie_schema')
+            validate(instance=response.data, schema=schema)
+    """
     def _load(name):
         schema_path = Path(__file__).parent / "schemas" / f"{name}.json"
         return json.loads(schema_path.read_text())
     return _load
+
+@pytest.fixture(scope="session")
+def movies_test_data():
+    """
+    Session-scoped fixture that loads movies API test data from YAML.
+
+    Loads test data once per test session and shares it across all tests,
+    improving performance by avoiding repeated file reads.
+
+    Note: This fixture is currently unused. The test module uses a module-level
+    constant with @pytest.mark.parametrize instead, which is required because
+    parametrize decorators are evaluated at collection time before fixtures
+    are available.
+
+    :return: Dictionary containing test data with defaults applied.
+    """
+    return load_test_data("movies_test_data.yaml")

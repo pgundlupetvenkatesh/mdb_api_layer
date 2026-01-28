@@ -1,0 +1,23 @@
+get_movie_details:
+  defaults:
+    valid:
+        status_code: 200
+        original_language: "en"
+    invalid:
+        status_code: 404
+
+  valid:
+    - movie_id: 550 # First list item (index 0)
+      movie_title: "Fight Club"
+    - movie_id: 680 # Second list item (index 1)
+      movie_title: "Pulp Fiction"
+    - movie_id: 155
+      movie_title: "The Dark Knight"
+
+  invalid:
+    - movie_id: 0
+      expected_message: "Invalid id: The pre-requisite id is invalid or not found."
+    - movie_id: -1
+      expected_message: "Invalid id: The pre-requisite id is invalid or not found."
+    - movie_id: 9999999999
+      expected_message: "The resource you requested could not be found."
