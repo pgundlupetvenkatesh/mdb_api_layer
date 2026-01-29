@@ -41,3 +41,11 @@ def movies_test_data():
     :return: Dictionary containing test data with defaults applied.
     """
     return load_test_data("movies_test_data.yaml")
+
+def pytest_html_report_title(report):
+    """
+    Customize the title of the HTML test report.
+    :param report:
+    :return:
+    """
+    report.title = "Movies API Test Report"

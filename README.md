@@ -1,6 +1,6 @@
 # mdb_api_layer
 
-API Testing Framework for The Movie Database (TMDB) with Python
+API Testing Framework for The Movie Database ([TMDB](https://themoviedb.org)) with Python
 
 ## Overview
 
@@ -99,3 +99,16 @@ allure serve allure-results
 cd docs
 make html
 ```
+### View documentation
+Open `docs/_build/html/index.html` in your web browser.
+
+## Reports
+
+### HTML Report
+```bash
+poetry run pytest tests/test_movies.py --html=tmdb_report.html --self-contained-html -v -s
+```
+
+Generate a simple pytest HTML test report:
+Open the generated `tmdb_report.html` in your web browser to view the test results.
+![sample_report](sample_report.png)

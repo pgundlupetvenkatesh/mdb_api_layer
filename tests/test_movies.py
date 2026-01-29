@@ -138,6 +138,18 @@ class TestMoviesAPI:
 
     @pytest.mark.parametrize('invalid_test', TEST_DATA['get_movie_details']['invalid'])
     def test_get_invalid_movie_details(self, movies_api, load_schema, invalid_test):
+        """
+        Test error handling for invalid movie IDs.
+
+        Validates proper error responses when requesting non-existent
+        or invalid movie IDs, ensuring appropriate status codes and
+        error messages are returned.
+
+        :param movies_api: MoviesAPI fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_test: Parametrized test data containing invalid movie_id,
+                             expected status_code, and expected_message.
+        """
         movie_id = invalid_test['movie_id']  # Invalid movie ID
         response = movies_api.get_movie_details(movie_id)
         res_body = response.data
