@@ -17,4 +17,4 @@ documentation for details.
 
    api
    config
-
+   tests
