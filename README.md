@@ -34,6 +34,9 @@ poetry install
 ## Testing
 `poetry run pytest tests/test_movies.py -v -s`
 ```
+### Sanity Checks
+`poetry env info`
+`poetry show`
 
 ## Configuration
 

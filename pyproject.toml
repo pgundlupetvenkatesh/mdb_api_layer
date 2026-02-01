@@ -10,9 +10,12 @@ package-mode = false
 python = "^3.10"
 requests = "^2.0"
 python-dotenv = "^1.0"
+jsonschema = "^4.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0"
+pytest-html = "^4.1"
+sphinx = "^7.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -21,4 +24,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
-
+generate_report_on_test = true
