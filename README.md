@@ -1,5 +1,7 @@
 # mdb_api_layer
 
+[![TMDB Tests](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml)
+
 API Testing Framework for The Movie Database ([TMDB](https://themoviedb.org)) with Python
 
 ## Overview
