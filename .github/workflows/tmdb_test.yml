@@ -1,0 +1,58 @@
+name: TMDB Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Cache Poetry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install Poetry
+      run: pip install poetry
+
+    - name: Install dependencies via Poetry
+      run: poetry install --no-interaction --no-root
+
+    - name: Create report directory
+      # Ensure the report directory exists
+      run: mkdir -p report
+
+    - name: Create .env file
+      run: |
+        echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env
+        echo "TMDB_SESSION_ID=${{ secrets.TMDB_SESSION_ID }}" >> .env
+        echo "TMDB_AUTH_TOKEN=${{ secrets.TMDB_AUTH_TOKEN }}" >> .env
+        echo "TMDB_REQ_TOKEN=${{ secrets.TMDB_REQ_TOKEN }}" >> .env
+
+    - name: Run Tests
+      run: |
+        poetry run pytest tests/test_movies.py \
+        --html=report/tmdb_report.html \
+        --self-contained-html -v -s
+
+    - name: Upload Report (even if tests fail)
+      # Report upload should run regardless of test outcome
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: tmdb_test_report
+        path: report/tmdb_report.html

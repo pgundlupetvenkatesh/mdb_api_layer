@@ -1,5 +1,7 @@
 # mdb_api_layer
 
+[![TMDB Tests](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml)
+
 API Testing Framework for The Movie Database ([TMDB](https://themoviedb.org)) with Python
 
 ## Overview
@@ -31,9 +33,15 @@ cd mdb_api_layer
 # Install dependencies
 poetry install
 
+# Add new Python package dependencies
+poetry add <package_name>
+
 ## Testing
 `poetry run pytest tests/test_movies.py -v -s`
 ```
+### Sanity Checks
+`poetry env info`
+`poetry show`
 
 ## Configuration
 
