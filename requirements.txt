@@ -1,6 +1,0 @@
-requests
-pytest
-pytest-html
-python-dotenv
-jsonschema
-sphinx
