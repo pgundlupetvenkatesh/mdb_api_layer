@@ -31,6 +31,9 @@ cd mdb_api_layer
 # Install dependencies
 poetry install
 
+# Add new Python package dependencies
+poetry add <package_name>
+
 ## Testing
 `poetry run pytest tests/test_movies.py -v -s`
 ```
