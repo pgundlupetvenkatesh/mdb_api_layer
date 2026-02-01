@@ -68,29 +68,15 @@ export TMDB_AUTH_TOKEN="your_auth_token"
 ```
 mdb_api_layer/
 ├── api/
-│   ├── base_api.py # Base API client with HTTP methods
-│   └── movies_api.py # Movies endpoint implementation
+│   ├── base_api.py       # Base API client with HTTP methods
+│   └── movies_api.py     # Movies endpoint implementation
 ├── config/
-│   └── config.py # Environment configuration
+│   └── config.py         # Environment configuration
 ├── tests/
-│   ├── conftest.py # Pytest fixtures 
-│   ├── data/ 
-│   │ └── movies_test_data.yaml # Test data for movie tests 
-│   ├── schemas/ 
-│   │ └── movie_schema.json # JSON schema for validation 
-│   └── test_movies.py # Movie API tests 
-├── docs/ 
-│   ├── conf.py # Sphinx configuration 
-│   ├── index.rst # Documentation index 
-│   ├── api.rst # API module documentation 
-│   ├── config.rst # Config module documentation 
-│   ├── tests.rst # Tests module documentation 
-│   ├── make.bat # Windows build script 
-│   └── Makefile # Unix build script 
-├── .env # Environment variables (not committed) 
-├── .gitignore 
-├── pyproject.toml # Poetry configuration 
-├── poetry.lock 
+│   ├── conftest.py       # Pytest fixtures
+│   ├── schemas/          # JSON schema files
+│   └── test_movies.py    # Movie API tests
+├── docs/                  # Sphinx documentation
 └── README.md
 ```
 
@@ -114,10 +100,6 @@ allure serve allure-results
 - pytest
 - pytest-html
 - allure-pytest
-- python-dotenv
-- jsonschema
-- pyyaml
-- sphinx
 
 ## Documentation
 
