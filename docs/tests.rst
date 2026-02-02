@@ -7,6 +7,7 @@ The test suite uses the following data and schema files:
 
 * ``tests/data/movies_test_data.yaml`` - Test cases for Movies API
 * ``tests/schemas/movie_schema.json`` - JSON schema for response validation
+* ``tests/schemas/popular_movies_schema.json`` - JSON schema for popular movies response validation
 
 Movies Test Data
 ~~~~~~~~~~~~~~~~
@@ -19,6 +20,12 @@ Movie Schema
 .. literalinclude:: ../tests/schemas/movie_schema.json
    :language: json
    :caption: movie_schema.json
+
+Popular Movie Schema
+~~~~~~~~~~~~~~~~~~~~
+.. literalinclude:: ../tests/schemas/popular_movies_schema.json
+   :language: json
+   :caption: popular_movie_schema.json
 
 Data
 ----
