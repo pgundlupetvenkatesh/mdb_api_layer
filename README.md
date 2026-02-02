@@ -58,11 +58,6 @@ Set the following environment variables before running tests:
 | `TMDB_REQ_TOKEN`  | Request token for authentication      | No       | -                              |
 | `TMDB_MOVIE_ID`   | Default movie ID for tests            | No       | -                              |
 
-```
-export TMDB_API_KEY="your_api_key"
-export TMDB_AUTH_TOKEN="your_auth_token"
-```
-
 ## Project Structure
 
 ```
@@ -99,6 +94,9 @@ mdb_api_layer/
 ```commandline
 # Run all movie tests with verbose output
 poetry run pytest tests/test_movies.py -v -s
+
+# Run a specific test function
+poetry run pytest tests/test_movies.py::TestClassName::test_func_name -v -s
 
 # Run with HTML report
 poetry run pytest tests/test_movies.py --html=report.html
