@@ -74,7 +74,7 @@ class TestMoviesAPI:
 
         :param movies_api: MoviesAPI fixture instance.
         :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_test: Parametrized test data containing invalid movie_id,
+        :param test_case: Parametrized test data containing valid movie_id,
                              expected status_code, and expected_message.
         """
 
@@ -153,7 +153,8 @@ class TestMoviesAPI:
         })
         assert res_body['status_message'] == invalid_test['expected_message']
 
-    def test_get_popular_movies_default(self, movies_api, load_schema, request):
+    @pytest.mark.parametrize('pop_movies', TEST_DATA['get_movie_details']['valid'])
+    def test_get_popular_movies_default(self, movies_api, load_schema, pop_movies, request):
         """
         Test retrieving popular movies with default parameters.
 
@@ -167,7 +168,7 @@ class TestMoviesAPI:
         res_body = response.data
 
         assert_http_response(response, {
-            'exp_status_code': 200,
+            'exp_status_code': pop_movies['status_code'],
             'exp_max_elp_seconds': 2,
             'exp_req_method': 'GET',
             'exp_content_type': 'application/json',

@@ -35,6 +35,14 @@ Data
    :undoc-members:
    :show-inheritance:
 
+Helpers
+-------
+.. automodule:: tests.helpers.response_assertions
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Conftest
 --------
 .. automodule:: tests.conftest
