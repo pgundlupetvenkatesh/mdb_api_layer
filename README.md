@@ -125,6 +125,7 @@ make html
 ```
 ### View documentation
 Open `docs/_build/html/index.html` in your web browser.
+![doc_sample](doc_sample.png)
 
 ## Reports
 

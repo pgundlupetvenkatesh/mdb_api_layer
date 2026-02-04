@@ -21,3 +21,9 @@ get_movie_details:
       expected_message: "Invalid id: The pre-requisite id is invalid or not found."
     - movie_id: 9999999999
       expected_message: "The resource you requested could not be found."
+
+popular_movies:
+  invalid:
+    - status_code: 400
+      page: { "page": -1 }
+      expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
