@@ -43,6 +43,12 @@ Helpers
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: tests.helpers.field_assertions
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Conftest
 --------
 .. automodule:: tests.conftest
