@@ -12,7 +12,7 @@ This module provides the foundation for all API interactions with the Movie Data
 import requests
 from pprint import pprint
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 from config.config import Config
 
@@ -28,6 +28,7 @@ class APIResponse:
     elapsed_seconds: float = 0.0
     reason: str = ""
     request: str = ""
+    request_params: Optional[dict] = None
 
 class BaseAPI:
     """
@@ -66,7 +67,6 @@ class BaseAPI:
         """
         url = f"{self.base_url}/{endpoint}"
         response = self.session.get(url, headers=self.headers, params=params, timeout=Config.TIMEOUT)
-        # response.raise_for_status()
 
         return APIResponse(
             data=response.json(),
@@ -77,7 +77,8 @@ class BaseAPI:
             encoding=response.encoding,
             elapsed_seconds=response.elapsed.total_seconds(),
             reason=response.reason,
-            request=str(response.request.method)
+            request=str(response.request.method),
+            request_params=params
         )
 
 

@@ -22,7 +22,8 @@ import pytest
 from jsonschema import validate
 
 from api.movies_api import MoviesAPI
-from tests.data.data_loader import load_test_data
+from .data.data_loader import load_test_data
+from .helpers.response_assertions import *
 
 TEST_DATA = load_test_data("movies_test_data.yaml")
 """Module-level test data loaded once at import time for parametrization."""
@@ -85,66 +86,42 @@ class TestMoviesAPI:
         res_body = response.data
 
         # Basic response validations
-        assert response.request == 'GET', 'HTTP method is not GET'
-        assert response.status_code == test_case['status_code'], 'returned status code is not 200'
-        assert 'application/json' in response.headers['Content-Type'], 'response is not in JSON format'
-        assert response.elapsed_seconds < 2, 'response time is too long'
-        assert str(movie_id) in response.url, f"Response url should contain movie ID '{movie_id}'"
+        assert_http_response(response, {
+            'exp_status_code': test_case['status_code'],
+            'exp_max_elp_seconds': 2,
+            'exp_req_method': 'GET',
+            'exp_content_type': 'application/json',
+            'exp_url_contains': str(movie_id)
+        })
 
         # response structure validation
-        assert isinstance(res_body['genres'], list), "Genres should be a list"
+        self.assert_list_field(res_body, 'genres')
+        self.assert_list_field(res_body, 'origin_country')
+        self.assert_list_field(res_body, 'production_companies')
+
         if len(res_body['genres']) > 0:
             for idx, it in enumerate(res_body['genres']):
-                assert 'id' in it, f"Genre at index {idx} should contain 'id' field"
-                assert isinstance(it['id'], int), "Genres Id should be int"
-                assert it['id'] > 0, "Genres Id should be positive"
+                self.assert_int_field(it, 'id', idx)
+                self.assert_str_field(it, 'name', idx)
 
-                assert 'name' in it, f"Genre at index {idx} should contain 'name' field"
-                assert isinstance(it['name'], str), "Genres name Id should be String"
-                assert len(it['name']) > 0, "Genres name should not be empty"
+        self.assert_int_field(res_body, 'id')
 
-        assert isinstance(res_body['id'], int), "Id Response should be int"
-        assert res_body['id'] > 0, "Id should be positive"
-        assert res_body['id'] == movie_id, f"Movie ID should be {movie_id}"
+        self.assert_bool_field(res_body, 'adult')
 
-        assert isinstance(res_body['adult'], bool), "Adult Response should be boolean"
-
-        assert isinstance(res_body['origin_country'], list), "Origin Country Response should be a list"
-        assert len(res_body['origin_country']) > 0, "Origin Country should not be empty"
-
-        assert isinstance(res_body['original_language'], str), "Origin language Response should be string"
-        assert len(res_body['original_language']) == 2, "Original language should be 2-char code"
+        self.assert_str_field(res_body, 'original_language')
+        self.assert_str_field(res_body, 'title')
+        self.assert_str_field(res_body, 'original_title')
         assert res_body['original_language'] == test_case['original_language'], f"Movie ID should be {movie_id}"
-
-        assert isinstance(res_body['title'], str), "Title Response should be string"
-        assert len(res_body['title']) > 0, "Title should not be empty"
-        assert 'title' in res_body, "Response should contain 'title' field"
         assert res_body['title'] == test_case['movie_title'], "Response should contain 'title' field"
 
-        assert isinstance(res_body['original_title'], str), "Original Title Response should be string"
-        assert len(res_body['original_title']) > 0, "Original Title should not be empty"
-
-        assert isinstance(res_body['production_companies'], list), "Production Companies Response should be a list"
         if len(res_body['production_companies']) > 0:
             for idx, it in enumerate(res_body['production_companies']):
-                assert 'id' in it, f"Production Company at index {idx} should contain 'id' field"
-                assert isinstance(it['id'], int), "Production Companies Id should be int"
-                assert it['id'] > 0, "Id should be positive"
+                self.assert_int_field(it, 'id', idx)
 
-                assert 'logo_path' in it, f"Production Company at index {idx} should contain 'logo path' field"
-                assert it['logo_path'] is None or isinstance(it['logo_path'],
-                                                             str), f"Production Companies at index {idx} Logo Path should be String"
-                assert it['logo_path'] is None or it['logo_path'].endswith(
-                    ('.png', '.jpg')), 'Production Companies Logo Path should be PNG'
+                self.assert_path_field(it, 'logo_path', idx)
 
-                assert 'name' in it, f"Production Company at index {idx} should contain 'name' field"
-                assert isinstance(it['name'], str), "Production Companies name should be String"
-                assert len(it['name']) > 0, "Production Companies name should not be empty"
-
-                assert 'origin_country' in it, f"Production Company at index {idx} should contain 'origin country' field"
-                assert isinstance(it['origin_country'], str), "Production Companies Origin Country should be String"
-                assert it['origin_country'] is None or len(
-                    it['origin_country']) > 0, "Origin Country should not be empty"
+                self.assert_str_field(it, 'name', idx)
+                self.assert_str_field(it, 'origin_country', idx)
 
         # Validate response against JSON schema
         validate(instance=res_body, schema=load_schema('movie_schema'))
@@ -167,11 +144,13 @@ class TestMoviesAPI:
         response = movies_api.get_movie_details(movie_id)
         res_body = response.data
 
-        assert response.request == 'GET', 'HTTP method is not GET'
-        assert response.status_code == invalid_test['status_code'], 'returned error status code is not 404'
-        assert 'application/json' in response.headers['Content-Type'], 'response is not in JSON format'
-        assert response.elapsed_seconds < 2, 'response time is too long'
-        assert str(movie_id) in response.url, f"Response url should contain movie ID '{movie_id}'"
+        assert_http_response(response, {
+            'exp_status_code': invalid_test['status_code'],
+            'exp_max_elp_seconds': 2,
+            'exp_req_method': 'GET',
+            'exp_content_type': 'application/json',
+            'exp_url_contains': str(movie_id)
+        })
         assert res_body['status_message'] == invalid_test['expected_message']
 
     def test_get_popular_movies_default(self, movies_api, load_schema, request):
@@ -187,21 +166,21 @@ class TestMoviesAPI:
         response = movies_api.get_popular_movies(query_params={"language": "en-US"})
         res_body = response.data
 
-        assert response.request == 'GET', 'HTTP method is not GET'
-        assert response.status_code == 200, 'returned status code is not 200'
-        assert 'application/json' in response.headers['Content-Type'], 'response is not in JSON format'
-        assert response.elapsed_seconds < 2, 'response time is too long'
-        assert 'popular' in response.url, "Response url should contain 'popular'"
+        assert_http_response(response, {
+            'exp_status_code': 200,
+            'exp_max_elp_seconds': 2,
+            'exp_req_method': 'GET',
+            'exp_content_type': 'application/json',
+            'exp_url_contains': 'popular'
+        })
 
         # response structure validation
-        assert isinstance(res_body['page'], int), f"{self._test_name}: Page Response should be int"
-        assert res_body['page'] > 0, f"{self._test_name}: Page should be positive"
+        self.assert_int_field(res_body, 'total_results', response.request_params['page'])
 
-        assert isinstance(res_body['results'], list), f"{self._test_name}: Page Results should be a list"
-        assert len(res_body['results']) > 0, f"P{self._test_name}: age results should not be empty"
+        self.assert_list_field(res_body, 'results')
+
         for idx, it in enumerate(res_body['results']):
-            assert 'genre_ids' in it, f"{self._test_name}: results at index {idx} should contain 'genre_ids' field"
-            assert isinstance(it['genre_ids'], list), f"{self._test_name}: genre_ids should be a list"
+            self.assert_list_field(it, 'genre_ids', idx)
 
             self.assert_bool_field(it, 'adult', idx)
             self.assert_bool_field(it, 'video', idx)
@@ -250,6 +229,8 @@ class TestMoviesAPI:
         :raises AssertionError: If the field is not a string or is empty.
         """
         idx = f'{index}' if index is not None else ''
+
+        assert field in data, f"{self._test_name}: Index {idx} should contain {field} field"
         assert isinstance(data[field], str), f"{self._test_name}: Index {idx} {field} Response should be string"
 
         if data[field] == 'original_language':
@@ -257,18 +238,25 @@ class TestMoviesAPI:
         else:
             assert len(data[field]) > 0, f"{self._test_name}: Index {idx} {field} should not be empty"
 
-    def assert_int_field(self, data, field, index=None):
+    def assert_int_field(self, data, field, index=None, id_val=None):
         """
         Assert that a field value is a positive integer.
 
         :param data: Dictionary containing the field to validate.
         :param field: Name of the field to check.
         :param index: Optional array index for contextual error messages.
+        :param id_val: Optional expected value for 'id' fields.
         :raises AssertionError: If the field is not an integer or not positive.
         """
         idx = f'{index}' if index is not None else ''
+
+        assert field in data, f"Index {idx} should contain {field} field"
         assert isinstance(data[field], int), f"{self._test_name}: Index {idx} {field} Response should be int"
-        assert data[field] > 0, f"{self._test_name}: Index {idx} {field} should be non-negative"
+
+        if id_val is not None:
+            assert data[field] == id_val, f"{self._test_name}: Index {idx} {field} should be {id_val}"
+        else:
+            assert data[field] > 0, f"{self._test_name}: Index {idx} {field} should be non-negative"
 
     def assert_path_field(self, data, field, index=None):
         """
@@ -282,6 +270,7 @@ class TestMoviesAPI:
         :raises AssertionError: If field is missing or has invalid format.
         """
         idx = f'{index}' if index is not None else ''
+
         assert field in data, f"{self._test_name}: Index {idx} should contain '{field}' field"
         assert data[field] is None or isinstance(data[field],
                                                  str), f"{self._test_name}: Index {idx} {field} should be String"
@@ -306,3 +295,18 @@ class TestMoviesAPI:
             assert 0.0 <= data[field] <= 10.0, f"{self._test_name}: Index {idx} {field} should be between 0.0 and 10.0"
         else:
             assert data[field] > 0.0, f"{self._test_name}: Index {idx} {field} should be positive"
+
+    def assert_list_field(self, data, field, index=None):
+        """
+        Assert that a field value is a non-empty list.
+
+        :param data: Dictionary containing the field to validate.
+        :param field: Name of the field to check.
+        :param index: Optional array index for contextual error messages.
+        :raises AssertionError: If the field is not a list or is empty.
+        """
+        idx = f'{index}' if index is not None else ''
+
+        assert field in data, f"{self._test_name}: Index {idx} should contain {field} field"
+        assert isinstance(data[field], list), f"{self._test_name}: Index {idx} {field} Response should be a list"
+        assert len(data[field]) > 0, f"{self._test_name}: Index {idx} {field} should not be empty"
