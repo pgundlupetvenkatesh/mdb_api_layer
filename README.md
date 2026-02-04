@@ -45,18 +45,64 @@ poetry add <package_name>
 
 ## Configuration
 
-Set the following environment variables before running tests:
+### Getting TMDB API Credentials
+
+1. **Create a TMDB account** at [themoviedb.org](https://www.themoviedb.org/signup)
+2. **Request an API key:**
+   - Go to [Settings → API](https://www.themoviedb.org/settings/api)
+   - Click "Create" or "Request an API Key"
+   - Choose "Developer" for personal/testing use
+   - Fill in the application details (use your project URL or localhost for testing)
+   - Once approved, you'll receive your **API Key (v3 auth)** and **API Read Access Token**
+3. **Locate your credentials:**
+   - **API Key**: Found under "API Key (v3 auth)" on the API settings page
+   - **Auth Token**: Found under "API Read Access Token (v4 auth)" — this is your Bearer token
+
+### Setting Up Environment Variables
+
+Create a `.env` file in the project root (this file is gitignored):
+
+```bash
+# Required
+TMDB_API_KEY=your_api_key_here
+TMDB_AUTH_TOKEN=your_read_access_token_here
+
+# Optional (defaults shown)
+TMDB_BASE_URL=https://api.themoviedb.org/3
+TMDB_TIMEOUT=30
+```
+
+**Alternative:** Export variables directly in your terminal:
+
+```bash
+export TMDB_API_KEY="your_api_key_here"
+export TMDB_AUTH_TOKEN="your_read_access_token_here"
+```
+
+### Environment Variables Reference
 
 | Variable          | Description                           | Required | Default                        |
 |-------------------|---------------------------------------|----------|--------------------------------|
-| `TMDB_API_KEY`    | Your TMDB API key                     | Yes      | -                              |
-| `TMDB_AUTH_TOKEN` | Bearer authentication token           | Yes      | -                              |
+| `TMDB_API_KEY`    | Your TMDB API key (v3 auth)           | Yes      | -                              |
+| `TMDB_AUTH_TOKEN` | API Read Access Token (v4 auth)       | Yes      | -                              |
 | `TMDB_BASE_URL`   | API base URL                          | No       | `https://api.themoviedb.org/3` |
 | `TMDB_TIMEOUT`    | Request timeout in seconds            | No       | `30`                           |
 | `TMDB_ACCOUNT_ID` | TMDB account ID                       | No       | -                              |
 | `TMDB_SESSION_ID` | Session ID for authenticated requests | No       | -                              |
 | `TMDB_REQ_TOKEN`  | Request token for authentication      | No       | -                              |
 | `TMDB_MOVIE_ID`   | Default movie ID for tests            | No       | -                              |
+
+### Running Tests After Setup
+
+```bash
+# Verify your setup
+poetry install
+
+# Run tests
+poetry run pytest tests/test_movies.py -v -s
+```
+
+> **Note:** Keep your API credentials secure. Never commit `.env` files or expose tokens in public repositories.
 
 ## Project Structure
 
