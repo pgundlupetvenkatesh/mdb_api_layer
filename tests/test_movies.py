@@ -88,9 +88,9 @@ class TestMoviesAPI(FieldAssertions):
         # Basic response validations
         assert_http_response(response, {
             'exp_status_code': test_case['status_code'],
-            'exp_max_elp_seconds': 2,
-            'exp_req_method': 'GET',
-            'exp_content_type': 'application/json',
+            'exp_max_elp_seconds': test_case['exp_max_elp_secs'],
+            'exp_req_method': test_case['exp_get_req_method'],
+            'exp_content_type': test_case['exp_content_type'],
             'exp_url_contains': str(movie_id)
         })
 
@@ -126,7 +126,7 @@ class TestMoviesAPI(FieldAssertions):
         # Validate response against JSON schema
         validate(instance=res_body, schema=load_schema('movie_schema'))
 
-    @pytest.mark.parametrize('pop_movies', TEST_DATA['get_movie_details']['valid'])
+    @pytest.mark.parametrize('pop_movies', TEST_DATA['popular_movies']['valid'])
     def test_get_popular_movies_default(self, movies_api, load_schema, pop_movies):
         """
         Test retrieving popular movies with default parameters.
@@ -137,14 +137,14 @@ class TestMoviesAPI(FieldAssertions):
         :param movies_api: MoviesAPI fixture instance.
         :param load_schema: Schema loader fixture from conftest.py.
         """
-        response = movies_api.get_popular_movies(query_params={"language": "en-US"})
+        response = movies_api.get_popular_movies(query_params=pop_movies['query_param'])
         res_body = response.data
 
         assert_http_response(response, {
             'exp_status_code': pop_movies['status_code'],
-            'exp_max_elp_seconds': 2,
-            'exp_req_method': 'GET',
-            'exp_content_type': 'application/json',
+            'exp_max_elp_seconds': pop_movies['exp_max_elp_secs'],
+            'exp_req_method': pop_movies['exp_get_req_method'],
+            'exp_content_type': pop_movies['exp_content_type'],
             'exp_url_contains': 'popular'
         })
 
@@ -199,9 +199,9 @@ class TestMoviesAPI(FieldAssertions):
 
         assert_http_response(response, {
             'exp_status_code': invalid_test['status_code'],
-            'exp_max_elp_seconds': 2,
-            'exp_req_method': 'GET',
-            'exp_content_type': 'application/json',
+            'exp_max_elp_seconds': invalid_test['exp_max_elp_secs'],
+            'exp_req_method': invalid_test['exp_get_req_method'],
+            'exp_content_type': invalid_test['exp_content_type'],
             'exp_url_contains': str(movie_id)
         })
         assert res_body['status_message'] == invalid_test['expected_message']
@@ -218,14 +218,14 @@ class TestMoviesAPI(FieldAssertions):
         :param movies_api: MoviesAPI fixture instance.
         :param load_schema: Schema loader fixture from conftest.py.
         """
-        response = movies_api.get_popular_movies(query_params=invalid_test['page'])
+        response = movies_api.get_popular_movies(query_params=invalid_test['query_param'])
         res_body = response.data
 
         assert_http_response(response, {
             'exp_status_code': invalid_test['status_code'],
-            'exp_max_elp_seconds': 2,
-            'exp_req_method': 'GET',
-            'exp_content_type': 'application/json',
+            'exp_max_elp_seconds': invalid_test['exp_max_elp_secs'],
+            'exp_req_method': invalid_test['exp_get_req_method'],
+            'exp_content_type': invalid_test['exp_content_type'],
             'exp_url_contains': 'popular'
         })
         assert res_body['status_message'] == invalid_test['expected_message']

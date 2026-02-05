@@ -29,9 +29,14 @@ def _apply_defaults(data: dict) -> None:
     test case in the corresponding category using setdefault (existing
     values are not overwritten).
 
+    Global defaults (top-level 'defaults' key) are applied to ALL test cases
+    across all sections.
+
     Expected YAML structure:
+        defaults:              # Global defaults applied to all test cases
+          key: default_value
         section_name:
-          defaults:
+          defaults:            # Section-specific defaults
             category_name:
               key: default_value
           category_name:
@@ -44,17 +49,30 @@ def _apply_defaults(data: dict) -> None:
     if not isinstance(data, dict):
         return
 
+    # Extract global defaults
+    global_defaults = data.pop('defaults', {}) or {}
+
     for section, content in data.items():
         if not isinstance(content, dict):
             continue    # Skip non-dict values
 
         defaults = content.pop('defaults', None)
-        if not isinstance(defaults, dict):
-            continue
 
-        for category, default_values in defaults.items():
-            if category in content and isinstance(content[category], list):
-                for test_case in content[category]:
-                    if isinstance(test_case, dict):
-                        for k, v in default_values.items():
-                            test_case.setdefault(k, v)
+        # Apply defaults to each category in the section
+        for category, test_cases in content.items():
+            if not isinstance(test_cases, list):
+                continue
+
+            # Get category-specific defaults
+            category_defaults = {}
+            if isinstance(defaults, dict) and category in defaults:
+                category_defaults = defaults[category]
+
+            for test_case in test_cases:
+                if isinstance(test_case, dict):
+                    # Apply global defaults first
+                    for k, v in global_defaults.items():
+                        test_case.setdefault(k, v)
+                    # Apply category-specific defaults (can override global if same key)
+                    for k, v in category_defaults.items():
+                        test_case.setdefault(k, v)

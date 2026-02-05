@@ -51,6 +51,7 @@ class MoviesAPI(BaseAPI):
         :return: Response object with paginated list of popular movies.
         """
         query_params ={ 'page': 1, **(query_params or {})}
+        print(f"query_params: {query_params}")
         return self.get(f"{self._sub_path}/popular", params=query_params)
 
     def get_top_rated_movies(self, query_params=None):
