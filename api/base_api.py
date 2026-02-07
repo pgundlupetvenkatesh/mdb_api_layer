@@ -83,6 +83,18 @@ class BaseAPI:
 
 
     def post(self, endpoint, json=None, params=None):
+        """
+        Perform a POST request to the specified endpoint.
+
+        :param endpoint: API endpoint path.
+        :type endpoint: str
+        :param json: JSON payload to send in the request body.
+        :type json: dict, optional
+        :param params: Optional query parameters.
+        :type params: dict, optional
+        :returns: API response with data, status code, and metadata.
+        :rtype: APIResponse
+        """
         url = f"{self.base_url}/{endpoint}"
         response = self.session.post(url, params=params, json=json, headers=self.headers, timeout=Config.TIMEOUT)
 
