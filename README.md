@@ -177,7 +177,7 @@ Open `docs/_build/html/index.html` in your web browser.
 
 ### HTML Report
 ```bash
-poetry run pytest tests/test_movies.py --html=tmdb_report.html --self-contained-html -v -s
+poetry run pytest tests/test_movies.py --html=report/tmdb_report.html --self-contained-html -v -s
 ```
 
 Generate a simple pytest HTML test report:
