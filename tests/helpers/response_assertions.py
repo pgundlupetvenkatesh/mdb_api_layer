@@ -18,3 +18,4 @@ def assert_http_response(response, exp_val):
     assert exp_val['exp_content_type'] in response.headers['Content-Type'], 'response is not in JSON format'
     assert response.elapsed_seconds < exp_val['exp_max_elp_seconds'], 'response time is too long'
     assert exp_val['exp_url_contains'] in response.url, f"Response url should contain movie ID '{exp_val['exp_url_contains']}'"
+    assert exp_val['exp_req_reason'] == response.reason, f"Response reason should be '{exp_val['expr_req_reason']}'"

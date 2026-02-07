@@ -82,7 +82,8 @@ class TestMoviesAPI(FieldAssertions):
         # movies_api creates MoviesAPI() instance
         # load_schema is a fixture from conftest.py
 
-        movie_id = test_case['movie_id']  # Example movie ID for "Fight Club"
+        movie_id = test_case['movie_id']
+        print(f"Running test: {self._test_name} for movie_id: {movie_id}")
         response = movies_api.get_movie_details(movie_id)
         res_body = response.data
 
@@ -92,7 +93,8 @@ class TestMoviesAPI(FieldAssertions):
             'exp_max_elp_seconds': test_case['exp_max_elp_secs'],
             'exp_req_method': test_case['exp_get_req_method'],
             'exp_content_type': test_case['exp_content_type'],
-            'exp_url_contains': str(movie_id)
+            'exp_url_contains': str(movie_id),
+            'exp_req_reason': test_case['reason']
         })
 
         # response structure validation
@@ -146,7 +148,8 @@ class TestMoviesAPI(FieldAssertions):
             'exp_max_elp_seconds': pop_movies['exp_max_elp_secs'],
             'exp_req_method': pop_movies['exp_get_req_method'],
             'exp_content_type': pop_movies['exp_content_type'],
-            'exp_url_contains': 'popular'
+            'exp_url_contains': 'popular',
+            'exp_req_reason': pop_movies['reason']
         })
 
         # response structure validation
@@ -190,6 +193,7 @@ class TestMoviesAPI(FieldAssertions):
         """
         movie_id = pick_random_movie_id()
         rating = add_valid_rating['rating_payload']['value']
+        print(f"Testing add_rating for movie_id: {movie_id} with rating: {rating}")
         response = movies_api.add_rating(movie_id, rating, query_params=Config.SESSION_ID)
         res_json = response.data
 
@@ -198,7 +202,8 @@ class TestMoviesAPI(FieldAssertions):
             'exp_max_elp_seconds': add_valid_rating['exp_max_elp_secs'],
             'exp_req_method':  add_valid_rating['exp_post_req_method'],
             'exp_content_type':  add_valid_rating['exp_content_type'],
-            'exp_url_contains': str(movie_id)
+            'exp_url_contains': str(movie_id),
+            'exp_req_reason': add_valid_rating['reason']
         })
 
         self.assert_bool_field(res_json, 'success')
@@ -225,7 +230,8 @@ class TestMoviesAPI(FieldAssertions):
         :param invalid_test: Parametrized test data containing invalid movie_id,
                              expected status_code, and expected_message.
         """
-        movie_id = invalid_test['movie_id']  # Invalid movie ID
+        movie_id = invalid_test['movie_id']
+        print(f"Testing invalid movie_id: {movie_id}")
         response = movies_api.get_movie_details(movie_id)
         res_body = response.data
 
@@ -234,7 +240,8 @@ class TestMoviesAPI(FieldAssertions):
             'exp_max_elp_seconds': invalid_test['exp_max_elp_secs'],
             'exp_req_method': invalid_test['exp_get_req_method'],
             'exp_content_type': invalid_test['exp_content_type'],
-            'exp_url_contains': str(movie_id)
+            'exp_url_contains': str(movie_id),
+            'exp_req_reason': invalid_test['reason']
         })
         assert res_body['status_message'] == invalid_test['expected_message']
 
@@ -258,29 +265,34 @@ class TestMoviesAPI(FieldAssertions):
             'exp_max_elp_seconds': invalid_test['exp_max_elp_secs'],
             'exp_req_method': invalid_test['exp_get_req_method'],
             'exp_content_type': invalid_test['exp_content_type'],
-            'exp_url_contains': 'popular'
+            'exp_url_contains': 'popular',
+            'exp_req_reason': invalid_test['reason']
         })
         assert res_body['status_message'] == invalid_test['expected_message']
 
-    # def test_add_rating_unauthenticated(self, movies_api):
-    #     """
-    #     Test adding a movie rating without authentication.
-    #
-    #     Validates that attempting to add a rating without proper
-    #     authentication returns the expected error response.
-    #
-    #     :param movies_api: MoviesAPI fixture instance.
-    #     """
-    #     movie_id = 550  # Example movie ID for "Fight Club"
-    #     rating = 8.5  # Example rating value
-    #     response = movies_api.add_rating(movie_id, rating, query_params=Config.SESSION_ID)
-    #     res_body = response.data
-    #
-    #     assert_http_response(response, {
-    #         'exp_status_code': 401,
-    #         'exp_max_elp_seconds': 2,
-    #         'exp_req_method': 'POST',
-    #         'exp_content_type': 'application/json',
-    #         'exp_url_contains': str(movie_id)
-    #     })
-    #     assert res_body['status_message'] == "Authentication failed: You do not have permissions to access the service."
+    @pytest.mark.parametrize('add_invalid_rating', TEST_DATA['add_rating']['invalid'])
+    def test_add_rating_unauthenticated(self, movies_api, add_invalid_rating):
+        """
+        Test adding a movie rating without authentication.
+
+        Validates that attempting to add a rating without proper
+        authentication returns the expected error response.
+
+        :param movies_api: MoviesAPI fixture instance.
+        """
+        movie_id = add_invalid_rating['movie_id']
+        rating = add_invalid_rating['rating_payload']['value']
+        print(f"Testing add_rating for movie_id: {movie_id} with invalid rating: {rating}")
+        response = movies_api.add_rating(movie_id, rating, query_params=Config.SESSION_ID)
+        res_json = response.data
+
+        assert_http_response(response, {
+            'exp_status_code': add_invalid_rating['status_code_bad_req'],
+            'exp_max_elp_seconds': add_invalid_rating['exp_max_elp_secs'],
+            'exp_req_method': add_invalid_rating['exp_post_req_method'],
+            'exp_content_type': add_invalid_rating['exp_content_type'],
+            'exp_url_contains': str(movie_id),
+            'exp_req_reason': add_invalid_rating['reason']
+        })
+        assert res_json['status_message'] in add_invalid_rating['expected_message'], \
+            f"Unexpected message: '{res_json['status_message']}' not in {add_invalid_rating['expected_message']}"
