@@ -54,7 +54,7 @@ class MoviesAPI(BaseAPI):
         print(f"query_params: {query_params}")
         return self.get(f"{self._sub_path}/popular", params=query_params)
 
-    def get_top_rated_movies(self, query_params=None):
+    def get_top_rated(self, query_params=None):
         """
         Retrieve a paginated list of top-rated movies.
 
@@ -65,7 +65,7 @@ class MoviesAPI(BaseAPI):
         query_params ={ 'page': 1 , **(query_params or {})}
         return self.get(f"{self._sub_path}/top_rated", params=query_params)
 
-    def get_movie_by_alt_title(self, movie_id):
+    def get_alt_title(self, movie_id):
         """
         Retrieve alternative titles for a specific movie.
 
@@ -76,3 +76,15 @@ class MoviesAPI(BaseAPI):
                  including country codes and title strings.
         """
         return self.get(f"{self._sub_path}/{movie_id}/alternative_titles")
+
+    def  add_rating(self, movie_id, rating, query_params=None):
+        """
+        Add a user rating for a specific movie.
+
+        :param movie_id: TMDB movie ID.
+        :param rating: User rating value (0.5 to 10.0).
+        :param query_params: Optional dict of query parameters, such as session_id for authentication.
+        :return: Response object with status of the rating submission.
+        """
+        payload = {'value': rating}
+        return self.post(f"{self._sub_path}/{movie_id}/rating", params=query_params, json=payload)

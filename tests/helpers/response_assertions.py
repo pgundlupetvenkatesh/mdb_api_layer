@@ -11,7 +11,9 @@ def assert_http_response(response, exp_val):
         - 'exp_url_contains': Substring that should be present in the response URL (e.g., movie ID).
     :raises AssertionError: If any validation fails.
     """
-    assert response.request == exp_val['exp_req_method'], 'HTTP method is not GET'
+    exp_req_method = exp_val['exp_req_method']
+
+    assert response.request == exp_req_method, f"HTTP method is not {exp_req_method}"
     assert response.status_code == exp_val['exp_status_code'], f"returned status code is not {exp_val['exp_status_code']}"
     assert exp_val['exp_content_type'] in response.headers['Content-Type'], 'response is not in JSON format'
     assert response.elapsed_seconds < exp_val['exp_max_elp_seconds'], 'response time is too long'

@@ -82,11 +82,22 @@ class BaseAPI:
         )
 
 
-    def post(self, endpoint, data=None, json=None):
+    def post(self, endpoint, json=None, params=None):
         url = f"{self.base_url}/{endpoint}"
-        response = self.session.post(url, headers=self.headers, data=data, json=json, timeout=Config.TIMEOUT)
-        response.raise_for_status()
-        return response.json()
+        response = self.session.post(url, params=params, json=json, headers=self.headers, timeout=Config.TIMEOUT)
+
+        return APIResponse(
+            data=response.json(),
+            status_code=response.status_code,
+            url=response.url,
+            headers=response.headers,
+            cookies=response.cookies,
+            encoding=response.encoding,
+            elapsed_seconds=response.elapsed.total_seconds(),
+            reason=response.reason,
+            request=str(response.request.method),
+            request_params=params
+        )
 
     def put(self, endpoint, data=None, json=None):
         url = f"{self.base_url}/{endpoint}"

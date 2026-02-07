@@ -21,6 +21,7 @@ Usage:
 import pytest
 from jsonschema import validate
 
+from config.config import Config
 from api.movies_api import MoviesAPI
 from .data.data_loader import load_test_data
 from .helpers import *
@@ -177,6 +178,37 @@ class TestMoviesAPI(FieldAssertions):
         # Validate response against JSON schema
         validate(instance=res_body, schema=load_schema('popular_movies_schema'))
 
+    @pytest.mark.parametrize('add_valid_rating', TEST_DATA['add_rating']['valid'])
+    def test_add_rating(self, movies_api, load_schema, add_valid_rating):
+        """
+        Test adding a movie rating without authentication.
+
+        Validates that attempting to add a rating without proper
+        authentication returns the expected error response.
+
+        :param movies_api: MoviesAPI fixture instance.
+        """
+        movie_id = pick_random_movie_id()
+        rating = add_valid_rating['rating_payload']['value']
+        response = movies_api.add_rating(movie_id, rating, query_params=Config.SESSION_ID)
+        res_json = response.data
+
+        assert_http_response(response, {
+            'exp_status_code': add_valid_rating['status_code'],
+            'exp_max_elp_seconds': add_valid_rating['exp_max_elp_secs'],
+            'exp_req_method':  add_valid_rating['exp_post_req_method'],
+            'exp_content_type':  add_valid_rating['exp_content_type'],
+            'exp_url_contains': str(movie_id)
+        })
+
+        self.assert_bool_field(res_json, 'success')
+        self.assert_int_field(res_json, 'status_code')
+        self.assert_str_field(res_json, 'status_message')
+
+        if 'success' in res_json:
+            assert res_json['success'] is True, "Rating should be added successfully. Its false now"
+            validate(instance=res_json, schema=load_schema('add_rating_schema'))
+
     # Invalid test cases
 
     @pytest.mark.parametrize('invalid_test', TEST_DATA['get_movie_details']['invalid'])
@@ -229,3 +261,26 @@ class TestMoviesAPI(FieldAssertions):
             'exp_url_contains': 'popular'
         })
         assert res_body['status_message'] == invalid_test['expected_message']
+
+    # def test_add_rating_unauthenticated(self, movies_api):
+    #     """
+    #     Test adding a movie rating without authentication.
+    #
+    #     Validates that attempting to add a rating without proper
+    #     authentication returns the expected error response.
+    #
+    #     :param movies_api: MoviesAPI fixture instance.
+    #     """
+    #     movie_id = 550  # Example movie ID for "Fight Club"
+    #     rating = 8.5  # Example rating value
+    #     response = movies_api.add_rating(movie_id, rating, query_params=Config.SESSION_ID)
+    #     res_body = response.data
+    #
+    #     assert_http_response(response, {
+    #         'exp_status_code': 401,
+    #         'exp_max_elp_seconds': 2,
+    #         'exp_req_method': 'POST',
+    #         'exp_content_type': 'application/json',
+    #         'exp_url_contains': str(movie_id)
+    #     })
+    #     assert res_body['status_message'] == "Authentication failed: You do not have permissions to access the service."
