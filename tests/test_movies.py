@@ -82,7 +82,8 @@ class TestMoviesAPI(FieldAssertions):
         # movies_api creates MoviesAPI() instance
         # load_schema is a fixture from conftest.py
 
-        movie_id = test_case['movie_id']  # Example movie ID for "Fight Club"
+        movie_id = test_case['movie_id']
+        print(f"Running test: {self._test_name} for movie_id: {movie_id}")
         response = movies_api.get_movie_details(movie_id)
         res_body = response.data
 
@@ -92,7 +93,8 @@ class TestMoviesAPI(FieldAssertions):
             'exp_max_elp_seconds': test_case['exp_max_elp_secs'],
             'exp_req_method': test_case['exp_get_req_method'],
             'exp_content_type': test_case['exp_content_type'],
-            'exp_url_contains': str(movie_id)
+            'exp_url_contains': str(movie_id),
+            'exp_req_reason': test_case['reason']
         })
 
         # response structure validation
@@ -146,7 +148,8 @@ class TestMoviesAPI(FieldAssertions):
             'exp_max_elp_seconds': pop_movies['exp_max_elp_secs'],
             'exp_req_method': pop_movies['exp_get_req_method'],
             'exp_content_type': pop_movies['exp_content_type'],
-            'exp_url_contains': 'popular'
+            'exp_url_contains': 'popular',
+            'exp_req_reason': pop_movies['reason']
         })
 
         # response structure validation
@@ -199,7 +202,8 @@ class TestMoviesAPI(FieldAssertions):
             'exp_max_elp_seconds': add_valid_rating['exp_max_elp_secs'],
             'exp_req_method':  add_valid_rating['exp_post_req_method'],
             'exp_content_type':  add_valid_rating['exp_content_type'],
-            'exp_url_contains': str(movie_id)
+            'exp_url_contains': str(movie_id),
+            'exp_req_reason': add_valid_rating['reason']
         })
 
         self.assert_bool_field(res_json, 'success')
@@ -226,7 +230,8 @@ class TestMoviesAPI(FieldAssertions):
         :param invalid_test: Parametrized test data containing invalid movie_id,
                              expected status_code, and expected_message.
         """
-        movie_id = invalid_test['movie_id']  # Invalid movie ID
+        movie_id = invalid_test['movie_id']
+        print(f"Testing invalid movie_id: {movie_id}")
         response = movies_api.get_movie_details(movie_id)
         res_body = response.data
 
@@ -235,7 +240,8 @@ class TestMoviesAPI(FieldAssertions):
             'exp_max_elp_seconds': invalid_test['exp_max_elp_secs'],
             'exp_req_method': invalid_test['exp_get_req_method'],
             'exp_content_type': invalid_test['exp_content_type'],
-            'exp_url_contains': str(movie_id)
+            'exp_url_contains': str(movie_id),
+            'exp_req_reason': invalid_test['reason']
         })
         assert res_body['status_message'] == invalid_test['expected_message']
 
@@ -259,7 +265,8 @@ class TestMoviesAPI(FieldAssertions):
             'exp_max_elp_seconds': invalid_test['exp_max_elp_secs'],
             'exp_req_method': invalid_test['exp_get_req_method'],
             'exp_content_type': invalid_test['exp_content_type'],
-            'exp_url_contains': 'popular'
+            'exp_url_contains': 'popular',
+            'exp_req_reason': invalid_test['reason']
         })
         assert res_body['status_message'] == invalid_test['expected_message']
 

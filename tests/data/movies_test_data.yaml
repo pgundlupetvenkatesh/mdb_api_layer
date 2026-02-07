@@ -9,8 +9,10 @@ get_movie_details:
     valid:
         status_code: 200  # Only applied to valid cases
         original_language: "en"
+        reason: 'OK'
     invalid:
         status_code: 404  # Only applied to invalid cases
+        reason: 'Not Found'
 
   valid:
     - movie_id: 550 # First list item (index 0)
@@ -33,8 +35,10 @@ popular_movies:
     valid:
       status_code: 200
       original_language: "en"
+      reason: 'OK'
     invalid:
       status_code: 400
+      reason: 'Bad Request'
 
   valid:
     - query_param: { "language": "en-US" }
@@ -48,6 +52,7 @@ add_rating:
   defaults:
     valid:
       status_code: 201
+      reason: 'Created'
     invalid:
       status_code_bad_req: 400
       reason: 'Bad Request'
