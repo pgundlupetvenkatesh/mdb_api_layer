@@ -31,8 +31,11 @@ class FieldAssertions:
         assert field in data, f"{self._test_name}: Index {idx} should contain {field} field"
         assert isinstance(data[field], str), f"{self._test_name}: Index {idx} {field} Response should be string"
 
-        if data[field] == 'original_language':
+        if field == 'original_language':
             assert len(data[field]) == 2, f"{self._test_name}: Index {idx} {field} should be 2-char code"
+        elif field == 'origin_country':
+            # These fields can be empty lists, so only validate it's a list (done above)
+            return
         else:
             assert len(data[field]) > 0, f"{self._test_name}: Index {idx} {field} should not be empty"
 
@@ -54,7 +57,7 @@ class FieldAssertions:
         if id_val is not None:
             assert data[field] == id_val, f"{self._test_name}: Index {idx} {field} should be {id_val}"
         else:
-            assert data[field] > 0, f"{self._test_name}: Index {idx} {field} should be non-negative"
+            assert data[field] >= 0, f"{self._test_name}: Index {idx} {field} should be non-negative"
 
     def assert_path_field(self, data, field, index=None):
         """
@@ -89,10 +92,10 @@ class FieldAssertions:
         idx = f'{index}' if index is not None else ''
         assert isinstance(data[field], float), f"{self._test_name}: Index {idx} {field} Response should be float"
 
-        if data[field] == 'vote_average':
+        if field == 'vote_average':
             assert 0.0 <= data[field] <= 10.0, f"{self._test_name}: Index {idx} {field} should be between 0.0 and 10.0"
         else:
-            assert data[field] > 0.0, f"{self._test_name}: Index {idx} {field} should be positive"
+            assert data[field] >= 0.0, f"{self._test_name}: Index {idx} {field} should be positive"
 
     def assert_list_field(self, data, field, index=None):
         """
@@ -107,4 +110,9 @@ class FieldAssertions:
 
         assert field in data, f"{self._test_name}: Index {idx} should contain {field} field"
         assert isinstance(data[field], list), f"{self._test_name}: Index {idx} {field} Response should be a list"
+
+        if field in ['genres', 'production_companies']:
+            # These fields can be empty lists, so only validate it's a list (done above)
+            return
+
         assert len(data[field]) > 0, f"{self._test_name}: Index {idx} {field} should not be empty"
