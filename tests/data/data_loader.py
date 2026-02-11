@@ -7,6 +7,7 @@ from tests.helpers.test_data_generators import *
 GENERATORS = {
     '$random_rating': random_rating,
     '$random_invalid_rating': random_invalid_rating,
+    '$random_movie_id': pick_random_movie_id
 }
 
 def load_test_data(file_name: str) -> dict:

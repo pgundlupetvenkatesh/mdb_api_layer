@@ -108,21 +108,15 @@ class TestMoviesAPI(FieldAssertions):
                 self.assert_str_field(it, 'name', idx)
 
         self.assert_int_field(res_body, 'id')
-
         self.assert_bool_field(res_body, 'adult')
-
         self.assert_str_field(res_body, 'original_language')
         self.assert_str_field(res_body, 'title')
         self.assert_str_field(res_body, 'original_title')
-        assert res_body['original_language'] == test_case['original_language'], f"Movie ID should be {movie_id}"
-        assert res_body['title'] == test_case['movie_title'], "Response should contain 'title' field"
 
         if len(res_body['production_companies']) > 0:
             for idx, it in enumerate(res_body['production_companies']):
                 self.assert_int_field(it, 'id', idx)
-
                 self.assert_path_field(it, 'logo_path', idx)
-
                 self.assert_str_field(it, 'name', idx)
                 self.assert_str_field(it, 'origin_country', idx)
 
@@ -154,27 +148,21 @@ class TestMoviesAPI(FieldAssertions):
 
         # response structure validation
         self.assert_int_field(res_body, 'total_results', response.request_params['page'])
-
         self.assert_list_field(res_body, 'results')
 
         for idx, it in enumerate(res_body['results']):
             self.assert_list_field(it, 'genre_ids', idx)
-
             self.assert_bool_field(it, 'adult', idx)
             self.assert_bool_field(it, 'video', idx)
-
             self.assert_path_field(it, 'backdrop_path', idx)
             self.assert_path_field(it, 'poster_path', idx)
-
             self.assert_int_field(it, 'id', idx)
             self.assert_int_field(it, 'vote_count', idx)
-
             self.assert_str_field(it, 'original_title', idx)
             self.assert_str_field(it, 'overview', idx)
             self.assert_str_field(it, 'title', idx)
             self.assert_str_field(it, 'release_date', idx)
             self.assert_str_field(it, 'original_language', idx)
-
             self.assert_float_field(it, 'popularity', idx)
             self.assert_float_field(it, 'vote_average', idx)
 
