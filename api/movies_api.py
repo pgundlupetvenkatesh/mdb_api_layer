@@ -88,3 +88,12 @@ class MoviesAPI(BaseAPI):
         """
         payload = {'value': rating}
         return self.post(f"{self._sub_path}/{movie_id}/rating", params=query_params, json=payload)
+
+    def  delete_rating(self, movie_id, query_params=None):
+        """
+        Delete a user rating for a specific movie.
+        :param movie_id: TMDB movie ID.
+        :param query_params: Optional dict of query parameters, such as session_id for authentication.
+        :return: Response object with status of the rating deletion.
+        """
+        return self.delete(f"{self._sub_path}/{movie_id}/rating", params=query_params)

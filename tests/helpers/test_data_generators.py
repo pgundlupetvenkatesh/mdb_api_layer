@@ -49,3 +49,22 @@ def pick_random_movie_id() -> int:
         raise ValueError("movie_ids.txt is empty or contains no valid numbers.")
 
     return random.choice(numbers)
+
+def pick_random_rated_movie_id(acc_id, session_id) -> int:
+    """
+    Fetches rated movies from the account and returns a random movie ID.
+
+    :return: Random rated movie ID
+    :raises ValueError: If no rated movies are found
+    """
+    from api.account_api import AccountAPI
+
+    account_api = AccountAPI()
+    response = account_api.get_rated_movies(acc_id, query_params={'session_id': session_id})
+    rated_movies = response.data.get('results', [])
+    # print(f"Rated Movies: {rated_movies}")
+
+    if not rated_movies:
+        raise ValueError("No rated movies found for this account.")
+
+    return random.choice(rated_movies)['id']
