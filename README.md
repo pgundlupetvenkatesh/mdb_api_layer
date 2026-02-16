@@ -25,6 +25,8 @@ comprehensive response assertions.
 
 ## Installation
 
+## Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/pgundlupetvenkatesh/mdb_api_layer.git
@@ -37,11 +39,14 @@ poetry install
 poetry add <package_name>
 
 ## Testing
-`poetry run pytest tests/test_movies.py -v -s`
+poetry run pytest tests/test_movies.py -v -s
 ```
 ### Sanity Checks
-`poetry env info`
-`poetry show`
+
+```
+poetry env info
+poetry show
+```
 
 ## Configuration
 
@@ -152,7 +157,7 @@ poetry run pytest tests/test_movies.py --alluredir=allure-results
 allure serve allure-results
 ```
 
-## Dependency
+## Dependencies
 
 - requests
 - pytest

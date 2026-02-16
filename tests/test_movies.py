@@ -117,7 +117,9 @@ class TestMoviesAPI(FieldAssertions):
         correctly, including response structure and content.
 
         :param movies_api: MoviesAPI fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py
+        :param pop_movies: Parametrized test data containing valid query_param,
+                           expected status_code, and expected_message.
         """
         response = movies_api.get_popular_movies(query_params=pop_movies['query_param'])
         res_body = response.data
@@ -164,6 +166,9 @@ class TestMoviesAPI(FieldAssertions):
         authentication returns the expected error response.
 
         :param movies_api: MoviesAPI fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param add_valid_rating: Parametrized test data containing valid movie_id,
+                                   expected status_code, and expected_message.
         """
         movie_id = pick_random_movie_id()
         rating = add_valid_rating['rating_payload']['value']
@@ -199,6 +204,9 @@ class TestMoviesAPI(FieldAssertions):
 
         :param movies_api: MoviesAPI fixture instance.
         :param account_api: AccountAPI fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param delete_valid_rating: Parametrized test data containing valid movie_id,
+                                     expected status_code, and expected_message.
         """
         movie_id = pick_random_rated_movie_id(Config.ACCOUNT_ID, Config.SESSION_ID)
         print(f"Testing delete_rating for movie_id: {movie_id}")
@@ -217,7 +225,7 @@ class TestMoviesAPI(FieldAssertions):
         self.assert_str_field(res_json, 'status_message')
         self.assert_int_field(res_json, 'status_code')
         self.assert_int_field(res_json, 'success')
-        assert res_json['status_message'] == "The item/record was deleted successfully."
+        assert res_json['status_message'] == delete_valid_rating['expected_message']
 
         if 'success' in res_json:
             assert res_json['success'] is True, "Rating should be deleted successfully. Its false now"
@@ -265,6 +273,8 @@ class TestMoviesAPI(FieldAssertions):
 
         :param movies_api: MoviesAPI fixture instance.
         :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_test: Parametrized test data containing invalid query_param,
+                             expected status_code, and expected_message.
         """
         response = movies_api.get_popular_movies(query_params=invalid_test['query_param'])
         res_body = response.data
@@ -288,6 +298,8 @@ class TestMoviesAPI(FieldAssertions):
         authentication returns the expected error response.
 
         :param movies_api: MoviesAPI fixture instance.
+        :param add_invalid_rating: Parametrized test data containing invalid movie_id,
+                                   expected status_code, and expected_message.
         """
         movie_id = add_invalid_rating['movie_id']
         rating = add_invalid_rating['rating_payload']['value']
@@ -305,3 +317,42 @@ class TestMoviesAPI(FieldAssertions):
         })
         assert res_json['status_message'] in add_invalid_rating['expected_message'], \
             f"Unexpected message: '{res_json['status_message']}' not in {add_invalid_rating['expected_message']}"
+
+    @pytest.mark.parametrize('delete_invalid_rating', TEST_DATA['delete_rating']['invalid'])
+    def test_delete_invalid_rating(self, movies_api, account_api, load_schema, delete_invalid_rating):
+        """
+        Test deleting a movie rating with invalid movie ID in the first iteration and without session ID authentication.
+
+        Validates that attempting to delete a rating without proper
+        authentication returns the expected error response.
+
+        :param movies_api: MoviesAPI fixture instance.
+        :param account_api: AccountAPI fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param delete_invalid_rating: Parametrized test data containing invalid movie_id,
+                                      expected status_code, and expected_message.
+        """
+        movie_id = delete_invalid_rating['movie_id']
+        # Use session_id from test data if provided, otherwise use valid Config.SESSION_ID
+        session_id = delete_invalid_rating.get('session_id', Config.SESSION_ID)
+        print(f"Testing {self._test_name} for movie_id: {movie_id} with session_id: {session_id}")
+        response = movies_api.delete_rating(movie_id, query_params=session_id)
+        res_json = response.data
+
+        assert_http_response(response, {
+            'exp_status_code': delete_invalid_rating['status_code'],
+            'exp_max_elp_seconds': delete_invalid_rating['exp_max_elp_secs'],
+            'exp_req_method': delete_invalid_rating['exp_del_req_method'],
+            'exp_content_type': delete_invalid_rating['exp_content_type'],
+            'exp_url_contains': str(movie_id),
+            'exp_req_reason': delete_invalid_rating['reason']
+        })
+
+        self.assert_str_field(res_json, 'status_message')
+        self.assert_int_field(res_json, 'status_code')
+        self.assert_int_field(res_json, 'success')
+        assert res_json['status_message'] == delete_invalid_rating['expected_message']
+
+        if 'success' in res_json:
+            assert res_json['success'] is False, "Rating should be deleted successfully. Its false now"
+            validate(instance=res_json, schema=load_schema('add_delete_rating_schema'))
