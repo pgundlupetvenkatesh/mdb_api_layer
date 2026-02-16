@@ -4,6 +4,35 @@ from pathlib import Path
 from datetime import datetime
 
 from tests.data.data_loader import load_test_data
+from api.movies_api import MoviesAPI
+from api.account_api import AccountAPI
+
+
+@pytest.fixture
+def movies_api():
+    """
+    Fixture that provides a MoviesAPI instance for each test.
+
+    Creates a fresh API client before each test and yields it for use.
+
+    :yields: Configured MoviesAPI instance.
+    """
+    api = MoviesAPI()
+    yield api
+
+
+@pytest.fixture
+def account_api():
+    """
+    Fixture that provides an AccountAPI instance for each test.
+
+    Creates a fresh API client before each test and yields it for use.
+
+    :yields: Configured AccountAPI instance.
+    """
+    api = AccountAPI()
+    yield api
+
 
 @pytest.fixture
 def load_schema():

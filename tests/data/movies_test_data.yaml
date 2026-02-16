@@ -3,6 +3,7 @@ defaults:
   exp_content_type: 'application/json'
   exp_get_req_method: 'GET'
   exp_post_req_method: 'POST'
+  exp_del_req_method: 'DELETE'
 
 get_movie_details:
   defaults:
@@ -67,3 +68,22 @@ add_rating:
       expected_message: ['Value too high: Value must be less than, or equal to 10.0.',
                          'Value too low: Value must be greater than 0.0.',
                          'Value invalid: Value must be a multiple of 0.50.']
+
+delete_rating:
+  defaults:
+    valid:
+      status_code: 200
+      reason: 'OK'
+    invalid:
+      status_code: 404
+      reason: 'Not Found'
+
+  valid:
+    - expected_message: "The item/record was deleted successfully."
+
+  invalid:
+    - movie_id: 9999999999
+      expected_message: "The resource you requested could not be found."
+    - movie_id: 0
+      session_id: "$invalid_session_id"
+      expected_message: "Invalid id: The pre-requisite id is invalid or not found."

@@ -117,8 +117,31 @@ class BaseAPI:
         response.raise_for_status()
         return response.json()
 
-    def delete(self, endpoint, data=None):
+    def delete(self, endpoint, data=None, params=None):
+        """
+        Perform a DELETE request to the specified endpoint.
+
+        :param endpoint: API endpoint path.
+        :type endpoint: str
+        :param data: Optional data payload to send in the request body.
+        :type data: dict, optional
+        :param params: Optional query parameters.
+        :type params: dict, optional
+        :returns: API response with data, status code, and metadata.
+        :rtype: APIResponse
+        """
         url = f"{self.base_url}/{endpoint}"
         response = self.session.delete(url, headers=self.headers, data=data, timeout=Config.TIMEOUT)
-        response.raise_for_status()
-        return response.json()
+
+        return APIResponse(
+            data=response.json(),
+            status_code=response.status_code,
+            url=response.url,
+            headers=response.headers,
+            cookies=response.cookies,
+            encoding=response.encoding,
+            elapsed_seconds=response.elapsed.total_seconds(),
+            reason=response.reason,
+            request=str(response.request.method),
+            request_params=params
+        )
