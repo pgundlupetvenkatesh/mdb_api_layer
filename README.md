@@ -97,6 +97,35 @@ export TMDB_AUTH_TOKEN="your_read_access_token_here"
 | `TMDB_REQ_TOKEN`  | Request token for authentication      | No       | -                              |
 | `TMDB_MOVIE_ID`   | Default movie ID for tests            | No       | -                              |
 
+## Logging
+
+The framework uses [Loguru](https://github.com/Delgan/loguru) for structured logging with colored output.
+
+### Log Levels
+
+| Level    | Description                          |
+|----------|--------------------------------------|
+| DEBUG    | Detailed diagnostic information      |
+| INFO     | General operational messages         |
+| WARNING  | Potential issues                     |
+| ERROR    | Error events                         |
+| CRITICAL | Serious failures                     |
+
+### Log level hierarchy
+| Level Set | Logs Shown                            |
+|-----------|---------------------------------------|
+| DEBUG     | DEBUG, INFO, WARNING, ERROR, CRITICAL |
+| INFO      | INFO, WARNING, ERROR, CRITICAL        |
+| WARNING   | WARNING, ERROR, CRITICAL              |
+| ERROR     | ERROR, CRITICAL                       |
+| CRITICAL  | CRITICAL only                         |
+
+### Controlling Log Level
+
+* Default (INFO) - `poetry run pytest tests/*`
+* Debug logging - `poetry run pytest tests/* --loguru-log-level=DEBUG`
+* Only errors - `poetry run pytest tests/* --loguru-log-level=ERROR`
+
 ### Running Tests After Setup
 
 ```bash
