@@ -99,7 +99,8 @@ export TMDB_AUTH_TOKEN="your_read_access_token_here"
 
 ## Logging
 
-The framework uses [Loguru](https://github.com/Delgan/loguru) for structured logging with colored output.
+The framework uses [Loguru](https://github.com/Delgan/loguru) for structured logging with colored output and option to
+save logs to files. You can control the log level to filter messages based on severity.
 
 ### Log Levels
 
@@ -125,6 +126,12 @@ The framework uses [Loguru](https://github.com/Delgan/loguru) for structured log
 * Default (INFO) - `poetry run pytest tests/*`
 * Debug logging - `poetry run pytest tests/* --loguru-log-level=DEBUG`
 * Only errors - `poetry run pytest tests/* --loguru-log-level=ERROR`
+
+### Log Output
+By default, logs are printed to the console with color coding. You can also add `--log-to-file` option to write logs
+to a `logs/test_run.log` for persistent storage and later analysis.
+
+`poetry run pytest tests/* --log-to-file`
 
 ### Running Tests After Setup
 

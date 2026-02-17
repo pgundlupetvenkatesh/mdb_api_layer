@@ -19,6 +19,7 @@ def pytest_addoption(parser):
     Usage:
         poetry run pytest tests/* --loguru-log-level=DEBUG
         poetry run pytest tests/* --loguru-log-level=WARNING
+        poetry run pytest tests/* --log-to-file
 
     Available log levels:
         DEBUG, INFO (default), WARNING, ERROR, CRITICAL
@@ -28,6 +29,12 @@ def pytest_addoption(parser):
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set log level for tests"
+    )
+    parser.addoption(
+        "--log-to-file",
+        action="store_true",
+        default=False,
+        help="Enable logging to file (default: False)"
     )
 
 # Set LOG_LEVEL to environment variable before any test modules are imported, ensuring loguru is configured correctly
@@ -47,6 +54,7 @@ def pytest_configure(config):
         already been initialized with default settings at module import time.
     """
     os.environ["LOG_LEVEL"] = config.getoption("--loguru-log-level")
+    os.environ["LOG_TO_FILE"] = str(config.getoption("--log-to-file"))
     from config.config import configure_logging
     configure_logging()
 

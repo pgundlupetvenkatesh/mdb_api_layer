@@ -15,6 +15,7 @@ def configure_logging():
     - Colored output to stderr
     - Custom format: timestamp | level | module:function:line - message
     - Log level from LOG_LEVEL environment variable (defaults to INFO)
+    - Optional file logging when LOG_TO_FILE is set to "True"
 
     Log levels (threshold-based, shows specified level and above):
         - DEBUG: Detailed diagnostic information
@@ -30,15 +31,31 @@ def configure_logging():
 
     Example:
         os.environ["LOG_LEVEL"] = "DEBUG"
-        configure_logging()  # Now shows DEBUG and above
+        os.environ["LOG_TO_FILE"] = "True"
+        configure_logging()  # Now shows DEBUG and above, also logs to file
     """
+    log_level = os.getenv('LOG_LEVEL', 'INFO')
+    log_to_file = os.getenv('LOG_TO_FILE', 'False') == 'True'
+
     logger.remove()
+
+    # Always log to stderr
     logger.add(
         sys.stderr,
         format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
-        level=os.getenv('LOG_LEVEL', 'INFO'),
+        level=log_level,
         colorize=True
     )
+
+    # Optionally log to file
+    if log_to_file:
+        logger.add(
+            "logs/test_run.log",
+            format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
+            level=log_level,
+            rotation="5 MB",
+            retention="7 days"
+        )
 
 configure_logging()
 
