@@ -20,6 +20,7 @@ Usage:
 
 import pytest
 from jsonschema import validate
+from loguru import logger
 
 from config.config import Config
 from .data.data_loader import load_test_data
@@ -68,7 +69,7 @@ class TestMoviesAPI(FieldAssertions):
         # load_schema is a fixture from conftest.py
 
         movie_id = test_case['movie_id']
-        print(f"Running test: {self._test_name} for movie_id: {movie_id}")
+        logger.info(f"Running test: {self._test_name} for movie_id: {movie_id}")
         response = movies_api.get_movie_details(movie_id)
         res_body = response.data
 
@@ -172,7 +173,7 @@ class TestMoviesAPI(FieldAssertions):
         """
         movie_id = pick_random_movie_id()
         rating = add_valid_rating['rating_payload']['value']
-        print(f"Testing add_rating for movie_id: {movie_id} with rating: {rating}")
+        logger.info(f"Testing add_rating for movie_id: {movie_id} with rating: {rating}")
         response = movies_api.add_rating(movie_id, rating, query_params=Config.SESSION_ID)
         res_json = response.data
 
@@ -209,7 +210,7 @@ class TestMoviesAPI(FieldAssertions):
                                      expected status_code, and expected_message.
         """
         movie_id = pick_random_rated_movie_id(Config.ACCOUNT_ID, Config.SESSION_ID)
-        print(f"Testing delete_rating for movie_id: {movie_id}")
+        logger.info(f"Testing delete_rating for movie_id: {movie_id}")
         response = movies_api.delete_rating(movie_id, query_params=Config.SESSION_ID)
         res_json = response.data
 
@@ -248,7 +249,7 @@ class TestMoviesAPI(FieldAssertions):
                              expected status_code, and expected_message.
         """
         movie_id = invalid_test['movie_id']
-        print(f"Testing invalid movie_id: {movie_id}")
+        logger.info(f"Testing invalid movie_id: {movie_id}")
         response = movies_api.get_movie_details(movie_id)
         res_body = response.data
 
@@ -303,7 +304,7 @@ class TestMoviesAPI(FieldAssertions):
         """
         movie_id = add_invalid_rating['movie_id']
         rating = add_invalid_rating['rating_payload']['value']
-        print(f"Testing add_rating for movie_id: {movie_id} with invalid rating: {rating}")
+        logger.info(f"Testing add_rating for movie_id: {movie_id} with invalid rating: {rating}")
         response = movies_api.add_rating(movie_id, rating, query_params=Config.SESSION_ID)
         res_json = response.data
 
@@ -335,7 +336,7 @@ class TestMoviesAPI(FieldAssertions):
         movie_id = delete_invalid_rating['movie_id']
         # Use session_id from test data if provided, otherwise use valid Config.SESSION_ID
         session_id = delete_invalid_rating.get('session_id', Config.SESSION_ID)
-        print(f"Testing {self._test_name} for movie_id: {movie_id} with session_id: {session_id}")
+        logger.info(f"Testing {self._test_name} for movie_id: {movie_id} with session_id: {session_id}")
         response = movies_api.delete_rating(movie_id, query_params=session_id)
         res_json = response.data
 

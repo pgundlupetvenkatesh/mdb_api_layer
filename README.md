@@ -97,6 +97,42 @@ export TMDB_AUTH_TOKEN="your_read_access_token_here"
 | `TMDB_REQ_TOKEN`  | Request token for authentication      | No       | -                              |
 | `TMDB_MOVIE_ID`   | Default movie ID for tests            | No       | -                              |
 
+## Logging
+
+The framework uses [Loguru](https://github.com/Delgan/loguru) for structured logging with colored output and option to
+save logs to files. You can control the log level to filter messages based on severity.
+
+### Log Levels
+
+| Level    | Description                          |
+|----------|--------------------------------------|
+| DEBUG    | Detailed diagnostic information      |
+| INFO     | General operational messages         |
+| WARNING  | Potential issues                     |
+| ERROR    | Error events                         |
+| CRITICAL | Serious failures                     |
+
+### Log level hierarchy
+| Level Set | Logs Shown                            |
+|-----------|---------------------------------------|
+| DEBUG     | DEBUG, INFO, WARNING, ERROR, CRITICAL |
+| INFO      | INFO, WARNING, ERROR, CRITICAL        |
+| WARNING   | WARNING, ERROR, CRITICAL              |
+| ERROR     | ERROR, CRITICAL                       |
+| CRITICAL  | CRITICAL only                         |
+
+### Controlling Log Level
+
+* Default (INFO) - `poetry run pytest tests/*`
+* Debug logging - `poetry run pytest tests/* --loguru-log-level=DEBUG`
+* Only errors - `poetry run pytest tests/* --loguru-log-level=ERROR`
+
+### Log Output
+By default, logs are printed to the console with color coding. You can also add `--log-to-file` option to write logs
+to a `logs/test_run.log` for persistent storage and later analysis.
+
+`poetry run pytest tests/* --log-to-file`
+
 ### Running Tests After Setup
 
 ```bash

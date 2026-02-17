@@ -210,3 +210,6 @@ __marimo__/
 reports/
 *.html
 assets/
+
+# Log files
+logs/*.log

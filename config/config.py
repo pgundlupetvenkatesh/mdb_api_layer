@@ -1,8 +1,63 @@
 import os
+import sys
+
 from typing import List
 from dotenv import load_dotenv
+from loguru import logger
 
 load_dotenv()
+
+def configure_logging():
+    """
+    Configure loguru logger with custom format and log level.
+
+    Removes the default loguru handler and adds a new one with:
+    - Colored output to stderr
+    - Custom format: timestamp | level | module:function:line - message
+    - Log level from LOG_LEVEL environment variable (defaults to INFO)
+    - Optional file logging when LOG_TO_FILE is set to "True"
+
+    Log levels (threshold-based, shows specified level and above):
+        - DEBUG: Detailed diagnostic information
+        - INFO: General operational messages (default)
+        - WARNING: Potential issues
+        - ERROR: Error events
+        - CRITICAL: Serious failures
+
+    Can be called multiple times to reconfigure logging (e.g., after
+    setting LOG_LEVEL environment variable in pytest_configure).
+
+    :return: None
+
+    Example:
+        os.environ["LOG_LEVEL"] = "DEBUG"
+        os.environ["LOG_TO_FILE"] = "True"
+        configure_logging()  # Now shows DEBUG and above, also logs to file
+    """
+    log_level = os.getenv('LOG_LEVEL', 'INFO')
+    log_to_file = os.getenv('LOG_TO_FILE', 'False') == 'True'
+
+    logger.remove()
+
+    # Always log to stderr
+    logger.add(
+        sys.stderr,
+        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+        level=log_level,
+        colorize=True
+    )
+
+    # Optionally log to file
+    if log_to_file:
+        logger.add(
+            "logs/test_run.log",
+            format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
+            level=log_level,
+            rotation="5 MB",
+            retention="7 days"
+        )
+
+configure_logging()
 
 class Config:
     BASE_URL: str = os.getenv("TMDB_BASE_URL", "https://api.themoviedb.org/3")

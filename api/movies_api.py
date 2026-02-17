@@ -8,9 +8,10 @@ handling, and response parsing functionality.
 Usage:
     api = MoviesAPI()
     response = api.get_movie_details(550)  # Get Fight Club details
-    print(response.data['title'])
+    logger.info(response.data['title'])
 """
 
+from loguru import logger
 from api.base_api import BaseAPI
 
 class MoviesAPI(BaseAPI):
@@ -51,7 +52,7 @@ class MoviesAPI(BaseAPI):
         :return: Response object with paginated list of popular movies.
         """
         query_params ={ 'page': 1, **(query_params or {})}
-        print(f"query_params: {query_params}")
+        logger.debug(f"query_params: {query_params}")
         return self.get(f"{self._sub_path}/popular", params=query_params)
 
     def get_top_rated(self, query_params=None):
