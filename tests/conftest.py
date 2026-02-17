@@ -3,6 +3,8 @@ import pytest
 from pathlib import Path
 from datetime import datetime
 
+import config.config  # This triggers the loguru setup at module level
+
 from tests.data.data_loader import load_test_data
 from api.movies_api import MoviesAPI
 from api.account_api import AccountAPI

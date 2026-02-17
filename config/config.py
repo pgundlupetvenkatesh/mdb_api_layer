@@ -1,8 +1,19 @@
 import os
 from typing import List
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
 load_dotenv()
+
+# Configure logging with loguru
+import sys
+from loguru import logger
+logger.remove()
+logger.add(
+    sys.stderr,
+    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+    level="INFO", # Other levels include DEBUG, WARNING, ERROR, CRITICAL
+    colorize=True
+)
 
 class Config:
     BASE_URL: str = os.getenv("TMDB_BASE_URL", "https://api.themoviedb.org/3")
