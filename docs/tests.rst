@@ -34,6 +34,20 @@ Add Rating Schema
    :language: json
    :caption: add_delete_rating_schema.json
 
+Contracts
+---------
+.. automodule:: tests.contracts.test_movie_details
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: tests.contracts.test_popular_movies
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Data
 ----
 .. automodule:: tests.data.data_loader
@@ -61,6 +75,17 @@ Helpers
    :members:
    :undoc-members:
    :show-inheritance:
+
+Pacts
+-----
+.. literalinclude:: ../tests/pacts/test_movie_details-api_pvd.json
+   :language: json
+   :caption: test_movie_details-api_pvd.json
+
+.. literalinclude:: ../tests/pacts/test_popular_movies-api_pvd.json
+   :language: json
+   :caption: test_popular_movies-api_pvd.json
+
 
 Conftest
 --------

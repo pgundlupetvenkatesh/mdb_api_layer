@@ -19,6 +19,7 @@ pytest = "^9.0"
 pytest-html = "^4.1"
 sphinx = "^7.0"
 pytest-order = "^1.3.0"
+pact-python = "^3.2"
 
 [build-system]
 requires = ["poetry-core"]
@@ -28,3 +29,6 @@ build-backend = "poetry.core.masonry.api"
 pythonpath = ["."]
 testpaths = ["tests"]
 generate_report_on_test = true
+markers = [
+    "contract: marks tests as contract tests (deselect with '-m \"not contract\"')"
+]

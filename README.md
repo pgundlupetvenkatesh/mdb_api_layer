@@ -158,9 +158,12 @@ mdb_api_layer/
 │   ├── conftest.py # Pytest fixtures 
 │   ├── data/ 
 │   │ └── movies_test_data.yaml # Test data for movie tests 
+│   ├── pacts/
+│   │ └── *.json # Generated Pact contract files
 │   ├── schemas/ 
 │   │ └── movie_schema.json # JSON schema for validation 
-│   └── test_movies.py # Movie API tests 
+│   ├── test_movies.py # Movie API tests (integration)
+│   └── test_movies_contract.py # Movie API tests (contract)
 ├── docs/ 
 │   ├── conf.py # Sphinx configuration 
 │   ├── index.rst # Documentation index 
@@ -193,6 +196,41 @@ poetry run pytest tests/test_movies.py --alluredir=allure-results
 allure serve allure-results
 ```
 
+## Contract Testing
+
+This project includes **consumer-driven contract testing(CDC)** using [Pact](https://pact.io/) to verify API structure 
+expectations without making real network calls.
+
+### Running Contract Tests
+
+```bash
+# Run a specific contract test. -m is a marker defined in .toml file
+poetry run pytest tests/contracts/test_movie_details.py -v -m contract
+
+# Run all contract tests
+poetry run pytest tests/contracts/ -v -m contract
+
+# Run all tests except contract tests
+poetry run pytest tests/ -v -m "not contract"
+
+# Run all tests (integration + contract)
+poetry run pytest tests/ -v
+```
+
+### Generated Pact Files
+
+Contract tests generate JSON pact files in `tests/pacts/`:
+
+```
+tests/pacts/
+└── testmoviedetails-apipvd.json  # Contract between consumer and provider
+```
+
+Pact files document the expected request/response structure and can be:
+- Versioned for tracking in git
+- Shared with API providers to verify
+- Used by CI/CD to detect breaking changes
+
 ## Dependencies
 
 - requests
@@ -203,6 +241,11 @@ allure serve allure-results
 - jsonschema
 - pyyaml
 - sphinx
+
+```bash
+# Update dependencies
+poetry update
+```
 
 ## Documentation
 
