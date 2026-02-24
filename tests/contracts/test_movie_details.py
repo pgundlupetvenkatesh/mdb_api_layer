@@ -18,8 +18,6 @@ class TestMovieDetails:
     in our case Devs/PO.
     """
 
-    # api = MoviesAPI()
-
     @pytest.fixture
     def pact(self):
         """
@@ -36,8 +34,19 @@ class TestMovieDetails:
         # Write/merge the contract file after each test
         pact.write_file(directory=PACT_DIR)
 
+    @pytest.fixture
+    def pact_movies_api(self):
+        """
+        Create a MoviesAPI instance pointing to the Pact mock server.
+
+        Override base URL to use the Pact mock server instead of the real TMDB API
+        and test against expected responses.
+        """
+        api = MoviesAPI()
+        return api
+
     @pytest.mark.contract
-    def test_get_movie_details(self, pact):
+    def test_get_movie_details(self, pact, pact_movies_api):
         """
         Verify movie details response structure. Defines expectations for the GET /movie/{id} endpoint.
         Using matchers to allows flexible type-based matching rather than exact value comparison.
@@ -91,9 +100,8 @@ class TestMovieDetails:
 
         # Start mock server, make request and verify on exit
         with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as srv:
-            api = MoviesAPI()
-            api.base_url = f"{srv.url}/3"
-            response = api.get_movie_details(550)
+            pact_movies_api.base_url = f"{srv.url}/3"
+            response = pact_movies_api.get_movie_details(550)
 
         # Response structure has already been verified on context exit.
         assert response.status_code == 200
@@ -102,7 +110,7 @@ class TestMovieDetails:
         assert isinstance(response.data["genres"], list)
 
     @pytest.mark.contract
-    def test_get_invalid_movie_details(self, pact):
+    def test_get_invalid_movie_details(self, pact, pact_movies_api):
         """
         Verify 404 error response for non-existent movie to test the client correctly handles error responses
         when requesting invalid movie ID.
@@ -125,9 +133,8 @@ class TestMovieDetails:
         )
 
         with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as srv:
-            api = MoviesAPI()
-            api.base_url = f"{srv.url}/3"
-            response = api.get_movie_details(99999999)
+            pact_movies_api.base_url = f"{srv.url}/3"
+            response = pact_movies_api.get_movie_details(99999999)
 
         assert response.status_code == 404
         assert response.data["success"] is False
