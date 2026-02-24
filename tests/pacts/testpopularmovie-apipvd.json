@@ -1,0 +1,165 @@
+{
+  "consumer": {
+    "name": "TestPopularMovie"
+  },
+  "provider": {
+    "name": "APIPvd"
+  },
+  "interactions": [
+    {
+      "description": "a request for popular movies page 1",
+      "providerState": "popular movies exist",
+      "request": {
+        "method": "GET",
+        "path": "/3/movie/popular",
+        "query": "page=1",
+        "headers": {
+          "Authorization": "Bearer token"
+        },
+        "matchingRules": {
+          "$.headers.Authorization": {
+            "match": "type"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json;charset=utf-8"
+        },
+        "body": {
+          "page": 1,
+          "total_pages": 500,
+          "total_results": 10000,
+          "results": [
+            {
+              "adult": false,
+              "backdrop_path": "/path.jpg",
+              "genre_ids": [
+                28
+              ],
+              "id": 123,
+              "original_language": "en",
+              "original_title": "Movie Title",
+              "overview": "Description...",
+              "popularity": 100.5,
+              "poster_path": "/poster.jpg",
+              "release_date": "2024-01-15",
+              "title": "Movie Title",
+              "video": false,
+              "vote_average": 7.5,
+              "vote_count": 1000
+            }
+          ]
+        },
+        "matchingRules": {
+          "$.body.page": {
+            "match": "type"
+          },
+          "$.body.total_pages": {
+            "match": "type"
+          },
+          "$.body.total_results": {
+            "match": "type"
+          },
+          "$.body.results": {
+            "min": 1
+          },
+          "$.body.results[*].*": {
+            "match": "type"
+          },
+          "$.body.results[*].adult": {
+            "match": "type"
+          },
+          "$.body.results[*].backdrop_path": {
+            "match": "type"
+          },
+          "$.body.results[*].genre_ids": {
+            "min": 1
+          },
+          "$.body.results[*].genre_ids[*].*": {
+            "match": "type"
+          },
+          "$.body.results[*].id": {
+            "match": "type"
+          },
+          "$.body.results[*].original_language": {
+            "match": "type"
+          },
+          "$.body.results[*].original_title": {
+            "match": "type"
+          },
+          "$.body.results[*].overview": {
+            "match": "type"
+          },
+          "$.body.results[*].popularity": {
+            "match": "type"
+          },
+          "$.body.results[*].poster_path": {
+            "match": "type"
+          },
+          "$.body.results[*].release_date": {
+            "match": "regex",
+            "regex": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "$.body.results[*].title": {
+            "match": "type"
+          },
+          "$.body.results[*].video": {
+            "match": "type"
+          },
+          "$.body.results[*].vote_average": {
+            "match": "type"
+          },
+          "$.body.results[*].vote_count": {
+            "match": "type"
+          }
+        }
+      }
+    },
+    {
+      "description": "a request for popular movies with invalid page",
+      "providerState": "invalid page parameter",
+      "request": {
+        "method": "GET",
+        "path": "/3/movie/popular",
+        "query": "page=-1",
+        "headers": {
+          "Authorization": "Bearer token"
+        },
+        "matchingRules": {
+          "$.headers.Authorization": {
+            "match": "type"
+          }
+        }
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Content-Type": "application/json;charset=utf-8"
+        },
+        "body": {
+          "success": false,
+          "status_code": 34,
+          "status_message": "The resource you requested could not be found."
+        },
+        "matchingRules": {
+          "$.body.success": {
+            "match": "type"
+          },
+          "$.body.status_code": {
+            "match": "type"
+          },
+          "$.body.status_message": {
+            "match": "type"
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}
