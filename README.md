@@ -204,8 +204,11 @@ expectations without making real network calls.
 ### Running Contract Tests
 
 ```bash
-# Run a specific contract test
+# Run a specific contract test. -m is a marker defined in .toml file
 poetry run pytest tests/contracts/test_movie_details.py -v -m contract
+
+# Run all contract tests
+poetry run pytest tests/contracts/ -v -m contract
 
 # Run all tests except contract tests
 poetry run pytest tests/ -v -m "not contract"

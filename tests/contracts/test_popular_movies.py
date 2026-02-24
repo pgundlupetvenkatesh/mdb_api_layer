@@ -3,8 +3,7 @@ Contract tests for popular Movies API using Pact.
 """
 
 import pytest
-import atexit
-from pact import Consumer, Provider, Like, EachLike, Term
+from pact import Pact, match
 
 from api.movies_api import MoviesAPI
 
@@ -19,7 +18,7 @@ class TestPopularMovies:
     Contract tests for Popular Movies API endpoints.
     """
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def pact(self):
         """
         Create a Pact instance for contract testing.
@@ -32,21 +31,9 @@ class TestPopularMovies:
         The consumer name identifies client service, and the provider name
         identifies the API being consumed (TMDB).
         """
-        pact = Consumer("TestPopularMovie").has_pact_with(
-            Provider("APIPvd"),
-            host_name=PACT_MOCK_HOST,
-            port=PACT_MOCK_PORT,
-            pact_dir=PACT_DIR,
-        )
-        pact.start_service()
-
-        # Register cleanup to run at exit
-        atexit.register(pact.stop_service)
-
+        pact = Pact('test_popular_movies', 'api_pvd')
         yield pact
-
-        # Verify all interactions were matched and write to pact file
-        pact.stop_service()
+        pact.write_file(directory=PACT_DIR)
 
     @pytest.fixture
     def pact_movies_api(self):
@@ -57,7 +44,6 @@ class TestPopularMovies:
         and test against expected responses.
         """
         api = MoviesAPI()
-        api.base_url = f"http://{PACT_MOCK_HOST}:{PACT_MOCK_PORT}/3"
         return api
 
     @pytest.mark.contract
@@ -69,49 +55,44 @@ class TestPopularMovies:
         Verifies the response contains proper pagination and movie array.
         """
         expected_popular_response = {
-            "page": Like(1),
-            "total_pages": Like(500),
-            "total_results": Like(10000),
-            "results": EachLike({
-                "adult": Like(False),
-                "backdrop_path": Like("/path.jpg"),
-                "genre_ids": EachLike(28),
-                "id": Like(123),
-                "original_language": Like("en"),
-                "original_title": Like("Movie Title"),
-                "overview": Like("Description..."),
-                "popularity": Like(100.5),
-                "poster_path": Like("/poster.jpg"),
-                "release_date": Term(
-                    generate="2024-01-15",
-                    matcher=r"^\d{4}-\d{2}-\d{2}$"
+            "page": match.int(1),
+            "total_pages": match.int(500),
+            "total_results": match.int(10000),
+            "results": match.each_like({
+                "adult": match.like(False),
+                "backdrop_path": match.like("/path.jpg"),
+                "genre_ids": match.int(28),
+                "id": match.int(123),
+                "original_language": match.like("en"),
+                "original_title": match.like("Movie Title"),
+                "overview": match.like("Description..."),
+                "popularity": match.like(100.5),
+                "poster_path": match.like("/poster.jpg"),
+                "release_date": match.regex(
+                    "2024-01-15",
+                    regex=r"^\d{4}-\d{2}-\d{2}$"
                 ),
-                "title": Like("Movie Title"),
-                "video": Like(False),
-                "vote_average": Like(7.5),
-                "vote_count": Like(1000)
+                "title": match.like("Movie Title"),
+                "video": match.like(False),
+                "vote_average": match.like(7.5),
+                "vote_count": match.int(1000)
             })
         }
 
         (
             pact
+            .upon_receiving("a request for popular movies in page 1")
             .given("popular movies exist")
-            .upon_receiving("a request for popular movies page 1")
-            .with_request(
-                method="GET",
-                path="/3/movie/popular",
-                query={"page": "1"},
-                headers={"Authorization": Like("Bearer token")}
-            )
-            .will_respond_with(
-                status=200,
-                headers={"Content-Type": "application/json;charset=utf-8"},
-                body=expected_popular_response
-            )
+            .with_request("GET", "/3/movie/popular")
+            .with_query_parameters({"page": "1"})
+            .with_header('Authorization', match.like('Bearer token'), part='Request')
+            .will_respond_with(200)
+            .with_header('Content-Type', "application/json;charset=utf-8", part='Response')
+            .with_body(expected_popular_response, content_type="application/json")
         )
-
-        with pact:
-            response = pact_movies_api.get_popular_movies({"page": 1})
+        with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as svr:
+             pact_movies_api.base_url = f"{svr.url}/3"
+             response = pact_movies_api.get_popular_movies({"page": 1})
 
         assert response.status_code == 200
         assert "results" in response.data
@@ -126,31 +107,26 @@ class TestPopularMovies:
         Tests the GET /movie/popular endpoint with an invalid page number.
         Verifies the API returns a 400 Bad Request with appropriate error message.
         """
-        breakpoint()
         exp_error_res = {
-            "success": Like(False),
-            "status_code": Like(34),
-            "status_message": Like("The resource you requested could not be found.")
+            "success": match.like(False),
+            "status_code": match.int(34),
+            "status_message": match.like("The resource you requested could not be found.")
         }
 
         (
             pact
-            .given("invalid page parameter")
             .upon_receiving("a request for popular movies with invalid page")
-            .with_request(
-                method="GET",
-                path="/3/movie/popular",
-                query={"page": "-1"},
-                headers={"Authorization": Like("Bearer token")}
-            )
-            .will_respond_with(
-                status=400,
-                headers={"Content-Type": "application/json;charset=utf-8"},
-                body=exp_error_res
-            )
+            .given("invalid page parameter")
+            .with_request("GET", "/3/movie/popular")
+            .with_query_parameters({"page": "-1"})
+            .with_header('Authorization', match.like('Bearer token'), part='Request')
+            .will_respond_with(400)
+            .with_header('Content-Type', 'application/json;charset=utf-8', part='Response')
+            .with_body(exp_error_res, content_type="application/json")
         )
 
-        with pact:
+        with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as svr:
+            pact_movies_api.base_url = f"{svr.url}/3"
             response = pact_movies_api.get_popular_movies({"page": -1})
 
         assert response.status_code == 400
