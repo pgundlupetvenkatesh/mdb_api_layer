@@ -210,11 +210,17 @@ poetry run pytest tests/contracts/test_movie_details.py -v -m contract
 # Run all contract tests
 poetry run pytest tests/contracts/ -v -m contract
 
+# With report generation
+poetry run pytest tests/contracts/ --html=report/tmdb_contract_report.html --self-contained-html -v -s -m contract
+
 # Run all tests except contract tests
 poetry run pytest tests/ -v -m "not contract"
 
 # Run all tests (integration + contract)
 poetry run pytest tests/ -v
+
+# With report generation for all tests
+poetry run pytest tests/ --html=report/tmdb_full_report.html --self-contained-html -v -s
 ```
 
 ### Generated Pact Files

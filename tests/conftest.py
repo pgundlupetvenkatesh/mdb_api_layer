@@ -132,7 +132,7 @@ def pytest_html_report_title(report):
     :param report:
     :return:
     """
-    report.title = "Movies API Test Report"
+    report.title = "Movies API Tests Report"
 
 def pytest_html_results_summary(prefix, summary, postfix):
     # Quick status header
