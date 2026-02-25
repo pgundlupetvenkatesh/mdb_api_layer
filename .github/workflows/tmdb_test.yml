@@ -48,6 +48,8 @@ jobs:
         poetry run pytest tests/ \
         --html=report/tmdb_full_report.html \
         --self-contained-html -v -s
+      env:
+        PYTEST_ADDOPTS: "--color=yes"
 
     - name: Upload Report (even if tests fail)
       # Report upload should run regardless of test outcome
