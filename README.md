@@ -264,7 +264,7 @@ make html
 Open `docs/_build/html/index.html` in your web browser.
 ![doc_sample](doc_sample.png)
 
-Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/) to See the current live documentation
+Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/docs/index.html) to See the current live documentation
 
 ## Reports
 
@@ -276,3 +276,5 @@ poetry run pytest tests/test_movies.py --html=report/tmdb_report.html --self-con
 Generate a simple pytest HTML test report:
 Open the generated `tmdb_report.html` in your web browser to view the test results.
 ![sample_report](sample_report.png)
+
+Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/report/tmdb_full_report.html) to See the latest report
