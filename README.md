@@ -7,8 +7,10 @@ API Testing Framework for The Movie Database ([TMDB](https://themoviedb.org)) wi
 
 ## Overview
 
-A Python-based API testing framework for TMDB API, featuring structured test organization, JSON schema validation, and
-comprehensive response assertions.
+A Python-based API testing framework for TMDB API, featuring structured test organization, JSON schema validation, 
+Contract tests, and comprehensive response assertions.
+
+###### View live code documentation & latest test report [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/)
 
 ## Features
 
@@ -20,11 +22,9 @@ comprehensive response assertions.
 
 ## Prerequisites
 
-- Python 3.8+
+- Python 3.12+
 - [Poetry](https://python-poetry.org/) for dependency management
 - TMDB API account and API key
-
-## Installation
 
 ## Installation
 
@@ -84,6 +84,28 @@ TMDB_TIMEOUT=30
 export TMDB_API_KEY="your_api_key_here"
 export TMDB_AUTH_TOKEN="your_read_access_token_here"
 ```
+
+### 🚀 GitHub Pages(GHP) Setup
+The project uses multi-deployment strategy to host both Sphinx doc and Pytest HTML reports on the same GitHub Pages site.
+I am using [peaceiris/actions-gh-pages](https://github.com/peaceiris/actions-gh-pages) action across two separate workflows:
+* API Tests: Generate and deploys test reports to /report.
+* Docs: Build and deploys docs to /docs.
+
+#### Configs
+1. **Settings > Pages:** - To support both docs and reports, the repository is configured to deploy from a specific branch 
+rather the default "GitHub Actions" method.<br>
+**Source:** Deploy from a branch<br>
+**Branch:** gh-pages<br>
+**Folder:** / (root)<br>
+2. **Environment & Protection Rules** - Modified the default `github-pages` environment to allow the automated 
+workflows to push updates.<br>
+**Settings > Environments > github-pages:**<br>
+**Deployment branches:** Change from `Selected branches` to `All branches` or `No Restriction`. This allows the 
+peaceiris/actions-gh-pages action to push the gh-pages branch without being blocked by 
+"Main-only" protection rules GitHub Docs: Deployment Branches.<br>
+3. **Settings > Actions > General:**<br>
+**Workflow permissions:** Set to Read and write permissions. This grants the GITHUB_TOKEN the authority to create and 
+update the gh-pages branch GitHub Docs: Token Permissions.<br>
 
 ### Environment Variables Reference
 
