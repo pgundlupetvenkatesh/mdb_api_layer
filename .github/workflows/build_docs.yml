@@ -41,7 +41,7 @@ jobs:
       run: poetry install --no-interaction --no-root
 
     - name: Build docs
-      run: cd docs && make html
+      run: cd docs && poetry run make html
 
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
