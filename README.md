@@ -1,6 +1,7 @@
 # mdb_api_layer
 
-[![TMDB Tests](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml)
+[![Tests](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml)
+[![Docs](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml)
 
 API Testing Framework for The Movie Database ([TMDB](https://themoviedb.org)) with Python
 
@@ -262,6 +263,8 @@ make html
 ### View documentation
 Open `docs/_build/html/index.html` in your web browser.
 ![doc_sample](doc_sample.png)
+
+Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/) to See the current live documentation
 
 ## Reports
 

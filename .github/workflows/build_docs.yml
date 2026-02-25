@@ -1,4 +1,4 @@
-name: Build Docs to GH Pages
+name: Build & Publish Docs
 
 on:
   push:
@@ -7,18 +7,22 @@ on:
 
 # Grant GITHUB_TOKEN the permissions required for Pages deployment
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 # Allow only one concurrent deployment
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-docs:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: https://pgundlupetvenkatesh.github.io
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -43,19 +47,51 @@ jobs:
     - name: Build docs
       run: cd docs && poetry run make html
 
-    - name: Upload Pages artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: docs/_build/html
+    - name: Create Landing Page Index
+      run: |
+        mkdir -p public
+        cat <<EOF > public/index.html
+        <!DOCTYPE html>
+        <html>
+        <head>
+         <title>TMDB API Layer - Project Hub</title>
+         <style>
+             body { font-family: sans-serif; line-height: 1.6; padding: 40px; max-width: 800px; margin: auto; }
+             .card { border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+             h1 { color: #333; }
+             a { color: #0366d6; text-decoration: none; font-weight: bold; }
+             a:hover { text-decoration: underline; }
+         </style>
+        </head>
+        <body>
+         <h1>TMDB API Layer Project Hub</h1>
+         <div class="card">
+             <h2>📚 Documentation</h2>
+             <p>View the technical documentation and API specifications.</p>
+             <a href="./docs/">Go to Docs →</a>
+         </div>
+         <div class="card">
+             <h2>📊 Test Reports</h2>
+             <p>View the latest Pytest execution results and contract tests.</p>
+             <a href="./report/tmdb_full_report.html">View Latest Report →</a>
+         </div>
+        </body>
+        </html>
+        EOF
 
-  deploy:
-    needs: build-docs
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+    - name: Deploy & append to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./public  # Publish the current root (contains index.html)
+        keep_files: true
+
+    - name: Deploy & append to GitHub Pages
+      if: always()
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/_build/html
+        destination_dir: docs # Content goes into https://pgundlupetvenkatesh.github.io/mdb_api_layer/docs/index.html
+        keep_files: true
 
