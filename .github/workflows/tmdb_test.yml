@@ -43,16 +43,18 @@ jobs:
         echo "TMDB_AUTH_TOKEN=${{ secrets.TMDB_AUTH_TOKEN }}" >> .env
         echo "TMDB_REQ_TOKEN=${{ secrets.TMDB_REQ_TOKEN }}" >> .env
 
-    - name: Run Tests
+    - name: Run Integration + Contract Tests
       run: |
-        poetry run pytest tests/test_movies.py \
-        --html=report/tmdb_report.html \
+        poetry run pytest tests/ \
+        --html=report/tmdb_full_report.html \
         --self-contained-html -v -s
+      env:
+        PYTEST_ADDOPTS: "--color=yes"
 
     - name: Upload Report (even if tests fail)
       # Report upload should run regardless of test outcome
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: tmdb_test_report
-        path: report/tmdb_report.html
+        name: tmdb_test_suite_report
+        path: report/tmdb_full_report.html
