@@ -19,9 +19,6 @@ concurrency:
 jobs:
   build-docs:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: https://pgundlupetvenkatesh.github.io
 
     steps:
     - name: Checkout code
@@ -67,12 +64,12 @@ jobs:
          <h1>TMDB API Layer Project Hub</h1>
          <div class="card">
              <h2>📚 Documentation</h2>
-             <p>View the technical documentation and API specifications.</p>
+             <p>View live code docs with API specs.</p>
              <a href="./docs/">Go to Docs →</a>
          </div>
          <div class="card">
              <h2>📊 Test Reports</h2>
-             <p>View the latest Pytest execution results and contract tests.</p>
+             <p>View latest Pytest results and contract tests.</p>
              <a href="./report/tmdb_full_report.html">View Latest Report →</a>
          </div>
         </body>
@@ -95,3 +92,8 @@ jobs:
         destination_dir: docs # Content goes into https://pgundlupetvenkatesh.github.io/mdb_api_layer/docs/index.html
         keep_files: true
 
+    - name: Publish Summary Link
+      if: always()
+      run: |
+        echo "### 🚀 Deployment Successful" >> $GITHUB_STEP_SUMMARY
+        echo "View Report and Docs [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer)" >> $GITHUB_STEP_SUMMARY
