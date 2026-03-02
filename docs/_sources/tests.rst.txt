@@ -5,16 +5,17 @@ Test Data & Schema Files
 ------------------------
 The test suite uses the following data and schema files:
 
-* ``tests/data/movies_test_data.yaml`` - Test cases for Movies API
+* ``tests/data/test_data.yaml`` - Test cases for Movies API
 * ``tests/schemas/movie_schema.json`` - JSON schema for response validation
 * ``tests/schemas/popular_movies_schema.json`` - JSON schema for popular movies response validation
 * ``tests/schemas/add_delete_rating_schema.json`` - JSON schema for adding and deleting movie rating response validation
+* ``tests/schemas/person_details_schema.json`` - JSON schema for person details response validation
 
 Movies Test Data
 ~~~~~~~~~~~~~~~~
-.. literalinclude:: ../tests/data/movies_test_data.yaml
+.. literalinclude:: ../tests/data/test_data.yaml
    :language: yaml
-   :caption: movies_test_data.yaml
+   :caption: test_data.yaml
 
 Movie Schema
 ~~~~~~~~~~~~
@@ -29,7 +30,13 @@ Popular Movie Schema
    :caption: popular_movie_schema.json
 
 Add Rating Schema
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+.. literalinclude:: ../tests/schemas/person_details_schema.json
+   :language: json
+   :caption: person_details_schema.json
+
+Person Details Schema
+~~~~~~~~~~~~~~~~~~~~~
 .. literalinclude:: ../tests/schemas/add_delete_rating_schema.json
    :language: json
    :caption: add_delete_rating_schema.json
@@ -98,6 +105,14 @@ Conftest
 Test Movies
 -----------
 .. automodule:: tests.test_movies
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Test People
+-----------
+.. automodule:: tests.people.test_details
    :no-index:
    :members:
    :undoc-members:

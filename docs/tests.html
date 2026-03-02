@@ -37,15 +37,16 @@
 <h2>Test Data &amp; Schema Files<a class="headerlink" href="#test-data-schema-files" title="Link to this heading">¶</a></h2>
 <p>The test suite uses the following data and schema files:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">tests/data/movies_test_data.yaml</span></code> - Test cases for Movies API</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/data/test_data.yaml</span></code> - Test cases for Movies API</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">tests/schemas/movie_schema.json</span></code> - JSON schema for response validation</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">tests/schemas/popular_movies_schema.json</span></code> - JSON schema for popular movies response validation</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">tests/schemas/add_delete_rating_schema.json</span></code> - JSON schema for adding and deleting movie rating response validation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/schemas/person_details_schema.json</span></code> - JSON schema for person details response validation</p></li>
 </ul>
 <section id="movies-test-data">
 <h3>Movies Test Data<a class="headerlink" href="#movies-test-data" title="Link to this heading">¶</a></h3>
 <div class="literal-block-wrapper docutils container" id="id1">
-<div class="code-block-caption"><span class="caption-text">movies_test_data.yaml</span><a class="headerlink" href="#id1" title="Link to this code">¶</a></div>
+<div class="code-block-caption"><span class="caption-text">test_data.yaml</span><a class="headerlink" href="#id1" title="Link to this code">¶</a></div>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">defaults</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">exp_max_elp_secs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w"> </span><span class="c1"># Applied to ALL valid AND invalid test cases</span>
 <span class="w">  </span><span class="nt">exp_content_type</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;application/json&#39;</span>
@@ -135,6 +136,26 @@
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">movie_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
 <span class="w">      </span><span class="nt">session_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;$invalid_session_id&quot;</span>
 <span class="w">      </span><span class="nt">expected_message</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Invalid</span><span class="nv"> </span><span class="s">id:</span><span class="nv"> </span><span class="s">The</span><span class="nv"> </span><span class="s">pre-requisite</span><span class="nv"> </span><span class="s">id</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">invalid</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">not</span><span class="nv"> </span><span class="s">found.&quot;</span>
+
+<span class="nt">get_person_details</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">defaults</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">valid</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">status_code</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
+<span class="w">      </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;OK&#39;</span>
+<span class="w">    </span><span class="nt">invalid</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">status_code</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">404</span>
+<span class="w">      </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;Not</span><span class="nv"> </span><span class="s">Found&#39;</span>
+
+<span class="w">  </span><span class="nt">valid</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">person_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;$random_person_id&quot;</span>
+
+<span class="w">  </span><span class="nt">invalid</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">person_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">      </span><span class="nt">expected_message</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Invalid</span><span class="nv"> </span><span class="s">id:</span><span class="nv"> </span><span class="s">The</span><span class="nv"> </span><span class="s">pre-requisite</span><span class="nv"> </span><span class="s">id</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">invalid</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">not</span><span class="nv"> </span><span class="s">found.&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">person_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-1</span>
+<span class="w">      </span><span class="nt">expected_message</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Invalid</span><span class="nv"> </span><span class="s">id:</span><span class="nv"> </span><span class="s">The</span><span class="nv"> </span><span class="s">pre-requisite</span><span class="nv"> </span><span class="s">id</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">invalid</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">not</span><span class="nv"> </span><span class="s">found.&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">person_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9999999999</span>
+<span class="w">      </span><span class="nt">expected_message</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;The</span><span class="nv"> </span><span class="s">resource</span><span class="nv"> </span><span class="s">you</span><span class="nv"> </span><span class="s">requested</span><span class="nv"> </span><span class="s">could</span><span class="nv"> </span><span class="s">not</span><span class="nv"> </span><span class="s">be</span><span class="nv"> </span><span class="s">found.&quot;</span>
 </pre></div>
 </div>
 </div>
@@ -194,7 +215,7 @@
 <span class="w">          </span><span class="nt">&quot;backdrop_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;null&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
 <span class="w">          </span><span class="nt">&quot;genre_ids&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">            </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;array&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;items&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">            </span><span class="nt">&quot;items&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">&quot;nullable&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
 <span class="w">          </span><span class="p">},</span>
 <span class="w">          </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="w"> </span><span class="p">},</span>
 <span class="w">          </span><span class="nt">&quot;original_language&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="w"> </span><span class="p">},</span>
@@ -226,7 +247,48 @@
 <section id="add-rating-schema">
 <h3>Add Rating Schema<a class="headerlink" href="#add-rating-schema" title="Link to this heading">¶</a></h3>
 <div class="literal-block-wrapper docutils container" id="id4">
-<div class="code-block-caption"><span class="caption-text">add_delete_rating_schema.json</span><a class="headerlink" href="#id4" title="Link to this code">¶</a></div>
+<div class="code-block-caption"><span class="caption-text">person_details_schema.json</span><a class="headerlink" href="#id4" title="Link to this code">¶</a></div>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;object&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;adult&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;boolean&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;also_known_as&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;array&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;items&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">&quot;nullable&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;biography&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;birthday&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;deathday&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;null&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;gender&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;homepage&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;null&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;imdb_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;known_for_department&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;place_of_birth&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;null&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;popularity&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;number&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;profile_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;null&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;required&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;adult&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;biography&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;birthday&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;gender&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;id&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;imdb_id&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;known_for_department&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;name&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;popularity&quot;</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="person-details-schema">
+<h3>Person Details Schema<a class="headerlink" href="#person-details-schema" title="Link to this heading">¶</a></h3>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">add_delete_rating_schema.json</span><a class="headerlink" href="#id5" title="Link to this code">¶</a></div>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;object&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
@@ -573,8 +635,8 @@ Assumes one number per line.</p>
 </section>
 <section id="pacts">
 <h2>Pacts<a class="headerlink" href="#pacts" title="Link to this heading">¶</a></h2>
-<div class="literal-block-wrapper docutils container" id="id5">
-<div class="code-block-caption"><span class="caption-text">test_movie_details-api_pvd.json</span><a class="headerlink" href="#id5" title="Link to this code">¶</a></div>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">test_movie_details-api_pvd.json</span><a class="headerlink" href="#id6" title="Link to this code">¶</a></div>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;consumer&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test_movie_details&quot;</span>
@@ -929,8 +991,8 @@ Assumes one number per line.</p>
 </pre></div>
 </div>
 </div>
-<div class="literal-block-wrapper docutils container" id="id6">
-<div class="code-block-caption"><span class="caption-text">test_popular_movies-api_pvd.json</span><a class="headerlink" href="#id6" title="Link to this code">¶</a></div>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">test_popular_movies-api_pvd.json</span><a class="headerlink" href="#id7" title="Link to this code">¶</a></div>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;consumer&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test_popular_movies&quot;</span>
@@ -1259,12 +1321,14 @@ Assumes one number per line.</p>
 <h2>Conftest<a class="headerlink" href="#conftest" title="Link to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">tests.conftest.</span></span><span class="sig-name descname"><span class="pre">account_api</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Fixture that provides an AccountAPI instance for each test.</p>
-<p>Creates a fresh API client before each test and yields it for use.</p>
+<span class="sig-prename descclassname"><span class="pre">tests.conftest.</span></span><span class="sig-name descname"><span class="pre">get_api_instance</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Fixture that provides a generic API client instance for each test.</p>
+<p>Creates a fresh API client before each test and yields it for use. This
+fixture can be used when the specific API type is not important for the
+test, allowing for more flexible test design.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Yields<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Configured AccountAPI instance.</p>
+<dd class="field-odd"><p>Configured BaseAPI instance.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1287,18 +1351,6 @@ returns the parsed JSON schema as a dictionary.</p>
 validate(instance=response.data, schema=schema)</p>
 </dd>
 </dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">tests.conftest.</span></span><span class="sig-name descname"><span class="pre">movies_api</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Fixture that provides a MoviesAPI instance for each test.</p>
-<p>Creates a fresh API client before each test and yields it for use.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Yields<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Configured MoviesAPI instance.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1382,7 +1434,7 @@ already been initialized with default settings at module import time.</p>
 <p>This module contains integration tests for the MoviesAPI class, validating
 both successful responses and error handling. Tests are data-driven using
 external YAML test data files with pytest’s parametrize decorator.</p>
-<p>Test data is loaded from ‘movies_test_data.yaml’ which contains valid and
+<p>Test data is loaded from ‘test_data.yaml’ which contains valid and
 invalid test cases with expected values and defaults applied.</p>
 <dl class="simple">
 <dt>Dependencies:</dt><dd><ul class="simple">
@@ -1397,7 +1449,7 @@ invalid test cases with expected values and defaults applied.</p>
 </dl>
 <dl class="py data">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">tests.test_movies.</span></span><span class="sig-name descname"><span class="pre">TEST_DATA</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'add_rating':</span> <span class="pre">{'invalid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">['Value</span> <span class="pre">too</span> <span class="pre">high:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">less</span> <span class="pre">than,</span> <span class="pre">or</span> <span class="pre">equal</span> <span class="pre">to</span> <span class="pre">10.0.',</span> <span class="pre">'Value</span> <span class="pre">too</span> <span class="pre">low:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">greater</span> <span class="pre">than</span> <span class="pre">0.0.',</span> <span class="pre">'Value</span> <span class="pre">invalid:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">a</span> <span class="pre">multiple</span> <span class="pre">of</span> <span class="pre">0.50.'],</span> <span class="pre">'movie_id':</span> <span class="pre">550,</span> <span class="pre">'rating_payload':</span> <span class="pre">{'value':</span> <span class="pre">10.2},</span> <span class="pre">'reason':</span> <span class="pre">'Bad</span> <span class="pre">Request',</span> <span class="pre">'status_code_bad_req':</span> <span class="pre">400},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">['Value</span> <span class="pre">too</span> <span class="pre">high:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">less</span> <span class="pre">than,</span> <span class="pre">or</span> <span class="pre">equal</span> <span class="pre">to</span> <span class="pre">10.0.',</span> <span class="pre">'Value</span> <span class="pre">too</span> <span class="pre">low:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">greater</span> <span class="pre">than</span> <span class="pre">0.0.',</span> <span class="pre">'Value</span> <span class="pre">invalid:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">a</span> <span class="pre">multiple</span> <span class="pre">of</span> <span class="pre">0.50.'],</span> <span class="pre">'movie_id':</span> <span class="pre">680,</span> <span class="pre">'rating_payload':</span> <span class="pre">{'value':</span> <span class="pre">19.0},</span> <span class="pre">'reason':</span> <span class="pre">'Bad</span> <span class="pre">Request',</span> <span class="pre">'status_code_bad_req':</span> <span class="pre">400}],</span> <span class="pre">'valid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'rating_payload':</span> <span class="pre">{'value':</span> <span class="pre">10.0},</span> <span class="pre">'reason':</span> <span class="pre">'Created',</span> <span class="pre">'status_code':</span> <span class="pre">201},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'rating_payload':</span> <span class="pre">{'value':</span> <span class="pre">4.0},</span> <span class="pre">'reason':</span> <span class="pre">'Created',</span> <span class="pre">'status_code':</span> <span class="pre">201}]},</span> <span class="pre">'delete_rating':</span> <span class="pre">{'invalid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'The</span> <span class="pre">resource</span> <span class="pre">you</span> <span class="pre">requested</span> <span class="pre">could</span> <span class="pre">not</span> <span class="pre">be</span> <span class="pre">found.',</span> <span class="pre">'movie_id':</span> <span class="pre">9999999999,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'status_code':</span> <span class="pre">404},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'Invalid</span> <span class="pre">id:</span> <span class="pre">The</span> <span class="pre">pre-requisite</span> <span class="pre">id</span> <span class="pre">is</span> <span class="pre">invalid</span> <span class="pre">or</span> <span class="pre">not</span> <span class="pre">found.',</span> <span class="pre">'movie_id':</span> <span class="pre">0,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'session_id':</span> <span class="pre">'a1b2c3d4e5f6g7h8i9j0',</span> <span class="pre">'status_code':</span> <span class="pre">404}],</span> <span class="pre">'valid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'The</span> <span class="pre">item/record</span> <span class="pre">was</span> <span class="pre">deleted</span> <span class="pre">successfully.',</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200}]},</span> <span class="pre">'get_movie_details':</span> <span class="pre">{'invalid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'Invalid</span> <span class="pre">id:</span> <span class="pre">The</span> <span class="pre">pre-requisite</span> <span class="pre">id</span> <span class="pre">is</span> <span class="pre">invalid</span> <span class="pre">or</span> <span class="pre">not</span> <span class="pre">found.',</span> <span class="pre">'movie_id':</span> <span class="pre">0,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'status_code':</span> <span class="pre">404},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'Invalid</span> <span class="pre">id:</span> <span class="pre">The</span> <span class="pre">pre-requisite</span> <span class="pre">id</span> <span class="pre">is</span> <span class="pre">invalid</span> <span class="pre">or</span> <span class="pre">not</span> <span class="pre">found.',</span> <span class="pre">'movie_id':</span> <span class="pre">-1,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'status_code':</span> <span class="pre">404},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'The</span> <span class="pre">resource</span> <span class="pre">you</span> <span class="pre">requested</span> <span class="pre">could</span> <span class="pre">not</span> <span class="pre">be</span> <span class="pre">found.',</span> <span class="pre">'movie_id':</span> <span class="pre">9999999999,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'status_code':</span> <span class="pre">404}],</span> <span class="pre">'valid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'movie_id':</span> <span class="pre">10757,</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'movie_id':</span> <span class="pre">30332,</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'movie_id':</span> <span class="pre">48926,</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200}]},</span> <span class="pre">'popular_movies':</span> <span class="pre">{'invalid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'Invalid</span> <span class="pre">page:</span> <span class="pre">Pages</span> <span class="pre">start</span> <span class="pre">at</span> <span class="pre">1</span> <span class="pre">and</span> <span class="pre">max</span> <span class="pre">at</span> <span class="pre">500.</span> <span class="pre">They</span> <span class="pre">are</span> <span class="pre">expected</span> <span class="pre">to</span> <span class="pre">be</span> <span class="pre">an</span> <span class="pre">integer.',</span> <span class="pre">'query_param':</span> <span class="pre">{'page':</span> <span class="pre">-1},</span> <span class="pre">'reason':</span> <span class="pre">'Bad</span> <span class="pre">Request',</span> <span class="pre">'status_code':</span> <span class="pre">400}],</span> <span class="pre">'valid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'query_param':</span> <span class="pre">{'language':</span> <span class="pre">'en-US'},</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'query_param':</span> <span class="pre">{'page':</span> <span class="pre">2},</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200}]}}</span></em></dt>
+<span class="sig-prename descclassname"><span class="pre">tests.test_movies.</span></span><span class="sig-name descname"><span class="pre">TEST_DATA</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'add_rating':</span> <span class="pre">{'invalid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">['Value</span> <span class="pre">too</span> <span class="pre">high:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">less</span> <span class="pre">than,</span> <span class="pre">or</span> <span class="pre">equal</span> <span class="pre">to</span> <span class="pre">10.0.',</span> <span class="pre">'Value</span> <span class="pre">too</span> <span class="pre">low:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">greater</span> <span class="pre">than</span> <span class="pre">0.0.',</span> <span class="pre">'Value</span> <span class="pre">invalid:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">a</span> <span class="pre">multiple</span> <span class="pre">of</span> <span class="pre">0.50.'],</span> <span class="pre">'movie_id':</span> <span class="pre">550,</span> <span class="pre">'rating_payload':</span> <span class="pre">{'value':</span> <span class="pre">-4.7},</span> <span class="pre">'reason':</span> <span class="pre">'Bad</span> <span class="pre">Request',</span> <span class="pre">'status_code_bad_req':</span> <span class="pre">400},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">['Value</span> <span class="pre">too</span> <span class="pre">high:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">less</span> <span class="pre">than,</span> <span class="pre">or</span> <span class="pre">equal</span> <span class="pre">to</span> <span class="pre">10.0.',</span> <span class="pre">'Value</span> <span class="pre">too</span> <span class="pre">low:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">greater</span> <span class="pre">than</span> <span class="pre">0.0.',</span> <span class="pre">'Value</span> <span class="pre">invalid:</span> <span class="pre">Value</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">a</span> <span class="pre">multiple</span> <span class="pre">of</span> <span class="pre">0.50.'],</span> <span class="pre">'movie_id':</span> <span class="pre">680,</span> <span class="pre">'rating_payload':</span> <span class="pre">{'value':</span> <span class="pre">-8.9},</span> <span class="pre">'reason':</span> <span class="pre">'Bad</span> <span class="pre">Request',</span> <span class="pre">'status_code_bad_req':</span> <span class="pre">400}],</span> <span class="pre">'valid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'rating_payload':</span> <span class="pre">{'value':</span> <span class="pre">9.0},</span> <span class="pre">'reason':</span> <span class="pre">'Created',</span> <span class="pre">'status_code':</span> <span class="pre">201},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'rating_payload':</span> <span class="pre">{'value':</span> <span class="pre">1.0},</span> <span class="pre">'reason':</span> <span class="pre">'Created',</span> <span class="pre">'status_code':</span> <span class="pre">201}]},</span> <span class="pre">'delete_rating':</span> <span class="pre">{'invalid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'The</span> <span class="pre">resource</span> <span class="pre">you</span> <span class="pre">requested</span> <span class="pre">could</span> <span class="pre">not</span> <span class="pre">be</span> <span class="pre">found.',</span> <span class="pre">'movie_id':</span> <span class="pre">9999999999,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'status_code':</span> <span class="pre">404},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'Invalid</span> <span class="pre">id:</span> <span class="pre">The</span> <span class="pre">pre-requisite</span> <span class="pre">id</span> <span class="pre">is</span> <span class="pre">invalid</span> <span class="pre">or</span> <span class="pre">not</span> <span class="pre">found.',</span> <span class="pre">'movie_id':</span> <span class="pre">0,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'session_id':</span> <span class="pre">'a1b2c3d4e5f6g7h8i9j0',</span> <span class="pre">'status_code':</span> <span class="pre">404}],</span> <span class="pre">'valid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'The</span> <span class="pre">item/record</span> <span class="pre">was</span> <span class="pre">deleted</span> <span class="pre">successfully.',</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200}]},</span> <span class="pre">'get_movie_details':</span> <span class="pre">{'invalid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'Invalid</span> <span class="pre">id:</span> <span class="pre">The</span> <span class="pre">pre-requisite</span> <span class="pre">id</span> <span class="pre">is</span> <span class="pre">invalid</span> <span class="pre">or</span> <span class="pre">not</span> <span class="pre">found.',</span> <span class="pre">'movie_id':</span> <span class="pre">0,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'status_code':</span> <span class="pre">404},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'Invalid</span> <span class="pre">id:</span> <span class="pre">The</span> <span class="pre">pre-requisite</span> <span class="pre">id</span> <span class="pre">is</span> <span class="pre">invalid</span> <span class="pre">or</span> <span class="pre">not</span> <span class="pre">found.',</span> <span class="pre">'movie_id':</span> <span class="pre">-1,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'status_code':</span> <span class="pre">404},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'The</span> <span class="pre">resource</span> <span class="pre">you</span> <span class="pre">requested</span> <span class="pre">could</span> <span class="pre">not</span> <span class="pre">be</span> <span class="pre">found.',</span> <span class="pre">'movie_id':</span> <span class="pre">9999999999,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'status_code':</span> <span class="pre">404}],</span> <span class="pre">'valid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'movie_id':</span> <span class="pre">25730,</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'movie_id':</span> <span class="pre">67567,</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'movie_id':</span> <span class="pre">350,</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200}]},</span> <span class="pre">'get_person_details':</span> <span class="pre">{'invalid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'Invalid</span> <span class="pre">id:</span> <span class="pre">The</span> <span class="pre">pre-requisite</span> <span class="pre">id</span> <span class="pre">is</span> <span class="pre">invalid</span> <span class="pre">or</span> <span class="pre">not</span> <span class="pre">found.',</span> <span class="pre">'person_id':</span> <span class="pre">0,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'status_code':</span> <span class="pre">404},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'Invalid</span> <span class="pre">id:</span> <span class="pre">The</span> <span class="pre">pre-requisite</span> <span class="pre">id</span> <span class="pre">is</span> <span class="pre">invalid</span> <span class="pre">or</span> <span class="pre">not</span> <span class="pre">found.',</span> <span class="pre">'person_id':</span> <span class="pre">-1,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'status_code':</span> <span class="pre">404},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'The</span> <span class="pre">resource</span> <span class="pre">you</span> <span class="pre">requested</span> <span class="pre">could</span> <span class="pre">not</span> <span class="pre">be</span> <span class="pre">found.',</span> <span class="pre">'person_id':</span> <span class="pre">9999999999,</span> <span class="pre">'reason':</span> <span class="pre">'Not</span> <span class="pre">Found',</span> <span class="pre">'status_code':</span> <span class="pre">404}],</span> <span class="pre">'valid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'person_id':</span> <span class="pre">13,</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200}]},</span> <span class="pre">'popular_movies':</span> <span class="pre">{'invalid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'expected_message':</span> <span class="pre">'Invalid</span> <span class="pre">page:</span> <span class="pre">Pages</span> <span class="pre">start</span> <span class="pre">at</span> <span class="pre">1</span> <span class="pre">and</span> <span class="pre">max</span> <span class="pre">at</span> <span class="pre">500.</span> <span class="pre">They</span> <span class="pre">are</span> <span class="pre">expected</span> <span class="pre">to</span> <span class="pre">be</span> <span class="pre">an</span> <span class="pre">integer.',</span> <span class="pre">'query_param':</span> <span class="pre">{'page':</span> <span class="pre">-1},</span> <span class="pre">'reason':</span> <span class="pre">'Bad</span> <span class="pre">Request',</span> <span class="pre">'status_code':</span> <span class="pre">400}],</span> <span class="pre">'valid':</span> <span class="pre">[{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'query_param':</span> <span class="pre">{'language':</span> <span class="pre">'en-US'},</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200},</span> <span class="pre">{'exp_content_type':</span> <span class="pre">'application/json',</span> <span class="pre">'exp_del_req_method':</span> <span class="pre">'DELETE',</span> <span class="pre">'exp_get_req_method':</span> <span class="pre">'GET',</span> <span class="pre">'exp_max_elp_secs':</span> <span class="pre">2,</span> <span class="pre">'exp_post_req_method':</span> <span class="pre">'POST',</span> <span class="pre">'query_param':</span> <span class="pre">{'page':</span> <span class="pre">2},</span> <span class="pre">'reason':</span> <span class="pre">'OK',</span> <span class="pre">'status_code':</span> <span class="pre">200}]}}</span></em></dt>
 <dd><p>Module-level test data loaded once at import time for parametrization.</p>
 </dd></dl>
 
@@ -1411,14 +1463,14 @@ valid requests and error scenarios. Each test validates HTTP
 method, status codes, headers, response time, and body structure.</p>
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">test_add_rating</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">movies_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_valid_rating</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-name descname"><span class="pre">test_add_rating</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_api_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_valid_rating</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Test adding a movie rating without authentication.</p>
 <p>Validates that attempting to add a rating without proper
 authentication returns the expected error response.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>movies_api</strong> – MoviesAPI fixture instance.</p></li>
+<li><p><strong>get_api_instance</strong> – Generic fixture instance.</p></li>
 <li><p><strong>load_schema</strong> – Schema loader fixture from conftest.py.</p></li>
 <li><p><strong>add_valid_rating</strong> – Parametrized test data containing valid movie_id,
 expected status_code, and expected_message.</p></li>
@@ -1429,14 +1481,14 @@ expected status_code, and expected_message.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">test_add_rating_unauthenticated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">movies_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_invalid_rating</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-name descname"><span class="pre">test_add_rating_unauthenticated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_api_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_invalid_rating</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Test adding a movie rating without authentication.</p>
 <p>Validates that attempting to add a rating without proper
 authentication returns the expected error response.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>movies_api</strong> – MoviesAPI fixture instance.</p></li>
+<li><p><strong>get_api_instance</strong> – Generic fixture instance.</p></li>
 <li><p><strong>add_invalid_rating</strong> – Parametrized test data containing invalid movie_id,
 expected status_code, and expected_message.</p></li>
 </ul>
@@ -1446,15 +1498,14 @@ expected status_code, and expected_message.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">test_delete_invalid_rating</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">movies_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_invalid_rating</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-name descname"><span class="pre">test_delete_invalid_rating</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_api_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_invalid_rating</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Test deleting a movie rating with invalid movie ID in the first iteration and without session ID authentication.</p>
 <p>Validates that attempting to delete a rating without proper
 authentication returns the expected error response.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>movies_api</strong> – MoviesAPI fixture instance.</p></li>
-<li><p><strong>account_api</strong> – AccountAPI fixture instance.</p></li>
+<li><p><strong>get_api_instance</strong> – Generic fixture instance.</p></li>
 <li><p><strong>load_schema</strong> – Schema loader fixture from conftest.py.</p></li>
 <li><p><strong>delete_invalid_rating</strong> – Parametrized test data containing invalid movie_id,
 expected status_code, and expected_message.</p></li>
@@ -1465,15 +1516,14 @@ expected status_code, and expected_message.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">test_delete_rating</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">movies_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">account_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_valid_rating</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-name descname"><span class="pre">test_delete_rating</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_api_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_valid_rating</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Test deleting a movie rating without authentication.</p>
 <p>Validates that attempting to delete a rating without proper
 authentication returns the expected error response.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>movies_api</strong> – MoviesAPI fixture instance.</p></li>
-<li><p><strong>account_api</strong> – AccountAPI fixture instance.</p></li>
+<li><p><strong>get_api_instance</strong> – Generic fixture instance.</p></li>
 <li><p><strong>load_schema</strong> – Schema loader fixture from conftest.py.</p></li>
 <li><p><strong>delete_valid_rating</strong> – Parametrized test data containing valid movie_id,
 expected status_code, and expected_message.</p></li>
@@ -1484,52 +1534,14 @@ expected status_code, and expected_message.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">test_get_invalid_movie_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">movies_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invalid_test</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Test error handling for invalid movie IDs.</p>
-<p>Validates proper error responses when requesting non-existent
-or invalid movie IDs, ensuring appropriate status codes and
-error messages are returned.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>movies_api</strong> – MoviesAPI fixture instance.</p></li>
-<li><p><strong>load_schema</strong> – Schema loader fixture from conftest.py.</p></li>
-<li><p><strong>invalid_test</strong> – Parametrized test data containing invalid movie_id,
-expected status_code, and expected_message.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">test_get_movie_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">movies_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_case</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Test error handling for invalid movie IDs.</p>
-<p>Validates proper error responses when requesting non-existent
-or invalid movie IDs, ensuring appropriate status codes and
-error messages are returned.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>movies_api</strong> – MoviesAPI fixture instance.</p></li>
-<li><p><strong>load_schema</strong> – Schema loader fixture from conftest.py.</p></li>
-<li><p><strong>test_case</strong> – Parametrized test data containing valid movie_id,
-expected status_code, and expected_message.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">test_get_popular_movies_default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">movies_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_movies</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-name descname"><span class="pre">test_get_popular_movies_default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_api_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_movies</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Test retrieving popular movies with default parameters.</p>
 <p>Validates that the default page of popular movies is returned
 correctly, including response structure and content.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>movies_api</strong> – MoviesAPI fixture instance.</p></li>
+<li><p><strong>get_api_instance</strong> – Generic fixture instance.</p></li>
 <li><p><strong>load_schema</strong> – Schema loader fixture from conftest.py</p></li>
 <li><p><strong>pop_movies</strong> – Parametrized test data containing valid query_param,
 expected status_code, and expected_message.</p></li>
@@ -1540,19 +1552,53 @@ expected status_code, and expected_message.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">test_get_popular_movies_invalid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">movies_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invalid_test</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-name descname"><span class="pre">test_get_popular_movies_invalid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_api_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invalid_test</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Test retrieving popular movies with invalid parameters.</p>
 <p>Validates that appropriate error responses are returned when
-invalid query parameters are provided for the popular movies
-endpoint.</p>
+invalid query parameters are provided for the popular movies endpoint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>movies_api</strong> – MoviesAPI fixture instance.</p></li>
+<li><p><strong>get_api_instance</strong> – Generic fixture instance.</p></li>
 <li><p><strong>load_schema</strong> – Schema loader fixture from conftest.py.</p></li>
 <li><p><strong>invalid_test</strong> – Parametrized test data containing invalid query_param,
 expected status_code, and expected_message.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="test-people">
+<h2>Test People<a class="headerlink" href="#test-people" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.people.test_details.</span></span><span class="sig-name descname"><span class="pre">TestDetails</span></span></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FieldAssertions</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">test_get_person_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_api_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">person_details</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Test fetching person details with valid data.</p>
+<p>Validates that the response contains expected fields and matches the
+defined JSON schema for person details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>person_details</strong> – Dictionary containing test parameters for a valid case.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">test_get_person_details_invalid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_api_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invalid_person_details</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Test fetching person details with valid data.</p>
+<p>Validates that the response contains expected fields and matches the
+defined JSON schema for person details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>invalid_person_details</strong> – Dictionary containing test parameters for invalid case.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1591,6 +1637,7 @@ expected status_code, and expected_message.</p></li>
 <li class="toctree-l2"><a class="reference internal" href="#pacts">Pacts</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#conftest">Conftest</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#test-movies">Test Movies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#test-people">Test People</a></li>
 </ul>
 </li>
 </ul>
