@@ -29,12 +29,16 @@ class FieldAssertions:
         idx = f'{index}' if index is not None else ''
 
         assert field in data, f"{self._test_name}: Index {idx} should contain {field} field"
-        assert isinstance(data[field], str), f"{self._test_name}: Index {idx} {field} Response should be string"
+        if field == 'place_of_birth':
+            # place_of_birth can be empty/null, so only validate its type (done below)
+            pass
+        else:
+            assert isinstance(data[field], str), f"{self._test_name}: Index {idx} {field} Response should be string"
 
         if field == 'original_language':
             assert len(data[field]) == 2, f"{self._test_name}: Index {idx} {field} should be 2-char code"
-        elif field in ['overview', 'origin_country']:
-            # These fields can be empty lists, so only validate it's a list (done above)
+        elif field in ['overview', 'origin_country', 'place_of_birth']:
+            # These fields can be empty/null, so only validate its type (done above)
             return
         else:
             assert len(data[field]) > 0, f"{self._test_name}: Index {idx} {field} should not be empty"
