@@ -64,3 +64,35 @@ class TestDetails(FieldAssertions):
 
         # Validate against JSON schema
         validate(instance=res_body, schema=load_schema('person_details_schema'))
+
+    @pytest.mark.parametrize('invalid_person_details', TEST_DATA['get_person_details']['invalid'])
+    def test_get_person_details_invalid(self, get_api_instance, load_schema, invalid_person_details):
+        """
+        Test fetching person details with valid data.
+
+        Validates that the response contains expected fields and matches the
+        defined JSON schema for person details.
+
+        :param invalid_person_details: Dictionary containing test parameters for invalid case.
+        """
+        people_api = get_api_instance('people_api')
+        response = people_api.get_person_details(invalid_person_details['person_id'])
+        res_body = response.data
+
+        assert_http_response(response, {
+            'exp_status_code': invalid_person_details['status_code'],
+            'exp_max_elp_seconds': invalid_person_details['exp_max_elp_secs'],
+            'exp_req_method': invalid_person_details['exp_get_req_method'],
+            'exp_content_type': invalid_person_details['exp_content_type'],
+            'exp_url_contains': 'person',
+            'exp_req_reason': invalid_person_details['reason']
+        })
+
+        # response structure validation
+        self.assert_str_field(res_body, 'status_message')
+        self.assert_bool_field(res_body, 'success')
+        self.assert_int_field(res_body, 'status_code')
+
+        if 'success' in res_body:
+            assert res_body['success'] is False, f"{self._test_name}: Expected 'success' to be False for invalid person ID"
+            validate(instance=res_body, schema=load_schema('generic_invalid_schema'))

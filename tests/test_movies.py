@@ -267,6 +267,8 @@ class TestMoviesAPI(FieldAssertions):
         })
         assert res_body['status_message'] == invalid_test['expected_message']
 
+        validate(instance=res_body, schema=load_schema('generic_invalid_schema'))
+
     @pytest.mark.parametrize('invalid_test', TEST_DATA['popular_movies']['invalid'])
     def test_get_popular_movies_invalid(self, get_api_instance, load_schema, invalid_test):
         """
@@ -294,8 +296,10 @@ class TestMoviesAPI(FieldAssertions):
         })
         assert res_body['status_message'] == invalid_test['expected_message']
 
+        validate(instance=res_body, schema=load_schema('generic_invalid_schema'))
+
     @pytest.mark.parametrize('add_invalid_rating', TEST_DATA['add_rating']['invalid'])
-    def test_add_rating_unauthenticated(self, get_api_instance, add_invalid_rating):
+    def test_add_rating_unauthenticated(self, load_schema, get_api_instance, add_invalid_rating):
         """
         Test adding a movie rating without authentication.
 
@@ -321,8 +325,11 @@ class TestMoviesAPI(FieldAssertions):
             'exp_url_contains': str(movie_id),
             'exp_req_reason': add_invalid_rating['reason']
         })
+
         assert res_json['status_message'] in add_invalid_rating['expected_message'], \
             f"Unexpected message: '{res_json['status_message']}' not in {add_invalid_rating['expected_message']}"
+
+        validate(instance=res_json, schema=load_schema('generic_invalid_schema'))
 
     @pytest.mark.parametrize('delete_invalid_rating', TEST_DATA['delete_rating']['invalid'])
     def test_delete_invalid_rating(self, get_api_instance, load_schema, delete_invalid_rating):
