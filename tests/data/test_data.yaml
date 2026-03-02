@@ -87,3 +87,23 @@ delete_rating:
     - movie_id: 0
       session_id: "$invalid_session_id"
       expected_message: "Invalid id: The pre-requisite id is invalid or not found."
+
+get_person_details:
+  defaults:
+    valid:
+      status_code: 200
+      reason: 'OK'
+    invalid:
+      status_code: 404
+      reason: 'Not Found'
+
+  valid:
+    - person_id: "$random_person_id"
+
+  invalid:
+    - person_id: 0
+      expected_message: "Invalid id: The pre-requisite id is invalid or not found."
+    - person_id: -1
+      expected_message: "Invalid id: The pre-requisite id is invalid or not found."
+    - person_id: 9999999999
+      expected_message: "The resource you requested could not be found."

@@ -61,32 +61,34 @@ def pytest_configure(config):
 from tests.data.data_loader import load_test_data
 from api.movies_api import MoviesAPI
 from api.account_api import AccountAPI
+from api.people_api import PeopleAPI
 
 @pytest.fixture
-def movies_api():
+def get_api_instance():
     """
-    Fixture that provides a MoviesAPI instance for each test.
+    Fixture that provides a generic API client instance for each test.
 
-    Creates a fresh API client before each test and yields it for use.
+    Creates a fresh API client before each test and yields it for use. This
+    fixture can be used when the specific API type is not important for the
+    test, allowing for more flexible test design.
 
-    :yields: Configured MoviesAPI instance.
+    :yields: Configured BaseAPI instance.
     """
-    api = MoviesAPI()
-    yield api
+    class_map = {
+        'movies_api': MoviesAPI,
+        'account_api': AccountAPI,
+        'people_api': PeopleAPI
+    }
 
+    def _create(api_class: str):
+        cls = class_map.get(api_class)
 
-@pytest.fixture
-def account_api():
-    """
-    Fixture that provides an AccountAPI instance for each test.
+        if cls is None:
+            raise ValueError(f"Unsupported API class: {api_class}")
 
-    Creates a fresh API client before each test and yields it for use.
+        return cls()    # instantiate class only when requested
 
-    :yields: Configured AccountAPI instance.
-    """
-    api = AccountAPI()
-    yield api
-
+    yield _create
 
 @pytest.fixture
 def load_schema():
@@ -124,7 +126,7 @@ def movies_test_data():
 
     :return: Dictionary containing test data with defaults applied.
     """
-    return load_test_data("movies_test_data.yaml")
+    return load_test_data("test_data.yaml")
 
 def pytest_html_report_title(report):
     """

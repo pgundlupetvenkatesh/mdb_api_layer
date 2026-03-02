@@ -13,7 +13,7 @@
           "backdrop_path": { "type": ["string", "null"] },
           "genre_ids": {
             "type": "array",
-            "items": { "type": "integer" }
+            "items": { "type": "integer" }, "nullable": true
           },
           "id": { "type": "integer" },
           "original_language": { "type": "string" },
