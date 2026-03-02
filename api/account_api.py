@@ -1,3 +1,4 @@
+from loguru import logger
 from api.base_api import BaseAPI
 
 class AccountAPI(BaseAPI):
@@ -13,5 +14,5 @@ class AccountAPI(BaseAPI):
         :return: Response object with paginated list of rated movies.
         """
         query_params = {'page': 1, **(query_params or {})}
-        # print(f"get_rated_movies query_params: {query_params}")
+        logger.debug(f"get_rated_movies query_params: {query_params}")
         return self.get(f"{self._sub_path}/{session_id}/rated/movies", params=query_params)

@@ -180,7 +180,7 @@ mdb_api_layer/
 ├── tests/
 │   ├── conftest.py # Pytest fixtures 
 │   ├── data/ 
-│   │ └── movies_test_data.yaml # Test data for movie tests 
+│   │ └── test_data.yaml # Test data for movie tests 
 │   ├── pacts/
 │   │ └── *.json # Generated Pact contract files
 │   ├── schemas/ 
@@ -292,7 +292,7 @@ Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/docs/index.html
 
 ### HTML Report
 ```bash
-poetry run pytest tests/test_movies.py --html=report/tmdb_report.html --self-contained-html -v -s
+poetry run pytest tests/ --html=report/tmdb_report.html --self-contained-html -v -s
 ```
 
 Generate a simple pytest HTML test report:
