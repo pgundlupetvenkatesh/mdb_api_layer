@@ -15,7 +15,7 @@ Dependencies:
     - load_test_data: YAML test data loader
 
 Usage:
-    pytest tests/test_movies.py -v
+    pytest tests/test_popular.py -v
 """
 
 import pytest
