@@ -37,7 +37,7 @@ class FieldAssertions:
 
         if field == 'original_language':
             assert len(data[field]) == 2, f"{self._test_name}: Index {idx} {field} should be 2-char code"
-        elif field in ['overview', 'origin_country', 'place_of_birth']:
+        elif field in ['overview', 'origin_country', 'place_of_birth', 'biography']:
             # These fields can be empty/null, so only validate its type (done above)
             return
         else:

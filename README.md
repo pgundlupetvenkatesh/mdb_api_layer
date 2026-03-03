@@ -40,7 +40,7 @@ poetry install
 poetry add <package_name>
 
 ## Testing
-poetry run pytest tests/test_movies.py -v -s
+poetry run pytest tests/movie_lists/test_popular.py -v -s
 ```
 ### Sanity Checks
 
@@ -66,7 +66,7 @@ poetry show
 
 ### Setting Up Environment Variables
 
-Create a `.env` file in the project root (this file is gitignored):
+Create a `.env` file in the project root (this file is ignored):
 
 ```bash
 # Required
@@ -163,7 +163,7 @@ to a `logs/test_run.log` for persistent storage and later analysis.
 poetry install
 
 # Run tests
-poetry run pytest tests/test_movies.py -v -s
+poetry run pytest tests/movie_lists/test_popular.py -v -s
 ```
 
 > **Note:** Keep your API credentials secure. Never commit `.env` files or expose tokens in public repositories.
@@ -206,13 +206,13 @@ mdb_api_layer/
 
 ```commandline
 # Run all movie tests with verbose output
-poetry run pytest tests/test_movies.py -v -s
+poetry run pytest tests/movies/ -v -s
 
 # Run a specific test function
-poetry run pytest tests/test_movies.py::TestClassName::test_func_name -v -s
+poetry run pytest tests/movie_lists/test_popular.py::TestClassName::test_func_name -v -s
 
 # Run with HTML report
-poetry run pytest tests/test_movies.py --html=report.html
+poetry run pytest tests/people/ --html=report.html
 
 # Run with Allure reporting
 poetry run pytest tests/test_movies.py --alluredir=allure-results
