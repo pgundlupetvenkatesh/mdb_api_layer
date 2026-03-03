@@ -37,17 +37,6 @@ class TestDetails(FieldAssertions):
     valid requests and error scenarios. Each test validates HTTP
     method, status codes, headers, response time, and body structure.
     """
-    @pytest.fixture(autouse=True)
-    def _store_test_name(self, request):
-        """
-        Fixture to capture and store the current test name.
-
-        Automatically runs before each test method (autouse=True) and stores
-        the test name in self._test_name for use in assertion messages.
-
-        :param request: Pytest request fixture providing test context.
-        """
-        self._test_name = request.node.name
 
     @pytest.mark.parametrize('movie_details', TEST_DATA['get_movie_details']['valid'])
     def test_get_movie_details(self, get_api_instance, load_schema, movie_details):

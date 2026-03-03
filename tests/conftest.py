@@ -63,6 +63,28 @@ from api.movies_api import MoviesAPI
 from api.account_api import AccountAPI
 from api.people_api import PeopleAPI
 
+@pytest.fixture(autouse=True)
+def _store_test_name(request):
+    """
+    Auto-use fixture that injects the current test name into class-based test instances.
+
+    Runs automatically before every test. For class-based tests, it sets
+    ``_test_name`` on the test instance so helper methods (e.g., FieldAssertions)
+    can include the test name in assertion messages and log output.
+
+    Function-based tests are silently skipped (no instance to attach to).
+
+    :param request: Pytest's FixtureRequest object providing test context.
+
+    Example:
+        class TestMovies(FieldAssertions):
+            def test_get_movie(self, get_api_instance):
+                # self._test_name is automatically set to "test_get_movie"
+                ...
+    """
+    if request.instance is not None:
+        request.instance._test_name = request.node.name
+
 @pytest.fixture
 def get_api_instance():
     """

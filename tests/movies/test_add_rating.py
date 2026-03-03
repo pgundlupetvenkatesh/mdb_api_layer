@@ -17,17 +17,6 @@ class TestAddRating(FieldAssertions):
     requests and error scenarios. Each test validates HTTP method,
     status codes, headers, response time, and body structure.
     """
-    @pytest.fixture(autouse=True)
-    def _store_test_name(self, request):
-        """
-        Fixture to capture and store the current test name.
-
-        Automatically runs before each test method (autouse=True) and stores
-        the test name in self._test_name for use in assertion messages.
-
-        :param request: Pytest request fixture providing test context.
-        """
-        self._test_name = request.node.name
 
     @pytest.mark.order(1)
     @pytest.mark.parametrize('add_valid_rating', TEST_DATA['add_rating']['valid'])
