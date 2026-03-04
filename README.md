@@ -14,15 +14,21 @@ Contract tests, and comprehensive response assertions.
 
 ## Features
 
-- RESTful API client with session management
+- RESTful API client with session management (GET, POST, PUT, DELETE)
+- Multiple API clients: Movies, People, Lists, Account, Search
 - JSON schema validation for response structure
-- Configurable environment-based settings
+- Consumer-driven contract testing with Pact
+- Data-driven testing with YAML test data and dynamic generators
+- Reusable field assertion helpers (bool, str, int, float, date)
+- Factory-pattern pytest fixtures for flexible API instance creation
+- Structured logging with [Loguru](https://github.com/Delgan/loguru) (configurable level & file output)
+- Configurable environment-based settings via `.env`
 - Pytest integration with HTML and Allure reporting
-- Sphinx documentation support
+- Sphinx documentation with GitHub Pages deployment
 
 ## Prerequisites
 
-- Python 3.12+
+- Python 3.10+
 - [Poetry](https://python-poetry.org/) for dependency management
 - TMDB API account and API key
 
@@ -74,8 +80,10 @@ TMDB_API_KEY=your_api_key_here
 TMDB_AUTH_TOKEN=your_read_access_token_here
 
 # Optional (defaults shown)
-TMDB_BASE_URL=https://api.themoviedb.org/3
+TMDB_BASE_URL=https://api.themoviedb.org
+TMDB_API_VERSION=3
 TMDB_TIMEOUT=30
+TMDB_USER_ACCESS_TOKEN=your_user_access_token_here
 ```
 
 **Alternative:** Export variables directly in your terminal:
@@ -109,16 +117,18 @@ update the gh-pages branch GitHub Docs: Token Permissions.<br>
 
 ### Environment Variables Reference
 
-| Variable          | Description                           | Required | Default                        |
-|-------------------|---------------------------------------|----------|--------------------------------|
-| `TMDB_API_KEY`    | Your TMDB API key (v3 auth)           | Yes      | -                              |
-| `TMDB_AUTH_TOKEN` | API Read Access Token (v4 auth)       | Yes      | -                              |
-| `TMDB_BASE_URL`   | API base URL                          | No       | `https://api.themoviedb.org/3` |
-| `TMDB_TIMEOUT`    | Request timeout in seconds            | No       | `30`                           |
-| `TMDB_ACCOUNT_ID` | TMDB account ID                       | No       | -                              |
-| `TMDB_SESSION_ID` | Session ID for authenticated requests | No       | -                              |
-| `TMDB_REQ_TOKEN`  | Request token for authentication      | No       | -                              |
-| `TMDB_MOVIE_ID`   | Default movie ID for tests            | No       | -                              |
+| Variable                | Description                               | Required | Default                      |
+|-------------------------|-------------------------------------------|----------|------------------------------|
+| `TMDB_API_KEY`          | Your TMDB API key (v3 auth)               | Yes      | -                            |
+| `TMDB_AUTH_TOKEN`       | API Read Access Token (v4 auth)           | Yes      | -                            |
+| `TMDB_USER_ACCESS_TOKEN`| User Access Token for Lists API (v4 auth) | No       | -                            |
+| `TMDB_BASE_URL`         | API base URL                              | No       | `https://api.themoviedb.org` |
+| `TMDB_API_VERSION`      | API version                               | No       | `3`                          |
+| `TMDB_TIMEOUT`          | Request timeout in seconds                | No       | `30`                         |
+| `TMDB_ACCOUNT_ID`       | TMDB account ID                           | No       | `12016691`                   |
+| `TMDB_SESSION_ID`       | Session ID for authenticated requests     | No       | -                            |
+| `TMDB_REQ_TOKEN`        | Request token for authentication          | No       | -                            |
+| `TMDB_MOVIE_ID`         | Default movie ID for tests                | No       | `346698`                     |
 
 ## Logging
 
@@ -173,49 +183,93 @@ poetry run pytest tests/movie_lists/test_popular.py -v -s
 ```
 mdb_api_layer/
 ├── api/
-│   ├── base_api.py # Base API client with HTTP methods
-│   └── movies_api.py # Movies endpoint implementation
+│   ├── base_api.py             # Base API client with HTTP methods (GET, POST, PUT, DELETE)
+│   ├── movies_api.py           # Movies endpoint implementation
+│   ├── people_api.py           # People endpoint implementation
+│   ├── lists_api.py            # Lists endpoint implementation (v4 API)
+│   ├── account_api.py          # Account endpoint implementation
+│   └── search_api.py           # Search endpoint implementation
 ├── config/
-│   └── config.py # Environment configuration
+│   └── config.py               # Environment configuration & Loguru logging setup
 ├── tests/
-│   ├── conftest.py # Pytest fixtures 
-│   ├── data/ 
-│   │ └── test_data.yaml # Test data for movie tests 
+│   ├── conftest.py             # Pytest fixtures, hooks & logging CLI options
+│   ├── contracts/
+│   │   ├── test_movie_details.py   # Movie details contract tests (Pact CDC)
+│   │   └── test_popular_movies.py  # Popular movies contract tests (Pact CDC)
+│   ├── data/
+│   │   ├── data_loader.py      # YAML test data loader with dynamic generators
+│   │   ├── test_data.yaml      # Parametrized test data for data-driven tests
+│   │   └── movie_ids.txt       # Movie IDs for random test data generation
+│   ├── helpers/
+│   │   ├── field_assertions.py     # Reusable field validation assertion mixin
+│   │   ├── response_assertions.py  # HTTP response assertion helpers
+│   │   └── test_data_generators.py # Dynamic test data generators
+│   ├── movies/
+│   │   ├── test_details.py     # Movie details integration tests
+│   │   ├── test_add_rating.py  # Add rating tests
+│   │   └── test_delete_rating.py   # Delete rating tests
+│   ├── movie_lists/
+│   │   └── test_popular.py     # Popular movies list tests
+│   ├── people/
+│   │   └── test_details.py     # People details integration tests
+│   ├── lists/
+│   │   └── test_update.py      # Lists update tests (v4 API)
 │   ├── pacts/
-│   │ └── *.json # Generated Pact contract files
-│   ├── schemas/ 
-│   │ └── movie_schema.json # JSON schema for validation 
-│   ├── test_movies.py # Movie API tests (integration)
-│   └── test_movies_contract.py # Movie API tests (contract)
-├── docs/ 
-│   ├── conf.py # Sphinx configuration 
-│   ├── index.rst # Documentation index 
-│   ├── api.rst # API module documentation 
-│   ├── config.rst # Config module documentation 
-│   ├── tests.rst # Tests module documentation 
-│   ├── make.bat # Windows build script 
-│   └── Makefile # Unix build script 
-├── .env # Environment variables (not committed) 
-├── .gitignore 
-├── pyproject.toml # Poetry configuration 
-├── poetry.lock 
+│   │   └── *.json              # Generated Pact contract files
+│   └── schemas/
+│       ├── movie_schema.json           # Movie details JSON schema
+│       ├── popular_movies_schema.json  # Popular movies JSON schema
+│       ├── person_details_schema.json  # Person details JSON schema
+│       ├── add_delete_rating_schema.json # Rating response JSON schema
+│       └── generic_schema.json         # Generic/error response JSON schema
+├── docs/
+│   ├── conf.py                 # Sphinx configuration
+│   ├── index.rst               # Documentation index
+│   ├── api.rst                 # API module documentation
+│   ├── config.rst              # Config module documentation
+│   ├── tests.rst               # Tests module documentation
+│   ├── make.bat                # Windows build script
+│   └── Makefile                # Unix build script
+├── logs/
+│   └── test_run.log            # Log file (when --log-to-file is used)
+├── report/
+│   └── tmdb_report.html        # Generated HTML test reports
+├── .env                        # Environment variables (not committed)
+├── .gitignore
+├── pyproject.toml              # Poetry configuration & pytest settings
+├── poetry.lock
 └── README.md
 ```
 
 ## Running Tests
 
 ```commandline
-# Run all movie tests with verbose output
+# Run all tests (integration + contract)
+poetry run pytest tests/ -v
+
+# Run all tests except contract tests
+poetry run pytest tests/ -v -m "not contract"
+
+# Run tests by module
 poetry run pytest tests/movies/ -v -s
+poetry run pytest tests/people/ -v -s
+poetry run pytest tests/lists/ -v -s
+poetry run pytest tests/movie_lists/ -v -s
 
 # Run a specific test function
 poetry run pytest tests/movie_lists/test_popular.py::TestClassName::test_func_name -v -s
 
+# Run with debug logging
+poetry run pytest tests/ -v -s --loguru-log-level=DEBUG
+
+# Run with log file output
+poetry run pytest tests/ -v -s --log-to-file
+
 # Run with HTML report
-poetry run pytest tests/people/ --html=report.html
+poetry run pytest tests/ --html=report/tmdb_report.html --self-contained-html -v -s
 
 # Run with Allure reporting
-poetry run pytest tests/test_movies.py --alluredir=allure-results
+poetry run pytest tests/ --alluredir=allure-results
 allure serve allure-results
 ```
 
@@ -252,7 +306,8 @@ Contract tests generate JSON pact files in `tests/pacts/`:
 
 ```
 tests/pacts/
-└── testmoviedetails-apipvd.json  # Contract between consumer and provider
+├── test_movie_details-api_pvd.json   # Movie details contract
+└── test_popular_movies-api_pvd.json  # Popular movies contract
 ```
 
 Pact files document the expected request/response structure and can be:
@@ -262,14 +317,20 @@ Pact files document the expected request/response structure and can be:
 
 ## Dependencies
 
-- requests
-- pytest
-- pytest-html
-- allure-pytest
-- python-dotenv
-- jsonschema
-- pyyaml
-- sphinx
+### Runtime
+- requests — HTTP client
+- python-dotenv — `.env` file loading
+- jsonschema — JSON schema validation
+- pyyaml — YAML test data parsing
+- loguru — Structured logging
+
+### Development
+- pytest — Test framework
+- pytest-html — HTML report generation
+- allure-pytest — Allure reporting
+- sphinx — Documentation generation
+- pytest-order — Test execution ordering
+- pact-python — Consumer-driven contract testing
 
 ```bash
 # Update dependencies
