@@ -55,20 +55,20 @@ class BaseAPI:
         }
         self.session = requests.Session()
 
-    def get(self, endpoint, params=None):
+    @staticmethod
+    def _build_response(response, params=None, payload=None):
         """
-        Perform a GET request to the specified endpoint.
+        Build a standardized APIResponse from a raw requests Response object.
 
-        :param endpoint: API endpoint path.
-        :type endpoint: str
-        :param params: Optional query parameters.
+        :param response: Raw response from the requests library.
+        :type response: requests.Response
+        :param params: Query parameters sent with the request.
         :type params: dict, optional
-        :returns: Parsed JSON response.
-        :rtype: dict
+        :param payload: JSON payload sent with the request body.
+        :type payload: dict, optional
+        :returns: Standardized API response with data, status code, and metadata.
+        :rtype: APIResponse
         """
-        url = f"{self.base_url}/{self.api_version}/{endpoint}"
-        response = self.session.get(url, headers=self.headers, params=params, timeout=Config.TIMEOUT)
-
         return APIResponse(
             data=response.json(),
             status_code=response.status_code,
@@ -79,9 +79,25 @@ class BaseAPI:
             elapsed_seconds=response.elapsed.total_seconds(),
             reason=response.reason,
             request=str(response.request.method),
-            request_params=params
+            request_params=params,
+            request_payload=payload
         )
 
+    def get(self, endpoint, params=None):
+        """
+        Perform a GET request to the specified endpoint.
+
+        :param endpoint: API endpoint path.
+        :type endpoint: str
+        :param params: Optional query parameters.
+        :type params: dict, optional
+        :returns: API response with data, status code, and metadata.
+        :rtype: APIResponse
+        """
+        url = f"{self.base_url}/{self.api_version}/{endpoint}"
+        response = self.session.get(url, headers=self.headers, params=params, timeout=Config.TIMEOUT)
+
+        return self._build_response(response, params=params)
 
     def post(self, endpoint, json=None, params=None):
         """
@@ -99,18 +115,7 @@ class BaseAPI:
         url = f"{self.base_url}/{self.api_version}/{endpoint}"
         response = self.session.post(url, params=params, json=json, headers=self.headers, timeout=Config.TIMEOUT)
 
-        return APIResponse(
-            data=response.json(),
-            status_code=response.status_code,
-            url=response.url,
-            headers=response.headers,
-            cookies=response.cookies,
-            encoding=response.encoding,
-            elapsed_seconds=response.elapsed.total_seconds(),
-            reason=response.reason,
-            request=str(response.request.method),
-            request_params=params
-        )
+        return self._build_response(response, params=params, payload=json)
 
     def put(self, endpoint, data=None):
         """
@@ -126,18 +131,7 @@ class BaseAPI:
         url = f"{self.base_url}/{self.api_version}/{endpoint}"
         response = self.session.put(url, json=data, headers=self.headers, timeout=Config.TIMEOUT)
 
-        return APIResponse(
-            data=response.json(),
-            status_code=response.status_code,
-            url=response.url,
-            headers=response.headers,
-            cookies=response.cookies,
-            encoding=response.encoding,
-            elapsed_seconds=response.elapsed.total_seconds(),
-            reason=response.reason,
-            request=str(response.request.method),
-            request_payload=data
-        )
+        return self._build_response(response, payload=data)
 
     def delete(self, endpoint, data=None, params=None):
         """
@@ -155,15 +149,4 @@ class BaseAPI:
         url = f"{self.base_url}/{self.api_version}/{endpoint}"
         response = self.session.delete(url, headers=self.headers, data=data, timeout=Config.TIMEOUT)
 
-        return APIResponse(
-            data=response.json(),
-            status_code=response.status_code,
-            url=response.url,
-            headers=response.headers,
-            cookies=response.cookies,
-            encoding=response.encoding,
-            elapsed_seconds=response.elapsed.total_seconds(),
-            reason=response.reason,
-            request=str(response.request.method),
-            request_params=params
-        )
+        return self._build_response(response, params=params, payload=data)
