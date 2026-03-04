@@ -83,4 +83,4 @@ class TestDetails(FieldAssertions):
 
         if 'success' in res_body:
             assert res_body['success'] is False, f"{self._test_name}: Expected 'success' to be False for invalid person ID"
-            validate(instance=res_body, schema=load_schema('generic_invalid_schema'))
+            validate(instance=res_body, schema=load_schema('generic_schema'))

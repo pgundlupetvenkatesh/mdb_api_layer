@@ -100,7 +100,7 @@ class TestMovieDetails:
 
         # Start mock server, make request and verify on exit
         with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as srv:
-            pact_movies_api.base_url = f"{srv.url}/3"
+            pact_movies_api.base_url = f"{srv.url}"
             response = pact_movies_api.get_movie_details(550)
 
         # Response structure has already been verified on context exit.
@@ -133,7 +133,7 @@ class TestMovieDetails:
         )
 
         with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as srv:
-            pact_movies_api.base_url = f"{srv.url}/3"
+            pact_movies_api.base_url = f"{srv.url}"
             response = pact_movies_api.get_movie_details(99999999)
 
         assert response.status_code == 404

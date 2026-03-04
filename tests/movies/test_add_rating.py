@@ -87,4 +87,4 @@ class TestAddRating(FieldAssertions):
         assert res_json['status_message'] in add_invalid_rating['expected_message'], \
             f"Unexpected message: '{res_json['status_message']}' not in {add_invalid_rating['expected_message']}"
 
-        validate(instance=res_json, schema=load_schema('generic_invalid_schema'))
+        validate(instance=res_json, schema=load_schema('generic_schema'))

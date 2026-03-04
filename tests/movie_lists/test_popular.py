@@ -114,4 +114,4 @@ class TestMoviesAPI(FieldAssertions):
         })
         assert res_body['status_message'] == invalid_test['expected_message']
 
-        validate(instance=res_body, schema=load_schema('generic_invalid_schema'))
+        validate(instance=res_body, schema=load_schema('generic_schema'))
