@@ -1,3 +1,4 @@
+import time
 import yaml
 from pathlib import Path
 
@@ -9,7 +10,8 @@ GENERATORS = {
     '$random_invalid_rating': random_invalid_rating,
     '$random_movie_id': pick_random_movie_id,
     '$invalid_session_id': lambda: 'a1b2c3d4e5f6g7h8i9j0',
-    '$random_person_id': lambda: random.randint(1, 14)
+    '$random_person_id': lambda: random.randint(1, 14),
+    '$current_timestamp': lambda: int(time.time())
 }
 
 def load_test_data(file_name: str) -> dict:

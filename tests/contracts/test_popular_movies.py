@@ -91,7 +91,7 @@ class TestPopularMovies:
             .with_body(expected_popular_response, content_type="application/json")
         )
         with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as svr:
-             pact_movies_api.base_url = f"{svr.url}/3"
+             pact_movies_api.base_url = f"{svr.url}"
              response = pact_movies_api.get_popular_movies({"page": 1})
 
         assert response.status_code == 200
@@ -126,7 +126,7 @@ class TestPopularMovies:
         )
 
         with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as svr:
-            pact_movies_api.base_url = f"{svr.url}/3"
+            pact_movies_api.base_url = f"{svr.url}"
             response = pact_movies_api.get_popular_movies({"page": -1})
 
         assert response.status_code == 400

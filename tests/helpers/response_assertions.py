@@ -16,6 +16,7 @@ def assert_http_response(response, exp_val):
     assert response.request == exp_req_method, f"HTTP method is not {exp_req_method}"
     assert response.status_code == exp_val['exp_status_code'], f"returned status code is not {exp_val['exp_status_code']}"
     assert exp_val['exp_content_type'] in response.headers['Content-Type'], 'response is not in JSON format'
-    assert response.elapsed_seconds < exp_val['exp_max_elp_seconds'], 'response time is too long'
+    assert response.elapsed_seconds < exp_val['exp_max_elp_seconds'], \
+        f"Actual response time is greater than expected. Actual: {response.elapsed_seconds} seconds, Expected: < {exp_val["exp_max_elp_seconds"]} seconds"
     assert exp_val['exp_url_contains'] in response.url, f"Response url should contain movie ID '{exp_val['exp_url_contains']}'"
     assert response.reason == exp_val['exp_req_reason'], f"Response reason should be '{exp_val['expr_req_reason']}' but it's '{response.reason}'"

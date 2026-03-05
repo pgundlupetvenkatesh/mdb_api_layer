@@ -62,6 +62,7 @@ from tests.data.data_loader import load_test_data
 from api.movies_api import MoviesAPI
 from api.account_api import AccountAPI
 from api.people_api import PeopleAPI
+from api.lists_api import ListsAPI
 
 @pytest.fixture(autouse=True)
 def _store_test_name(request):
@@ -99,7 +100,8 @@ def get_api_instance():
     class_map = {
         'movies_api': MoviesAPI,
         'account_api': AccountAPI,
-        'people_api': PeopleAPI
+        'people_api': PeopleAPI,
+        'lists_api': ListsAPI
     }
 
     def _create(api_class: str):

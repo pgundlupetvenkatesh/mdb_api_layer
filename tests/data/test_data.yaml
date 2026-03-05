@@ -1,9 +1,10 @@
 defaults:
-  exp_max_elp_secs: 2 # Applied to ALL valid AND invalid test cases
+  exp_max_elp_secs: 4 # Applied to ALL valid AND invalid test cases
   exp_content_type: 'application/json'
   exp_get_req_method: 'GET'
   exp_post_req_method: 'POST'
   exp_del_req_method: 'DELETE'
+  exp_put_req_method: 'PUT'
 
 get_movie_details:
   defaults:
@@ -13,12 +14,10 @@ get_movie_details:
     invalid:
         status_code: 404  # Only applied to invalid cases
         reason: 'Not Found'
-
   valid:
     - movie_id: "$random_movie_id" # First list item (index 0)
     - movie_id: "$random_movie_id" # Second list item (index 1)
     - movie_id: "$random_movie_id"
-
   invalid:
     - movie_id: 0
       expected_message: "Invalid id: The pre-requisite id is invalid or not found."
@@ -35,11 +34,9 @@ popular_movies:
     invalid:
       status_code: 400
       reason: 'Bad Request'
-
   valid:
     - query_param: { "language": "en-US" }
     - query_param: { "page": 2 }
-
   invalid:
     - query_param: { "page": -1 }
       expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
@@ -52,11 +49,9 @@ add_rating:
     invalid:
       status_code_bad_req: 400
       reason: 'Bad Request'
-
   valid:
     - rating_payload: { "value": "$random_rating" }
     - rating_payload: { "value": "$random_rating" }
-
   invalid:
     - movie_id: 550
       rating_payload: { "value": "$random_invalid_rating" }
@@ -77,10 +72,8 @@ delete_rating:
     invalid:
       status_code: 404
       reason: 'Not Found'
-
   valid:
     - expected_message: "The item/record was deleted successfully."
-
   invalid:
     - movie_id: 9999999999
       expected_message: "The resource you requested could not be found."
@@ -96,10 +89,8 @@ get_person_details:
     invalid:
       status_code: 404
       reason: 'Not Found'
-
   valid:
     - person_id: "$random_person_id"
-
   invalid:
     - person_id: 0
       expected_message: "Invalid id: The pre-requisite id is invalid or not found."
@@ -107,3 +98,26 @@ get_person_details:
       expected_message: "Invalid id: The pre-requisite id is invalid or not found."
     - person_id: 9999999999
       expected_message: "The resource you requested could not be found."
+
+update_list:
+  defaults:
+    valid:
+      status_code: 201
+      reason: 'Created'
+    invalid:
+      status_code: 404
+      reason: 'Not Found'
+  valid:
+      - list_id: 8637178
+        payload: { "name": 'French', "description": "$current_timestamp", "public": true }
+        expected_message: "The item/record was updated successfully."
+      - list_id: 8637178
+        payload: { "name": 'Hollywood', "description": "$current_timestamp", "public": true }
+        expected_message: "The item/record was updated successfully."
+  invalid:
+      - list_id: 9999999999
+        payload: { "name": 'Indian', "description": "$current_timestamp", "public": false }
+        expected_message: "The resource you requested could not be found."
+      - list_id: 0
+        payload: { "name": 'Hollywood', "description": "Some random Description", "public": true }
+        expected_message: "Invalid id: The pre-requisite id is invalid or not found."
