@@ -35,6 +35,7 @@ class TestUpdate(FieldAssertions):
         response = lists_api.update_list(list_id=update_list['list_id'], payload=update_list['payload'])
         res_json = response.data
 
+        logger.info(f"{self._test_name} - Actual maximum elapsed seconds: " + str(response.elapsed_seconds))
         assert_http_response(response, {
             'exp_status_code': update_list['status_code'],
             'exp_max_elp_seconds': update_list['exp_max_elp_secs'],
@@ -50,4 +51,30 @@ class TestUpdate(FieldAssertions):
 
         if 'success' in res_json:
             assert res_json['success'] is True, "Rating should be added successfully. Its false now"
+            validate(instance=res_json, schema=load_schema('generic_schema'))
+
+    @pytest.mark.parametrize('update_list_invalid', TEST_DATA['update_list']['invalid'])
+    def test_update_list_description_invalid(self, get_api_instance, load_schema, update_list_invalid):
+        lists_api = get_api_instance('lists_api')
+        logger.debug(
+            f"Testing update_list for list_id: {update_list_invalid['list_id']} with payload: {update_list_invalid['payload']}")
+        response = lists_api.update_list(list_id=update_list_invalid['list_id'], payload=update_list_invalid['payload'])
+        res_json = response.data
+
+        logger.info(f"{self._test_name} - Actual maximum elapsed seconds: " + str(response.elapsed_seconds))
+        assert_http_response(response, {
+            'exp_status_code': update_list_invalid['status_code'],
+            'exp_max_elp_seconds': update_list_invalid['exp_max_elp_secs'],
+            'exp_req_method': update_list_invalid['exp_put_req_method'],
+            'exp_content_type': update_list_invalid['exp_content_type'],
+            'exp_url_contains': f'list/{update_list_invalid["list_id"]}',
+            'exp_req_reason': update_list_invalid['reason']
+        })
+
+        self.assert_bool_field(res_json, 'success')
+        self.assert_int_field(res_json, 'status_code')
+        self.assert_str_field(res_json, 'status_message')
+
+        if 'success' in res_json:
+            assert res_json['success'] is False, "Rating should not be added successfully. Its true now"
             validate(instance=res_json, schema=load_schema('generic_schema'))
