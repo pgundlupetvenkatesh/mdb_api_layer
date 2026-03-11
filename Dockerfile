@@ -14,8 +14,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Set working directory
 WORKDIR /app
 
-# Install Poetry
-RUN pip install --no-cache-dir poetry
+# Install & upgrdae pip and Poetry in one layer.
+RUN pip install --no-cache-dir --upgrade pip poetry
 
 # Copy dependency files first (leverages Docker layer caching)
 COPY pyproject.toml poetry.lock ./
