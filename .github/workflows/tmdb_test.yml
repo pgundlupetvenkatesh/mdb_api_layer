@@ -1,5 +1,6 @@
 name: API Tests
 
+# On every push or PR to main/master
 on:
   push:
     branches: [ main, master ]
@@ -21,54 +22,91 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
 
     steps:
+    # Clone your repo into the runner
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+    # Enabling Docker Buildx to improved caching
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-    - name: Cache Poetry
+    # Cache Docker layers between workflow runs
+    # Key is based on Dockerfile + poetry.lock — if neither changes,
+    # the cache is reused and Docker skips rebuilding unchanged layers.
+    - name: Cache Docker layers
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-docker-${{ hashFiles('Dockerfile', 'poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-docker-
 
-    - name: Install Poetry
-      run: pip install poetry
+    # Build the Docker image from your Dockerfile
+    # --cache-from: read cached layers from previous runs
+    # --cache-to: write new layers to cache for next run
+    # --load: make the image available to `docker run`
+    - name: Build Docker image
+      run: |
+        docker buildx build \
+          --cache-from type=local,src=/tmp/.buildx-cache \
+          --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
+          --load \
+          -t mdb-api-tests .
 
-    - name: Install dependencies via Poetry
-      run: poetry install --no-interaction --no-root
-
+    # Create the report directory on the runner's filesystem
+    # (needed for the volume mount — Docker won't create it automatically)
     - name: Create report directory
-      # Ensure the report directory exists
       run: mkdir -p report
 
-    - name: Create .env file
+    # Run tests inside the container and capture exit code.
+    # -e: pass each secret as an environment variable (never stored in image)
+    # -v: mount the runner's report/ folder into the container's /app/report
+    #     so the HTML report is written to the runner's filesystem
+    # Even if tests fail, we continue so the report gets deployed.
+    # The exit code is saved to GITHUB_ENV and checked in the final step.
+    - name: Run Tests in Docker
+      id: tests
       run: |
-        echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env
-        echo "TMDB_SESSION_ID=${{ secrets.TMDB_SESSION_ID }}" >> .env
-        echo "TMDB_AUTH_TOKEN=${{ secrets.TMDB_AUTH_TOKEN }}" >> .env
-        echo "TMDB_USER_ACCESS_TOKEN=${{ secrets.TMDB_USER_ACCESS_TOKEN }}" >> .env
-        echo "TMDB_REQ_TOKEN=${{ secrets.TMDB_REQ_TOKEN }}" >> .env
+        EXIT_CODE=0
+        docker run --rm \
+          -e TMDB_API_KEY=${{ secrets.TMDB_API_KEY }} \
+          -e TMDB_SESSION_ID=${{ secrets.TMDB_SESSION_ID }} \
+          -e TMDB_AUTH_TOKEN=${{ secrets.TMDB_AUTH_TOKEN }} \
+          -e TMDB_USER_ACCESS_TOKEN=${{ secrets.TMDB_USER_ACCESS_TOKEN }} \
+          -e TMDB_REQ_TOKEN=${{ secrets.TMDB_REQ_TOKEN }} \
+          -v ${{ github.workspace }}/report:/app/report \
+          mdb-api-tests || EXIT_CODE=$?
+        echo "TEST_EXIT_CODE=$EXIT_CODE" >> $GITHUB_ENV
 
-    - name: Run Integration + Contract Tests
+    # Rotate the Docker cache to prevent unbounded growth
+    # Runs even if tests fail (if: always())
+    - name: Move Docker cache
+      if: always()
       run: |
-        poetry run pytest tests/ \
-        --html=report/tmdb_full_report.html \
-        --self-contained-html -v -s
-      env:
-        PYTEST_ADDOPTS: "--color=yes"
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-    - name: Deploy & Upload/Append to GitHub Pages
+    # Publish the HTML report to GitHub Pages
+    # - Copies report/ contents to the gh-pages branch under /report
+    # - keep_files: true means previous reports are preserved (appended)
+    # - Runs even if tests fail so you can see the failure report
+    - name: Deploy report to GitHub Pages
       if: always()
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./report
-        destination_dir: report      # Content goes into https://pgundlupetvenkatesh.github.io/mdb_api_layer/report/tmdb_full_report.html
-        keep_files: true            # Prevents deleting docs or reports
+        destination_dir: report
+        keep_files: true
+
+    # Fail the workflow if tests failed (after report is deployed)
+    - name: Check test results
+      if: always()
+      run: |
+        if [ -n "$TEST_EXIT_CODE" ] && [ "$TEST_EXIT_CODE" -ne 0 ]; then
+          echo "Tests failed with exit code $TEST_EXIT_CODE"
+          exit $TEST_EXIT_CODE
+        fi
