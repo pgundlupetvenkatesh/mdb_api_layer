@@ -31,6 +31,7 @@ Contract tests, and comprehensive response assertions.
 - Python 3.10+
 - [Poetry](https://python-poetry.org/) for dependency management
 - TMDB API account and API key
+- [Docker](https://www.docker.com/get-started) for containerized test runs (optional)
 
 ## Installation
 
@@ -236,6 +237,8 @@ mdb_api_layer/
 │   └── tmdb_report.html        # Generated HTML test reports
 ├── .env                        # Environment variables (not committed)
 ├── .gitignore
+├── Dockerfile                  # Docker image definition for containerized test runs
+├── docker-compose.yml          # Docker Compose config for local containerized runs
 ├── pyproject.toml              # Poetry configuration & pytest settings
 ├── poetry.lock
 └── README.md
@@ -272,6 +275,86 @@ poetry run pytest tests/ --html=report/tmdb_report.html --self-contained-html -v
 poetry run pytest tests/ --alluredir=allure-results
 allure serve allure-results
 ```
+
+## Running Tests in Docker
+
+Tests can run inside a Docker container for a consistent, isolated environment — no local Python or dependency setup needed.
+
+### Prerequisites
+- [Docker](https://www.docker.com/get-started) installed and running
+
+### Using Docker Compose (Recommended for Local)
+
+```bash
+# Build and run tests (reads secrets from .env file)
+docker compose up --build
+
+# Flow
+build image
+  ↓
+start container
+  ↓
+run pytest
+  ↓
+save report
+
+# Run in detached mode. Runs the container in the background.
+docker compose up --build -d
+
+# View logs
+docker compose logs -f tests
+
+# Tear down. Stops and removed containers.
+docker compose down
+```
+
+The HTML report is mounted to `./report/` on your host, so it persists after the container exits.
+
+### Using Docker Directly
+
+```bash
+# Build the image
+docker build -t mdb-api-tests .
+
+# Flow
+Dockerfile
+   ↓
+Build image
+   ↓
+mdb-api-tests image created
+
+# Run tests (pass env vars explicitly)
+docker run --rm \
+  -e TMDB_API_KEY=your_key \
+  -e TMDB_AUTH_TOKEN=your_token \
+  -v $(pwd)/report:/app/report \
+  mdb-api-tests
+
+# Flow
+container starts
+  ↓
+pytest runs
+  ↓
+tests execute
+  ↓
+HTML report generated
+```
+
+### How It Works
+
+| File                 | Role                                                                 |
+|----------------------|----------------------------------------------------------------------|
+| `Dockerfile`         | Defines the image: Python 3.12-slim, installs Poetry & dependencies  |
+| `docker-compose.yml` | Orchestrates the container: loads `.env`, mounts `report/` volume    |
+| GH CI workflow       | Builds with Docker Buildx caching, passes secrets via `-e` flags     |
+
+### CI/CD (GitHub Actions)
+
+In CI, tests run inside the same Docker image but with additional optimizations:
+- **Docker Buildx** for layer caching between workflow runs
+- Secrets are injected via `-e` flags (not glued into the image)
+- The HTML report is deployed to GitHub Pages after the run
+- If tests fail, the workflow still deploys the report before marking the job as failed
 
 ## Contract Testing
 
