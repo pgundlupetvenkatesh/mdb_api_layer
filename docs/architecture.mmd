@@ -1,0 +1,105 @@
+graph TB
+    subgraph CI["CI/CD · GitHub Actions"]
+        GH_TEST["tmdb_test.yml<br/>Docker Build → Run Tests → Deploy Report"]
+        GH_DOCS["build_docs.yml<br/>Sphinx Build → Deploy Docs"]
+        GH_PAGES["GitHub Pages<br/>/report · /docs"]
+        GH_TEST --> GH_PAGES
+        GH_DOCS --> GH_PAGES
+    end
+    classDef Title font-size:30px;
+    class CI Title;
+
+    subgraph DOCKER["Docker"]
+        DOCKERFILE["Dockerfile<br/>Python 3.12-slim + Poetry"]
+        COMPOSE["docker-compose.yml<br/>.env · volume mount"]
+        DOCKERFILE --> COMPOSE
+    end
+    classDef Title font-size:30px;
+    class DOCKER Title;
+
+    subgraph CONFIG["Config Layer"]
+        ENV[".env<br/>API keys · tokens · settings"]
+        CFG["config.py<br/>Config class · configure_logging()"]
+        ENV --> CFG
+    end
+    classDef Title font-size:30px;
+    class CONFIG Title;
+
+    subgraph API["API Layer"]
+        BASE["BaseAPI<br/>GET · POST · PUT · DELETE<br/>Session · Headers · APIResponse"]
+        MOVIES["MoviesAPI"] --> BASE
+        PEOPLE["PeopleAPI"] --> BASE
+        LISTS["ListsAPI<br/>v4 API"] --> BASE
+        ACCOUNT["AccountAPI"] --> BASE
+        SEARCH["SearchAPI"] --> BASE
+    end
+    classDef Title font-size:30px;
+    class API Title;
+
+    subgraph TESTS["Test Layer"]
+        SPACER[ ] ~~~ CONFTEST
+        CONFTEST["conftest.py<br/>Fixtures · Hooks · CLI Options"]
+
+        subgraph HELPERS["Helpers"]
+            FIELD["FieldAssertions<br/>bool · str · int · float · date"]
+            RESP["response_assertions<br/>HTTP response validation"]
+            GEN["test_data_generators<br/>random ratings · IDs"]
+        end
+        classDef HelpersTitle font-size:30px;
+        class HELPERS HelpersTitle;
+
+        subgraph DATA["Test Data"]
+            YAML["test_data.yaml"]
+            LOADER["data_loader.py<br/>YAML parser · defaults · generators"]
+            SCHEMAS["JSON Schemas<br/>movie · people · rating · generic"]
+            YAML --> LOADER
+        end
+        classDef DataTitle font-size:30px;
+        class DATA DataTitle;
+
+        subgraph SUITES["Test Suites"]
+            T_MOVIES["movies/<br/>details · rating"]
+            T_LISTS_POP["movie_lists/<br/>popular"]
+            T_PEOPLE["people/<br/>details"]
+            T_LISTS_V4["lists/<br/>update"]
+            T_CONTRACTS["contracts/<br/>Pact CDC tests"]
+            T_PACTS["pacts/<br/>Generated .json contracts"]
+            T_CONTRACTS --> T_PACTS
+        end
+        classDef SuiteTitle font-size:30px;
+        class SUITES SuiteTitle;
+    end
+    classDef TestTitle font-size:30px,color:#fff;
+    class TESTS TestTitle;
+
+    subgraph DOCS["Documentation"]
+        SPHINX["Sphinx<br/>conf.py · .rst files"]
+        HTML_DOCS["_build/html/"]
+        SPHINX --> HTML_DOCS
+    end
+    classDef DocsTitle font-size:30px;
+    class DOCS DocsTitle;
+
+    CFG --> BASE
+    CFG --> CONFTEST
+    CONFTEST --> SUITES
+    LOADER --> SUITES
+    HELPERS --> SUITES
+    SCHEMAS --> SUITES
+    API --> SUITES
+    COMPOSE --> GH_TEST
+    BASE --- TMDB["TMDB API<br/>api.themoviedb.org"]
+
+    style CI stroke:#388e3c
+    style DOCKER stroke:#1565c0
+    style CONFIG stroke:#ef6c00
+    style API stroke:#c62828
+    style TESTS fill:#000,stroke:#6a1b9a
+    style SPACER fill:none,stroke:none,color:#000
+    style DOCS stroke:#00838f
+    style TMDB stroke:#f9a825
+
+
+%% To regenerate the architecture diagram, run from project root:
+%% npx -y @mermaid-js/mermaid-cli -i docs/architecture.mmd -o docs/architecture.png -t default -b transparent --scale 2
+

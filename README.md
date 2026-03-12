@@ -26,6 +26,22 @@ Contract tests, and comprehensive response assertions.
 - Pytest integration with HTML and Allure reporting
 - Sphinx documentation with GitHub Pages deployment
 
+## Architecture
+
+![Architecture Diagram](docs/architecture.png)
+
+### How the Layers Connect
+
+| Layer | Responsibility |
+|---|---|
+| **Config** | Loads `.env`, exposes `Config` class, sets up Loguru logging |
+| **API** | `BaseAPI` handles HTTP + auth; endpoint classes (`MoviesAPI`, etc.) add domain methods |
+| **Tests** | `conftest.py` wires fixtures/hooks; suites use helpers, schemas, and data-driven YAML |
+| **Contracts** | Pact CDC tests generate `.json` contract files in `tests/pacts/` |
+| **Docker** | `Dockerfile` builds image; `docker-compose.yml` runs tests locally with `.env` and volume |
+| **CI/CD** | Two GH Actions workflows: one for Docker test runs + report deploy, one for Sphinx docs |
+| **Docs** | Sphinx auto-generates API docs from docstrings, deployed to GitHub Pages |
+
 ## Prerequisites
 
 - Python 3.10+
