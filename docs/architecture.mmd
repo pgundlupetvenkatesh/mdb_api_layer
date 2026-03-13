@@ -37,7 +37,6 @@ graph TB
     class API Title;
 
     subgraph TESTS["Test Layer"]
-        SPACER[ ] ~~~ CONFTEST
         CONFTEST["conftest.py<br/>Fixtures · Hooks · CLI Options"]
 
         subgraph HELPERS["Helpers"]
@@ -69,7 +68,7 @@ graph TB
         classDef SuiteTitle font-size:30px;
         class SUITES SuiteTitle;
     end
-    classDef TestTitle font-size:30px,color:#fff;
+    classDef TestTitle font-size:30px;
     class TESTS TestTitle;
 
     subgraph DOCS["Documentation"]
@@ -102,4 +101,3 @@ graph TB
 
 %% To regenerate the architecture diagram, run from project root:
 %% npx -y @mermaid-js/mermaid-cli -i docs/architecture.mmd -o docs/architecture.png -t default -b transparent --scale 2
-
