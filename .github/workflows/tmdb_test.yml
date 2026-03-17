@@ -103,7 +103,7 @@ jobs:
         docker run --rm \
           -v ${{ github.workspace }}/report:/app/report \
           mdb-api-tests \
-          pytest_html_merger -i /app/report -o /app/report/merged_tmdb_full_report.html
+          python -m pytest_html_merger -i /app/report -o /app/report/merged_tmdb_full_report.html
 
     # Publish the HTML report to GitHub Pages
     # - Copies report/ contents to the gh-pages branch under /report
