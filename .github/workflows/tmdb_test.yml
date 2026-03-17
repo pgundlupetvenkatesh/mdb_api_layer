@@ -94,26 +94,39 @@ jobs:
         rm -rf /tmp/.buildx-cache
         mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
+    # List report files for debugging — helps verify both test
+    # containers produced their HTML before the merge step runs.
+    - name: List report files
+      if: always()
+      run: ls -la report/
+
     # Merge individual HTML reports into a single combined report.
     # Runs inside the Docker image because pytest-html-report-merger
     # is installed there (not on the runner).
+    # Only runs if both report files exist (both containers succeeded).
     - name: Merge Reports
       if: always()
       run: |
-        docker run --rm \
-          -v ${{ github.workspace }}/report:/app/report \
-          mdb-api-tests \
-          python -m pytest_html_report_merger \
-            --out /app/report/merged_tmdb_full_report.html \
-            /app/report/tmdb_non_contract_report.html \
-            /app/report/tmdb_contract_report.html
+        if [ -f report/tmdb_non_contract_report.html ] && [ -f report/tmdb_contract_report.html ]; then
+          docker run --rm \
+            -v ${{ github.workspace }}/report:/app/report \
+            mdb-api-tests \
+            python -m pytest_html_report_merger \
+              --out /app/report/merged_tmdb_full_report.html \
+              /app/report/tmdb_non_contract_report.html \
+              /app/report/tmdb_contract_report.html
+        else
+          echo "::warning::One or both report files missing — skipping merge"
+          ls -la report/
+        fi
 
     # Publish the HTML report to GitHub Pages
     # - Copies report/ contents to the gh-pages branch under /report
     # - keep_files: true means previous reports are preserved (appended)
     # - Runs even if tests fail so you can see the failure report
+    # - Only deploys on push (PR tokens cannot write to gh-pages)
     - name: Deploy report to GitHub Pages
-      if: always()
+      if: always() && github.event_name == 'push'
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
