@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8"/>
-    <title id="head-title">Movies API Tests Report</title>
-      <style type="text/css">body {
+ <head>
+  <meta charset="utf-8">
+  <title id="head-title">
+   merged_tmdb_full_report.html
+  </title>
+  <style type="text/css">
+   body {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 12px;
   /* do not increase min-width as some may use split screens */
@@ -322,127 +325,205 @@ div.media {
 .filter__label {
   margin-right: 10px;
 }
-
-      </style>
-    
-  </head>
-  <body>
-    <h1 id="title">Movies API Tests Report</h1>
-    <p>Report generated on 17-Mar-2026 at 17:25:52 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
-        v4.2.0</p>
-    <div id="environment-header">
-      <h2>Environment</h2>
+  </style>
+ </head>
+ <body>
+  <h1 id="title">
+   merged_tmdb_full_report.html
+  </h1>
+  <p>
+   Report generated on 17-Mar-2026 at 17:25:52 by
+   <a href="https://pypi.python.org/pypi/pytest-html">
+    pytest-html
+   </a>
+   v4.2.0
+  </p>
+  <div id="environment-header">
+   <h2>
+    Environment
+   </h2>
+  </div>
+  <table id="environment">
+  </table>
+  <!-- TEMPLATES -->
+  <template id="template_environment_row">
+   <tr>
+    <td>
+    </td>
+    <td>
+    </td>
+   </tr>
+  </template>
+  <template id="template_results-table__body--empty">
+   <tbody class="results-table-row">
+    <tr id="not-found-message">
+     <td colspan="4">
+      No results found. Check the filters.
+     </td>
+    </tr>
+   </tbody>
+  </template>
+  <template id="template_results-table__tbody">
+   <tbody class="results-table-row">
+    <tr class="collapsible">
+    </tr>
+    <tr class="extras-row">
+     <td class="extra" colspan="4">
+      <div class="extraHTML">
+      </div>
+      <div class="media">
+       <div class="media-container">
+        <div class="media-container__nav--left">
+         &lt;
+        </div>
+        <div class="media-container__viewport">
+         <img src>
+         <video controls>
+          <source src type="video/mp4">
+         </video>
+        </div>
+        <div class="media-container__nav--right">
+         &gt;
+        </div>
+       </div>
+       <div class="media__name">
+       </div>
+       <div class="media__counter">
+       </div>
+      </div>
+      <div class="logwrapper">
+       <div class="logexpander">
+       </div>
+       <div class="log">
+       </div>
+      </div>
+     </td>
+    </tr>
+   </tbody>
+  </template>
+  <!-- END TEMPLATES -->
+  <div class="summary">
+   <div class="summary__data">
+    <h2>
+     Summary
+    </h2>
+    <div class="additional-summary prefix">
+     <h2>
+      🎬 TMDB API Automation Suite
+     </h2>
+     <p>
+      Run Date: 2026-03-17 17:25:52
+     </p>
     </div>
-    <table id="environment"></table>
-    <!-- TEMPLATES -->
-      <template id="template_environment_row">
-      <tr>
-        <td></td>
-        <td></td>
-      </tr>
-    </template>
-    <template id="template_results-table__body--empty">
-      <tbody class="results-table-row">
-        <tr id="not-found-message">
-          <td colspan="4">No results found. Check the filters.</td>
-        </tr>
-      </tbody>
-    </template>
-    <template id="template_results-table__tbody">
-      <tbody class="results-table-row">
-        <tr class="collapsible">
-        </tr>
-        <tr class="extras-row">
-          <td class="extra" colspan="4">
-            <div class="extraHTML"></div>
-            <div class="media">
-              <div class="media-container">
-                  <div class="media-container__nav--left">&lt;</div>
-                  <div class="media-container__viewport">
-                    <img src="" />
-                    <video controls>
-                      <source src="" type="video/mp4">
-                    </video>
-                  </div>
-                  <div class="media-container__nav--right">&gt;</div>
-                </div>
-                <div class="media__name"></div>
-                <div class="media__counter"></div>
-            </div>
-            <div class="logwrapper">
-              <div class="logexpander"></div>
-              <div class="log"></div>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </template>
-    <!-- END TEMPLATES -->
-    <div class="summary">
-      <div class="summary__data">
-        <h2>Summary</h2>
-        <div class="additional-summary prefix">
-          <h2>🎬 TMDB API Automation Suite</h2>
-          <p>Run Date: 2026-03-17 17:25:52</p>
-        </div>
-        <p class="run-count">24 tests took 00:00:07.</p>
-        <p class="filter">(Un)check the boxes to filter the results.</p>
-        <div class="summary__reload">
-          <div class="summary__reload__button hidden" onclick="location.reload()">
-            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
-          </div>
-        </div>
-        <div class="summary__spacer"></div>
-        <div class="controls">
-          <div class="filters">
-            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" disabled>
-            <span class="failed">0 Failed,</span>
-            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" >
-            <span class="passed">24 Passed,</span>
-            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" disabled>
-            <span class="skipped">0 Skipped,</span>
-            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" disabled>
-            <span class="xfailed">0 Expected failures,</span>
-            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled>
-            <span class="xpassed">0 Unexpected passes,</span>
-            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="error" disabled>
-            <span class="error">0 Errors,</span>
-            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="rerun" disabled>
-            <span class="rerun">0 Reruns</span>
-            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="retried" disabled>
-            <span class="retried">0 Retried,</span>
-          </div>
-          <div class="collapse">
-            <button id="show_all_details">Show all details</button>&nbsp;/&nbsp;<button id="hide_all_details">Hide all details</button>
-          </div>
-        </div>
+    <p class="run-count">
+     28 tests took 51:06:47.
+    </p>
+    <p class="filter">
+     (Un)check the boxes to filter the results.
+    </p>
+    <div class="summary__reload">
+     <div class="summary__reload__button hidden" onclick="location.reload()">
+      <div>
+       There are still tests running.
+       <br>
+       Reload this page to get the latest results!
       </div>
-      <div class="additional-summary summary">
-        <h3>Report Summary</h3>
-        <p>Validation of critical TMDB endpoints including Movies, TV, and Search services.</p>
-      </div>
-      <div class="additional-summary postfix">
-        <hr>
-        <div>
-          <p>For detailed API specs, visit the     <a href='https://developer.themoviedb.org'>TMDB Documentation</a>  </p>
-          <p style='color: #666;'>Failure logs are archived in the /logs workspace directory.</p>
-        </div>
-      </div>
+     </div>
     </div>
-    <table id="results-table">
-      <thead id="results-table-head">
-        <tr>
-          <th class="sortable" data-column-type="result">Result</th>
-          <th class="sortable" data-column-type="testId">Test</th>
-          <th class="sortable" data-column-type="duration">Duration</th>
-          <th>Links</th>
-        </tr>
-      </thead>
-    </table>
+    <div class="summary__spacer">
+    </div>
+    <div class="controls">
+     <div class="filters">
+      <input checked="true" class="filter" data-test-result="failed" disabled name="filter_checkbox" type="checkbox">
+      <span class="failed">
+       0 Failed,
+      </span>
+      <input checked="true" class="filter" data-test-result="passed" name="filter_checkbox" type="checkbox">
+      <span class="passed">
+       28 Passed,
+      </span>
+      <input checked="true" class="filter" data-test-result="skipped" disabled name="filter_checkbox" type="checkbox">
+      <span class="skipped">
+       0 Skipped,
+      </span>
+      <input checked="true" class="filter" data-test-result="xfailed" disabled name="filter_checkbox" type="checkbox">
+      <span class="xfailed">
+       0 Expected failures,
+      </span>
+      <input checked="true" class="filter" data-test-result="xpassed" disabled name="filter_checkbox" type="checkbox">
+      <span class="xpassed">
+       0 Unexpected passes,
+      </span>
+      <input checked="true" class="filter" data-test-result="error" disabled name="filter_checkbox" type="checkbox">
+      <span class="error">
+       0 Errors,
+      </span>
+      <input checked="true" class="filter" data-test-result="rerun" disabled name="filter_checkbox" type="checkbox">
+      <span class="rerun">
+       0 Reruns
+      </span>
+      <input checked="true" class="filter" data-test-result="retried" disabled name="filter_checkbox" type="checkbox">
+      <span class="retried">
+       0 Retried,
+      </span>
+     </div>
+     <div class="collapse">
+      <button id="show_all_details">
+       Show all details
+      </button>
+      &nbsp;/&nbsp;
+      <button id="hide_all_details">
+       Hide all details
+      </button>
+     </div>
+    </div>
+   </div>
+   <div class="additional-summary summary">
+    <h3>
+     Report Summary
+    </h3>
+    <p>
+     Validation of critical TMDB endpoints including Movies, TV, and Search services.
+    </p>
+   </div>
+   <div class="additional-summary postfix">
+    <hr>
+    <div>
+     <p>
+      For detailed API specs, visit the
+      <a href="https://developer.themoviedb.org">
+       TMDB Documentation
+      </a>
+     </p>
+     <p style="color: #666;">
+      Failure logs are archived in the /logs workspace directory.
+     </p>
+    </div>
+   </div>
+  </div>
+  <table id="results-table">
+   <thead id="results-table-head">
+    <tr>
+     <th class="sortable" data-column-type="result">
+      Result
+     </th>
+     <th class="sortable" data-column-type="testId">
+      Test
+     </th>
+     <th class="sortable" data-column-type="duration">
+      Duration
+     </th>
+     <th>
+      Links
+     </th>
+    </tr>
+   </thead>
+  </table>
   <footer>
-    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.12.13&#34;, &#34;Platform&#34;: &#34;Linux-6.14.0-1017-azure-x86_64-with-glibc2.41&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;9.0.2&#34;, &#34;pluggy&#34;: &#34;1.6.0&#34;}, &#34;Plugins&#34;: {&#34;order&#34;: &#34;1.3.0&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;, &#34;html&#34;: &#34;4.2.0&#34;, &#34;anyio&#34;: &#34;4.12.1&#34;}}, &#34;tests&#34;: {&#34;tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating0]&#34;, &#34;duration&#34;: &#34;96 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;96 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating1]&#34;, &#34;duration&#34;: &#34;68 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;68 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_rating[delete_valid_rating0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_rating[delete_valid_rating0]&#34;, &#34;duration&#34;: &#34;141 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_rating[delete_valid_rating0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;141 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list0]&#34;, &#34;duration&#34;: &#34;00:00:02&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:02&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list1]&#34;, &#34;duration&#34;: &#34;00:00:02&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:02&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid0]&#34;, &#34;duration&#34;: &#34;55 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;55 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid1]&#34;, &#34;duration&#34;: &#34;99 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;99 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies0]&#34;, &#34;duration&#34;: &#34;34 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;34 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies1]&#34;, &#34;duration&#34;: &#34;30 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;30 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_invalid[invalid_test0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_invalid[invalid_test0]&#34;, &#34;duration&#34;: &#34;46 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_invalid[invalid_test0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;46 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating0]&#34;, &#34;duration&#34;: &#34;72 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;72 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating1]&#34;, &#34;duration&#34;: &#34;47 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;47 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating0]&#34;, &#34;duration&#34;: &#34;49 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;49 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating1]&#34;, &#34;duration&#34;: &#34;49 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;49 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details0]&#34;, &#34;duration&#34;: &#34;50 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;50 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details1]&#34;, &#34;duration&#34;: &#34;70 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;70 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details2]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details2]&#34;, &#34;duration&#34;: &#34;53 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details2]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;53 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test0]&#34;, &#34;duration&#34;: &#34;51 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;51 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test1]&#34;, &#34;duration&#34;: &#34;73 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;73 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test2]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test2]&#34;, &#34;duration&#34;: &#34;49 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test2]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;49 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/people/test_details.py::TestDetails::test_get_person_details[person_details0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/people/test_details.py::TestDetails::test_get_person_details[person_details0]&#34;, &#34;duration&#34;: &#34;59 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/people/test_details.py::TestDetails::test_get_person_details[person_details0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;59 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details0]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details0]&#34;, &#34;duration&#34;: &#34;53 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details0]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;53 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details1]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details1]&#34;, &#34;duration&#34;: &#34;49 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details1]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;49 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details2]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details2]&#34;, &#34;duration&#34;: &#34;48 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details2]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;48 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;Movies API Tests Report&#34;}"></div>
-    <script>
-      (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+   <div data-jsonblob='{"environment": {"Python": "3.12.13", "Platform": "Linux-6.14.0-1017-azure-x86_64-with-glibc2.41", "Packages": {"pytest": "9.0.2", "pluggy": "1.6.0"}, "Plugins": {"order": "1.3.0", "metadata": "3.1.1", "html": "4.2.0", "anyio": "4.12.1"}}, "tests": {"tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating0]", "duration": "96 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;96 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating1] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating1]", "duration": "68 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_add_rating.py::TestAddRating::test_add_rating[add_valid_rating1]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;68 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_rating[delete_valid_rating0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_rating[delete_valid_rating0]", "duration": "141 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_rating[delete_valid_rating0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;141 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list0]", "duration": "00:00:02", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;00:00:02&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list1] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list1]", "duration": "00:00:02", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/lists/test_update.py::TestUpdate::test_update_list_description[update_list1]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;00:00:02&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid0]", "duration": "55 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;55 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid1] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid1]", "duration": "99 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/lists/test_update.py::TestUpdate::test_update_list_description_invalid[update_list_invalid1]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;99 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies0]", "duration": "34 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;34 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies1] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies1]", "duration": "30 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_default[pop_movies1]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;30 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_invalid[invalid_test0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_invalid[invalid_test0]", "duration": "46 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movie_lists/test_popular.py::TestMoviesAPI::test_get_popular_movies_invalid[invalid_test0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;46 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating0]", "duration": "72 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;72 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating1] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating1]", "duration": "47 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_add_rating.py::TestAddRating::test_add_rating_unauthenticated[add_invalid_rating1]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;47 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating0]", "duration": "49 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;49 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating1] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating1]", "duration": "49 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_delete_rating.py::TestDeleteRating::test_delete_invalid_rating[delete_invalid_rating1]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;49 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details0]", "duration": "50 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;50 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details1] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details1]", "duration": "70 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details1]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;70 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details2] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details2]", "duration": "53 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_details.py::TestDetails::test_get_movie_details[movie_details2]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;53 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test0]", "duration": "51 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;51 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test1] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test1]", "duration": "73 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test1]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;73 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test2] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test2]", "duration": "49 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/movies/test_details.py::TestDetails::test_get_invalid_movie_details[invalid_test2]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;49 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/people/test_details.py::TestDetails::test_get_person_details[person_details0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/people/test_details.py::TestDetails::test_get_person_details[person_details0]", "duration": "59 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/people/test_details.py::TestDetails::test_get_person_details[person_details0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;59 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details0] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details0]", "duration": "53 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details0]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;53 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details1] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details1]", "duration": "49 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details1]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;49 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details2] - tmdb_non_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details2]", "duration": "48 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/people/test_details.py::TestDetails::test_get_person_details_invalid[invalid_person_details2]&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;48 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/contracts/test_movie_details.py::TestMovieDetails::test_get_movie_details - tmdb_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/contracts/test_movie_details.py::TestMovieDetails::test_get_movie_details", "duration": "14 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/contracts/test_movie_details.py::TestMovieDetails::test_get_movie_details&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;14 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/contracts/test_movie_details.py::TestMovieDetails::test_get_invalid_movie_details - tmdb_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/contracts/test_movie_details.py::TestMovieDetails::test_get_invalid_movie_details", "duration": "4 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/contracts/test_movie_details.py::TestMovieDetails::test_get_invalid_movie_details&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;4 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/contracts/test_popular_movies.py::TestPopularMovies::test_get_popular_movies - tmdb_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/contracts/test_popular_movies.py::TestPopularMovies::test_get_popular_movies", "duration": "4 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/contracts/test_popular_movies.py::TestPopularMovies::test_get_popular_movies&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;4 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}], "tests/contracts/test_popular_movies.py::TestPopularMovies::test_get_popular_movies_invalid_page - tmdb_contract_report.html": [{"extras": [], "result": "Passed", "testId": "tests/contracts/test_popular_movies.py::TestPopularMovies::test_get_popular_movies_invalid_page", "duration": "3 ms", "resultsTableRow": ["&lt;td class=\"col-result\"&gt;Passed&lt;/td&gt;", "&lt;td class=\"col-testId\"&gt;tests/contracts/test_popular_movies.py::TestPopularMovies::test_get_popular_movies_invalid_page&lt;/td&gt;", "&lt;td class=\"col-duration\"&gt;3 ms&lt;/td&gt;", "&lt;td class=\"col-links\"&gt;&lt;/td&gt;"], "log": "No log output captured."}]}, "renderCollapsed": ["passed"], "initialSort": "result", "title": "merged_tmdb_full_report.html"}' id="data-container">
+   </div>
+   <script>
+    (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')
 
 class DataManager {
@@ -1097,7 +1178,7 @@ module.exports = {
 }
 
 },{}]},{},[4]);
-    </script>
+   </script>
   </footer>
-  </body>
+ </body>
 </html>
