@@ -112,7 +112,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}/report:/app/report \
             mdb-api-tests \
-            python -m pytest_html_report_merger \
+            pytest-html-report-merger \
               --out /app/report/merged_tmdb_full_report.html \
               /app/report/tmdb_non_contract_report.html \
               /app/report/tmdb_contract_report.html
