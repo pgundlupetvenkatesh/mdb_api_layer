@@ -1,6 +1,6 @@
 name: Docker API Tests
 
-# On every push or PR to main/master
+# On every push to main or PR updates
 on:
   push:
     branches: [ main, master ]
@@ -66,13 +66,11 @@ jobs:
     # as environment variables without baking them into the image.
     - name: Create .env from secrets
       run: |
-        cat <<EOF > .env
-        TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}
-        TMDB_SESSION_ID=${{ secrets.TMDB_SESSION_ID }}
-        TMDB_AUTH_TOKEN=${{ secrets.TMDB_AUTH_TOKEN }}
-        TMDB_USER_ACCESS_TOKEN=${{ secrets.TMDB_USER_ACCESS_TOKEN }}
-        TMDB_REQ_TOKEN=${{ secrets.TMDB_REQ_TOKEN }}
-        EOF
+        echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" > .env
+        echo "TMDB_SESSION_ID=${{ secrets.TMDB_SESSION_ID }}" >> .env
+        echo "TMDB_AUTH_TOKEN=${{ secrets.TMDB_AUTH_TOKEN }}" >> .env
+        echo "TMDB_USER_ACCESS_TOKEN=${{ secrets.TMDB_USER_ACCESS_TOKEN }}" >> .env
+        echo "TMDB_REQ_TOKEN=${{ secrets.TMDB_REQ_TOKEN }}" >> .env
 
     # Run integration and contract tests in parallel using docker compose.
     # --no-build: skip building since the image was already built by buildx above.
@@ -105,16 +103,21 @@ jobs:
     # is installed there (not on the runner).
     # Only runs if both report files exist (both containers succeeded).
     - name: Merge Reports
-      if: always()
+      if: always() && github.event_name == 'push'
       run: |
+        echo "=== Checking for report files ==="
+        ls -la report/*.html || echo "No HTML files found"
         if [ -f report/tmdb_non_contract_report.html ] && [ -f report/tmdb_contract_report.html ]; then
+          echo "Both reports found — merging..."
           docker run --rm \
             -v ${{ github.workspace }}/report:/app/report \
             mdb-api-tests \
-            python -m pytest_html_report_merger \
+            pytest-html-report-merger \
               --out /app/report/merged_tmdb_full_report.html \
               /app/report/tmdb_non_contract_report.html \
               /app/report/tmdb_contract_report.html
+          echo "=== Merge complete — verifying output ==="
+          ls -la report/merged_tmdb_full_report.html || echo "::error::Merged report was NOT created"
         else
           echo "::warning::One or both report files missing — skipping merge"
           ls -la report/
@@ -130,8 +133,8 @@ jobs:
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./report
-        destination_dir: report
+        publish_dir: ./report # Deploy report directory to the remote GHP branch
+        destination_dir: report # Destination subDir on a publishing branch
         keep_files: true
 
     # Fail the workflow if tests failed (after report is deployed)

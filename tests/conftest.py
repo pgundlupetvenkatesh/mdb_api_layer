@@ -4,6 +4,7 @@ import pytest
 
 from pathlib import Path
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # Registering logger configuration options and setup before any test runs
 def pytest_addoption(parser):
@@ -161,10 +162,13 @@ def pytest_html_report_title(report):
     report.title = "Movies API Tests Report"
 
 def pytest_html_results_summary(prefix, summary, postfix):
+    # Get current Eastern time
+    et_time = datetime.now(ZoneInfo("America/New_York"))
+
     # Quick status header
     prefix.extend([
         "<h2>🎬 TMDB API Automation Suite</h2>",
-        f"<p>Run Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>"
+        f"<p>Run Date: {et_time.strftime('%Y-%m-%d %H:%M:%S')}</p>"
     ])
 
     # Env callout
