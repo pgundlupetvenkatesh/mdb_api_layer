@@ -70,7 +70,7 @@ jobs:
          <div class="card">
              <h2>📊 Test Reports</h2>
              <p>View latest Pytest results and contract tests.</p>
-             <a href="./report/tmdb_full_report.html">View Latest Report →</a>
+             <a href="./report/merged_tmdb_full_report.html">View Latest Report →</a>
          </div>
         </body>
         </html>
