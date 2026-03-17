@@ -2,17 +2,29 @@
 # command overrides the default CMD in the Dockerfile, so it runs pytest with the specified options when the container starts
 # Build the image -> create containers -> run the command in the container -> output report to mounted volume
 
+x-common-config: &common-config
+  build: .  # Build image from ./Dockerfile
+  image: mdb-api-tests  # Tag the image for easier reference and aligned with GH Actions workflow
+  env_file:
+    - .env  # Load all env vars from your .env file
+  volumes:
+    - ./report:/app/report  # Mount report dir so HTML persists
+
 services:
-  tests:
-    build: .              # Build image from ./Dockerfile
-    image: mdb-api-tests  # Tag the image for easier reference and aligned with GH Actions workflow
-    container_name: tmdb-api-tests
-    env_file:
-      - .env        # Load all env vars from your .env file
-    volumes:
-      - ./report:/app/report  # Mount report dir so HTML persists
+  integration_tests:
+    <<: *common-config
+    container_name: tmdb-api-integration-tests
     command: >
       pytest tests/
-      --html=report/tmdb_full_report.html
+      --html=report/tmdb_non_contract_report.html
       --self-contained-html
-      -v -s
+      -v -s -m "not contract"
+
+  contract_tests:
+    <<: *common-config
+    container_name: tmdb-api-contract-tests
+    command: >
+      pytest tests/contracts/
+      --html=report/tmdb_contract_report.html
+      --self-contained-html
+      -v -s -m contract
