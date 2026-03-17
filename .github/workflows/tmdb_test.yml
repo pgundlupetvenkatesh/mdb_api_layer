@@ -103,7 +103,7 @@ jobs:
     # is installed there (not on the runner).
     # Only runs if both report files exist (both containers succeeded).
     - name: Merge Reports
-      if: always()
+      if: always() && github.event_name == 'push'
       run: |
         echo "=== Checking for report files ==="
         ls -la report/*.html || echo "No HTML files found"
