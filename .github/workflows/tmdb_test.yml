@@ -123,18 +123,13 @@ jobs:
           ls -la report/
         fi
 
-    - name: List report files after merge
-      if: always()
-      run: ls -la report/
-
     # Publish the HTML report to GitHub Pages
     # - Copies report/ contents to the gh-pages branch under /report
     # - keep_files: true means previous reports are preserved (appended)
     # - Runs even if tests fail so you can see the failure report
     # - Only deploys on push (PR tokens cannot write to gh-pages)
     - name: Deploy report to GitHub Pages
-#      if: always() && github.event_name == 'push'
-      if: always()
+      if: always() && github.event_name == 'push'
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
