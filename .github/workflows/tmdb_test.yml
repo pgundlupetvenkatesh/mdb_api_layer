@@ -105,7 +105,10 @@ jobs:
     - name: Merge Reports
       if: always()
       run: |
+        echo "=== Checking for report files ==="
+        ls -la report/*.html || echo "No HTML files found"
         if [ -f report/tmdb_non_contract_report.html ] && [ -f report/tmdb_contract_report.html ]; then
+          echo "Both reports found — merging..."
           docker run --rm \
             -v ${{ github.workspace }}/report:/app/report \
             mdb-api-tests \
@@ -113,6 +116,8 @@ jobs:
               --out /app/report/merged_tmdb_full_report.html \
               /app/report/tmdb_non_contract_report.html \
               /app/report/tmdb_contract_report.html
+          echo "=== Merge complete — verifying output ==="
+          ls -la report/merged_tmdb_full_report.html || echo "::error::Merged report was NOT created"
         else
           echo "::warning::One or both report files missing — skipping merge"
           ls -la report/
