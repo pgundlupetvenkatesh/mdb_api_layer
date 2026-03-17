@@ -29,7 +29,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # Enabling Docker Buildx to improved caching
+    # Enabling Docker Buildx for improved caching
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
@@ -61,24 +61,29 @@ jobs:
     - name: Create report directory
       run: mkdir -p report
 
-    # Run tests inside the container and capture exit code.
-    # -e: pass each secret as an environment variable (never stored in image)
-    # -v: mount the runner's report/ folder into the container's /app/report
-    #     so the HTML report is written to the runner's filesystem
-    # Even if tests fail, we continue so the report gets deployed.
-    # The exit code is saved to GITHUB_ENV and checked in the final step.
+    # Write secrets into a temporary .env file for docker compose.
+    # docker-compose.yml reads env_file: .env, so secrets are passed
+    # as environment variables without baking them into the image.
+    - name: Create .env from secrets
+      run: |
+        cat <<EOF > .env
+        TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}
+        TMDB_SESSION_ID=${{ secrets.TMDB_SESSION_ID }}
+        TMDB_AUTH_TOKEN=${{ secrets.TMDB_AUTH_TOKEN }}
+        TMDB_USER_ACCESS_TOKEN=${{ secrets.TMDB_USER_ACCESS_TOKEN }}
+        TMDB_REQ_TOKEN=${{ secrets.TMDB_REQ_TOKEN }}
+        EOF
+
+    # Run integration and contract tests in parallel using docker compose.
+    # --no-build: skip building since the image was already built by buildx above.
+    # Both services run simultaneously and write separate reports to ./report.
+    # Exit code is non-zero if any service fails; captured so the workflow
+    # can continue to merge and deploy the report before failing.
     - name: Run Tests in Docker
       id: tests
       run: |
         EXIT_CODE=0
-        docker run --rm \
-          -e TMDB_API_KEY=${{ secrets.TMDB_API_KEY }} \
-          -e TMDB_SESSION_ID=${{ secrets.TMDB_SESSION_ID }} \
-          -e TMDB_AUTH_TOKEN=${{ secrets.TMDB_AUTH_TOKEN }} \
-          -e TMDB_USER_ACCESS_TOKEN=${{ secrets.TMDB_USER_ACCESS_TOKEN }} \
-          -e TMDB_REQ_TOKEN=${{ secrets.TMDB_REQ_TOKEN }} \
-          -v ${{ github.workspace }}/report:/app/report \
-          mdb-api-tests || EXIT_CODE=$?
+        docker compose up --no-build || EXIT_CODE=$?
         echo "TEST_EXIT_CODE=$EXIT_CODE" >> $GITHUB_ENV
 
     # Rotate the Docker cache to prevent unbounded growth
@@ -88,6 +93,20 @@ jobs:
       run: |
         rm -rf /tmp/.buildx-cache
         mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+    # Merge individual HTML reports into a single combined report.
+    # Runs inside the Docker image because pytest-html-report-merger
+    # is installed there (not on the runner).
+    - name: Merge Reports
+      if: always()
+      run: |
+        docker run --rm \
+          -v ${{ github.workspace }}/report:/app/report \
+          mdb-api-tests \
+          python -m pytest_html_report_merger \
+            --out /app/report/merged_tmdb_full_report.html \
+            /app/report/tmdb_non_contract_report.html \
+            /app/report/tmdb_contract_report.html
 
     # Publish the HTML report to GitHub Pages
     # - Copies report/ contents to the gh-pages branch under /report

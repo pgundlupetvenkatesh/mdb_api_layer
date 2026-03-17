@@ -26,6 +26,22 @@ Contract tests, and comprehensive response assertions.
 - Pytest integration with HTML and Allure reporting
 - Sphinx documentation with GitHub Pages deployment
 
+## Architecture
+
+![Architecture Diagram](docs/architecture.png)
+
+### How the Layers Connect
+
+| Layer | Responsibility |
+|---|---|
+| **Config** | Loads `.env`, exposes `Config` class, sets up Loguru logging |
+| **API** | `BaseAPI` handles HTTP + auth; endpoint classes (`MoviesAPI`, etc.) add domain methods |
+| **Tests** | `conftest.py` wires fixtures/hooks; suites use helpers, schemas, and data-driven YAML |
+| **Contracts** | Pact CDC tests generate `.json` contract files in `tests/pacts/` |
+| **Docker** | `Dockerfile` builds image; `docker-compose.yml` runs tests locally with `.env` and volume |
+| **CI/CD** | Two GH Actions workflows: one for Docker test runs + report deploy, one for Sphinx docs |
+| **Docs** | Sphinx auto-generates API docs from docstrings, deployed to GitHub Pages |
+
 ## Prerequisites
 
 - Python 3.10+
@@ -118,18 +134,18 @@ update the gh-pages branch GitHub Docs: Token Permissions.<br>
 
 ### Environment Variables Reference
 
-| Variable                | Description                               | Required | Default                      |
-|-------------------------|-------------------------------------------|----------|------------------------------|
-| `TMDB_API_KEY`          | Your TMDB API key (v3 auth)               | Yes      | -                            |
-| `TMDB_AUTH_TOKEN`       | API Read Access Token (v4 auth)           | Yes      | -                            |
-| `TMDB_USER_ACCESS_TOKEN`| User Access Token for Lists API (v4 auth) | No       | -                            |
-| `TMDB_BASE_URL`         | API base URL                              | No       | `https://api.themoviedb.org` |
-| `TMDB_API_VERSION`      | API version                               | No       | `3`                          |
-| `TMDB_TIMEOUT`          | Request timeout in seconds                | No       | `30`                         |
-| `TMDB_ACCOUNT_ID`       | TMDB account ID                           | No       | `12016691`                   |
-| `TMDB_SESSION_ID`       | Session ID for authenticated requests     | No       | -                            |
-| `TMDB_REQ_TOKEN`        | Request token for authentication          | No       | -                            |
-| `TMDB_MOVIE_ID`         | Default movie ID for tests                | No       | `346698`                     |
+| Variable                  | Description                               | Required   | Default                    |
+|---------------------------|-------------------------------------------|------------|----------------------------|
+| `TMDB_API_KEY`            | Your TMDB API key (v3 auth)               | Yes        | -                          |
+| `TMDB_AUTH_TOKEN`         | Your TMDB API read access token (v4 auth) | Yes        | -                          |
+| `TMDB_BASE_URL`           | Base URL for TMDB API                     | No         | https://api.themoviedb.org |
+| `TMDB_API_VERSION`        | API version to use (3 or 4)               | No         | 3                          |
+| `TMDB_TIMEOUT`            | Request timeout in seconds                | No         | 30                         |
+| `TMDB_USER_ACCESS_TOKEN`  | User Access Token for Lists API (v4 auth) | No         | -                          |
+| `TMDB_ACCOUNT_ID`         | TMDB account ID                           | No         | `12016691`                 |
+| `TMDB_SESSION_ID`         | Session ID for authenticated requests     | No         | -                          |
+| `TMDB_REQ_TOKEN`          | Request token for authentication          | No         | -                          |
+| `TMDB_MOVIE_ID`           | Default movie ID for tests                | No         | `346698`                   |
 
 ## Logging
 
@@ -278,7 +294,8 @@ allure serve allure-results
 
 ## Running Tests in Docker
 
-Tests can run inside a Docker container for a consistent, isolated environment — no local Python or dependency setup needed.
+Tests run inside Docker containers for a consistent, isolated environment — no local Python or dependency setup needed.
+Integration and contract tests run **in parallel** as separate containers from the same image.
 
 ### Prerequisites
 - [Docker](https://www.docker.com/get-started) installed and running
@@ -286,58 +303,45 @@ Tests can run inside a Docker container for a consistent, isolated environment �
 ### Using Docker Compose (Recommended for Local)
 
 ```bash
-# Build and run tests (reads secrets from .env file)
+# Build and run both test suites in parallel (reads secrets from .env file)
 docker compose up --build
 
 # Flow
-build image
+build image (mdb-api-tests)
   ↓
-start container
+start 2 containers in parallel
+  ├── tmdb-api-integration-tests  → pytest tests/ -m "not contract"
+  └── tmdb-api-contract-tests     → pytest tests/contracts/ -m contract
   ↓
-run pytest
-  ↓
-save report
+reports saved to ./report/
 
-# Run in detached mode. Runs the container in the background.
+# Run in detached mode
 docker compose up --build -d
 
-# View logs
-docker compose logs -f tests
+# View logs for a specific service
+docker compose logs -f integration_tests
+docker compose logs -f contract_tests
 
-# Tear down. Stops and removed containers.
+# Tear down
 docker compose down
 ```
 
-The HTML report is mounted to `./report/` on your host, so it persists after the container exits.
+Both containers share the same `./report/` volume mount but write to **separate report files**:
+- `tmdb_non_contract_report.html` — integration tests
+- `tmdb_contract_report.html` — contract tests
 
-### Using Docker Directly
+### Using Docker Directly (Single Run)
 
 ```bash
 # Build the image
 docker build -t mdb-api-tests .
 
-# Flow
-Dockerfile
-   ↓
-Build image
-   ↓
-mdb-api-tests image created
-
-# Run tests (pass env vars explicitly)
+# Run all tests in one container (pass env vars explicitly)
 docker run --rm \
   -e TMDB_API_KEY=your_key \
   -e TMDB_AUTH_TOKEN=your_token \
   -v $(pwd)/report:/app/report \
   mdb-api-tests
-
-# Flow
-container starts
-  ↓
-pytest runs
-  ↓
-tests execute
-  ↓
-HTML report generated
 ```
 
 ### How It Works
@@ -345,16 +349,36 @@ HTML report generated
 | File                 | Role                                                                 |
 |----------------------|----------------------------------------------------------------------|
 | `Dockerfile`         | Defines the image: Python 3.12-slim, installs Poetry & dependencies  |
-| `docker-compose.yml` | Orchestrates the container: loads `.env`, mounts `report/` volume    |
-| GH CI workflow       | Builds with Docker Buildx caching, passes secrets via `-e` flags     |
+| `docker-compose.yml` | Runs integration & contract tests in parallel via two services       |
+| GH CI workflow       | Builds with Buildx caching, runs parallel compose, merges reports    |
+
+### Parallel Execution Architecture
+
+```
+docker-compose.yml
+  │
+  ├── x-common-config (shared anchor)
+  │     ├── build: .
+  │     ├── image: mdb-api-tests
+  │     ├── env_file: .env
+  │     └── volumes: ./report:/app/report
+  │
+  ├── integration_tests (container: tmdb-api-integration-tests)
+  │     └── pytest tests/ -m "not contract" → tmdb_non_contract_report.html
+  │
+  └── contract_tests (container: tmdb-api-contract-tests)
+        └── pytest tests/contracts/ -m contract → tmdb_contract_report.html
+```
 
 ### CI/CD (GitHub Actions)
 
-In CI, tests run inside the same Docker image but with additional optimizations:
+In CI, tests run inside the same Docker image with additional optimizations:
 - **Docker Buildx** for layer caching between workflow runs
-- Secrets are injected via `-e` flags (not glued into the image)
-- The HTML report is deployed to GitHub Pages after the run
-- If tests fail, the workflow still deploys the report before marking the job as failed
+- Secrets are written to `.env` file (never baked into the image)
+- **Parallel execution** via `docker compose up --no-build` (image pre-built by Buildx)
+- Individual HTML reports are **merged** into `merged_tmdb_full_report.html` using `pytest-html-report-merger`
+- Merged report is deployed to GitHub Pages
+- If tests fail, the workflow still merges and deploys the report before marking the job as failed
 
 ## Contract Testing
 
@@ -410,6 +434,7 @@ Pact files document the expected request/response structure and can be:
 ### Development
 - pytest — Test framework
 - pytest-html — HTML report generation
+- pytest-html-report-merger — Merges multiple HTML reports into one
 - allure-pytest — Allure reporting
 - sphinx — Documentation generation
 - pytest-order — Test execution ordering
@@ -443,4 +468,23 @@ Generate a simple pytest HTML test report:
 Open the generated `tmdb_report.html` in your web browser to view the test results.
 ![sample_report](sample_report.png)
 
-Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/report/tmdb_full_report.html) to See the latest report
+### Docker Parallel Reports
+When running via `docker compose`, two separate reports are generated and then merged in CI:
+
+| Report                          | Source             |
+|---------------------------------|--------------------|
+| `tmdb_non_contract_report.html` | Integration tests  |
+| `tmdb_contract_report.html`     | Contract tests     |
+| `merged_tmdb_full_report.html`  | Combined (CI only) |
+
+Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/report/merged_tmdb_full_report.html) to see the latest merged report
+
+## Future Improvements
+
+* Allure reporting
+* Fake data library for data generation
+* pydantic for response validation
+* AI-based test generation
+* Load perf testing with Locust
+* Send test results to Grafana
+* Kubernetes-based orchestration for scaled parallel execution
