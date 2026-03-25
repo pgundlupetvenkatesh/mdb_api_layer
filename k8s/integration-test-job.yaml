@@ -31,12 +31,14 @@ spec:                           # The Job's specification — HOW it should run.
           envFrom:                # Inject environment variables from a K8s Secret.
             - secretRef:
                 name: tmdb-secrets  # The Secret name. Injects all keys from the Secret as env vars
-          command: ["pytest"]       # Override Dockerfile CMD.
+          command: [ "sh", "-c" ]   # Override Dockerfile CMD.
           args:
-            - "tests/"
-            - "--html=report/tmdb_non_contract_report.html"
-            - "--self-contained-html"
-            - "-v"
-            - "-s"
-            - "-m"
-            - "not contract"
+            - |
+              pytest tests/ \
+                --html=report/tmdb_non_contract_report.html \
+                --self-contained-html \
+                -v -s -m "not contract"; \
+              TEST_EXIT=$?; \
+              echo "Tests finished. Sleeping 60s for report extraction..."; \
+              sleep 60; \
+              exit $TEST_EXIT

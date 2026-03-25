@@ -482,7 +482,7 @@ When running via `docker compose`, two separate reports are generated and then m
 
 Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/report/merged_tmdb_full_report.html) to see the latest merged report
 
-## Running Tests in Kubernetes
+## Running Tests in Kubernetes(Optional)
 
 Tests can also run in Kubernetes for container orchestration. Both test suites run as parallel **Jobs** on your local 
 Docker Desktop K8s cluster.
@@ -507,17 +507,34 @@ kubectl apply -f k8s/integration-test-job.yaml -f k8s/contract-test-job.yaml
 # 4. Watch job status
 kubectl get jobs,pods -l app=tmdb-api-tests
 
-# 5. Stream logs
-kubectl logs -f job/integration-tests
-kubectl logs -f job/contract-tests
+# 5. Wait for pods to start running
+kubectl wait --for=condition=Ready pod -l suite=integration --timeout=300s
+kubectl wait --for=condition=Ready pod -l suite=contract --timeout=300s
 
-# 6. Copy reports from pods to local machine
-kubectl cp $(kubectl get pod -l suite=integration -o jsonpath='{.items[0].metadata.name}'):/app/report/tmdb_non_contract_report.html ./report/tmdb_non_contract_report.html
-kubectl cp $(kubectl get pod -l suite=contract -o jsonpath='{.items[0].metadata.name}'):/app/report/tmdb_contract_report.html ./report/tmdb_contract_report.html
+# 6. Poll for reports, then copy (within 60s sleep window)
+INT_POD=$(kubectl get pod -l suite=integration -o jsonpath='{.items[0].metadata.name}')
+until kubectl exec $INT_POD -- test -f /app/report/tmdb_non_contract_report.html 2>/dev/null; do
+  echo "Waiting for integration tests to finish..."
+  sleep 10
+done
+kubectl cp $INT_POD:/app/report/tmdb_non_contract_report.html ./report/tmdb_non_contract_report.html
 
-# 7. Cleanup
+CON_POD=$(kubectl get pod -l suite=contract -o jsonpath='{.items[0].metadata.name}')
+until kubectl exec $CON_POD -- test -f /app/report/tmdb_contract_report.html 2>/dev/null; do
+  echo "Waiting for contract tests to finish..."
+  sleep 10
+done
+kubectl cp $CON_POD:/app/report/tmdb_contract_report.html ./report/tmdb_contract_report.html
+
+# 7. Wait for jobs to finish, then stream logs
+kubectl wait --for=condition=complete --timeout=300s job/integration-tests job/contract-tests
+kubectl logs job/integration-tests
+kubectl logs job/contract-tests
+
+# 8. Cleanup
 kubectl delete job integration-tests contract-tests
 kubectl delete secret tmdb-secrets    # optional
+
 ```
 
 ### How It Works
