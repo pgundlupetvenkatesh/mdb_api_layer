@@ -1,0 +1,42 @@
+# Kubernetes Job for running integration tests (excludes contract tests).
+# Uses the same mdb-api-tests image built from the Dockerfile.
+# Secrets are injected via the tmdb-secrets Secret (created from .env).
+#
+# Usage:
+#   kubectl apply -f k8s/integration-test-job.yaml
+#   kubectl logs -f job/integration-tests
+#   kubectl cp integration-tests-<pod>:/app/report/tmdb_non_contract_report.html ./report/
+
+apiVersion: batch/v1
+kind: Job
+metadata:                       # Describes the Job itself
+  name: integration-tests       # Pod name
+  labels:
+    app: tmdb-api-tests
+    suite: integration
+spec:                           # The Job's specification — HOW it should run.
+  backoffLimit: 0               # Don't retry on failure — test failures are expected
+  ttlSecondsAfterFinished: 300  # Auto-delete the Job + Pod 300s (5 min) after it finishes. Prevents leftover pods.
+  template:                     # Pod template — describes the Pod that will run the tests
+    metadata:                   # Pod-level metadata.
+      labels:                   # Key-value tags for organizing/filtering resources
+        app: tmdb-api-tests
+        suite: integration
+    spec:                       # Pod specification — describes the container(s) and how to run them, what runs inside.
+      restartPolicy: Never      # If the container exits (pass or fail), don't restart it. Required for Jobs with backoffLimit: 0.
+      containers:               # List of containers in this Pod (just one here).
+        - name: integration-tests # Container name (for logs/debugging).
+          image: mdb-api-tests    # The Docker image to use.
+          imagePullPolicy: Never  # Use local Docker Desktop image
+          envFrom:                # Inject environment variables from a K8s Secret.
+            - secretRef:
+                name: tmdb-secrets  # The Secret name. Injects all keys from the Secret as env vars
+          command: ["pytest"]       # Override Dockerfile CMD.
+          args:
+            - "tests/"
+            - "--html=report/tmdb_non_contract_report.html"
+            - "--self-contained-html"
+            - "-v"
+            - "-s"
+            - "-m"
+            - "not contract"

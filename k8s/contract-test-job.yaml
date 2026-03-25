@@ -1,0 +1,43 @@
+# Kubernetes Job for running contract tests only.
+# Uses the same mdb-api-tests image built from the Dockerfile.
+# Secrets are injected via the tmdb-secrets Secret (created from .env).
+#
+# Usage:
+#   kubectl apply -f k8s/contract-test-job.yaml
+#   kubectl logs -f job/contract-tests
+#   kubectl cp contract-tests-<pod>:/app/report/tmdb_contract_report.html ./report/
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: contract-tests
+  labels:
+    app: tmdb-api-tests
+    suite: contract
+spec:
+  backoffLimit: 0           # Don't retry on failure — test failures are expected
+  ttlSecondsAfterFinished: 300  # Auto-cleanup pod 5 min after completion
+  template:
+    metadata:
+      labels:
+        app: tmdb-api-tests
+        suite: contract
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: contract-tests
+          image: mdb-api-tests
+          imagePullPolicy: Never    # Use local Docker Desktop image
+          envFrom:
+            - secretRef:
+                name: tmdb-secrets  # Injects all keys from the Secret as env vars
+          command: ["pytest"]
+          args:
+            - "tests/contracts/"
+            - "--html=report/tmdb_contract_report.html"
+            - "--self-contained-html"
+            - "-v"
+            - "-s"
+            - "-m"
+            - "contract"
+

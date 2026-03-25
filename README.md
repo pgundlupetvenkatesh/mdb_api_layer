@@ -256,6 +256,9 @@ mdb_api_layer/
 ├── Dockerfile                  # Docker image definition for containerized test runs
 ├── docker-compose.yml          # Docker Compose config for local containerized runs
 ├── pyproject.toml              # Poetry configuration & pytest settings
+├── k8s/                        # Kubernetes Job manifests for test orchestration
+│   ├── integration-test-job.yaml
+│   └── contract-test-job.yaml
 ├── poetry.lock
 └── README.md
 ```
@@ -479,6 +482,63 @@ When running via `docker compose`, two separate reports are generated and then m
 
 Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/report/merged_tmdb_full_report.html) to see the latest merged report
 
+## Running Tests in Kubernetes
+
+Tests can also run in Kubernetes for container orchestration. Both test suites run as parallel **Jobs** on your local 
+Docker Desktop K8s cluster.
+
+### Prerequisites
+- Docker Desktop with [Kubernetes enabled](https://docs.docker.com/desktop/kubernetes/)
+- `kubectl` CLI configured (`kubectl cluster-info` should respond)
+
+### Step-by-step
+
+```bash
+# 1. Build the image (K8s uses local Docker images)
+docker build -t mdb-api-tests .
+
+# 2. Create and check a Secret k8 object from your .env file (one-time setup)
+kubectl create secret generic tmdb-secrets --from-env-file=.env
+kubectl get secret tmdb-secrets
+
+# 3. Launch both test jobs in parallel
+kubectl apply -f k8s/integration-test-job.yaml -f k8s/contract-test-job.yaml
+
+# 4. Watch job status
+kubectl get jobs,pods -l app=tmdb-api-tests
+
+# 5. Stream logs
+kubectl logs -f job/integration-tests
+kubectl logs -f job/contract-tests
+
+# 6. Copy reports from pods to local machine
+kubectl cp $(kubectl get pod -l suite=integration -o jsonpath='{.items[0].metadata.name}'):/app/report/tmdb_non_contract_report.html ./report/tmdb_non_contract_report.html
+kubectl cp $(kubectl get pod -l suite=contract -o jsonpath='{.items[0].metadata.name}'):/app/report/tmdb_contract_report.html ./report/tmdb_contract_report.html
+
+# 7. Cleanup
+kubectl delete job integration-tests contract-tests
+kubectl delete secret tmdb-secrets    # optional
+```
+
+### How It Works
+
+```
+k8s/
+├── integration-test-job.yaml   → Job: pytest tests/ -m "not contract"
+└── contract-test-job.yaml      → Job: pytest tests/contracts/ -m contract
+
+.env → kubectl create secret → tmdb-secrets (K8s Secret)
+                                    ↓
+                          envFrom: secretRef
+                                    ↓
+                    ┌───────────────────────────────────┐
+                    │         mdb-api-tests image       │
+                    ├──────────────┬────────────────────┤
+                    │ integration  │    contract        │
+                    │ tests Job    │    tests Job       │
+                    └──────────────┴────────────────────┘
+```
+
 ## Future Improvements
 
 * Allure reporting
@@ -487,4 +547,3 @@ Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/report/merged_t
 * AI-based test generation
 * Load perf testing with Locust
 * Send test results to Grafana
-* Kubernetes-based orchestration for scaled parallel execution
