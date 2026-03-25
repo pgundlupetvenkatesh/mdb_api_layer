@@ -256,6 +256,9 @@ mdb_api_layer/
 ├── Dockerfile                  # Docker image definition for containerized test runs
 ├── docker-compose.yml          # Docker Compose config for local containerized runs
 ├── pyproject.toml              # Poetry configuration & pytest settings
+├── k8s/                        # Kubernetes Job manifests for test orchestration
+│   ├── integration-test-job.yaml
+│   └── contract-test-job.yaml
 ├── poetry.lock
 └── README.md
 ```
@@ -479,6 +482,39 @@ When running via `docker compose`, two separate reports are generated and then m
 
 Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/report/merged_tmdb_full_report.html) to see the latest merged report
 
+## Running Tests in Kubernetes(Optional)
+
+Tests can also run in Kubernetes for container orchestration. Both test suites run as parallel **Jobs** on your local 
+Docker Desktop K8s cluster.
+
+### Prerequisites
+- Docker Desktop with [Kubernetes enabled](https://docs.docker.com/desktop/kubernetes/)
+- `kubectl` CLI configured (`kubectl cluster-info` should respond)
+
+### Step-by-step
+
+Run the [run_k8s_tests.sh](./run_k8s_tests.sh) file to execute k8 commands in sequence.
+Feel free to see the step-by-step commands in the script.
+
+### How It Works
+
+```
+k8s/
+├── integration-test-job.yaml   → Job: pytest tests/ -m "not contract"
+└── contract-test-job.yaml      → Job: pytest tests/contracts/ -m contract
+
+.env → kubectl create secret → tmdb-secrets (K8s Secret)
+                                    ↓
+                          envFrom: secretRef
+                                    ↓
+                    ┌───────────────────────────────────┐
+                    │         mdb-api-tests image       │
+                    ├──────────────┬────────────────────┤
+                    │ integration  │    contract        │
+                    │ tests Job    │    tests Job       │
+                    └──────────────┴────────────────────┘
+```
+
 ## Future Improvements
 
 * Allure reporting
@@ -487,4 +523,3 @@ Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/report/merged_t
 * AI-based test generation
 * Load perf testing with Locust
 * Send test results to Grafana
-* Kubernetes-based orchestration for scaled parallel execution
