@@ -493,49 +493,8 @@ Docker Desktop K8s cluster.
 
 ### Step-by-step
 
-```bash
-# 1. Build the image (K8s uses local Docker images)
-docker build -t mdb-api-tests .
-
-# 2. Create and check a Secret k8 object from your .env file (one-time setup)
-kubectl create secret generic tmdb-secrets --from-env-file=.env
-kubectl get secret tmdb-secrets
-
-# 3. Launch both test jobs in parallel
-kubectl apply -f k8s/integration-test-job.yaml -f k8s/contract-test-job.yaml
-
-# 4. Watch job status
-kubectl get jobs,pods -l app=tmdb-api-tests
-
-# 5. Wait for pods to start running
-kubectl wait --for=condition=Ready pod -l suite=integration --timeout=300s
-kubectl wait --for=condition=Ready pod -l suite=contract --timeout=300s
-
-# 6. Poll for reports, then copy (within 60s sleep window)
-INT_POD=$(kubectl get pod -l suite=integration -o jsonpath='{.items[0].metadata.name}')
-until kubectl exec $INT_POD -- test -f /app/report/tmdb_non_contract_report.html 2>/dev/null; do
-  echo "Waiting for integration tests to finish..."
-  sleep 10
-done
-kubectl cp $INT_POD:/app/report/tmdb_non_contract_report.html ./report/tmdb_non_contract_report.html
-
-CON_POD=$(kubectl get pod -l suite=contract -o jsonpath='{.items[0].metadata.name}')
-until kubectl exec $CON_POD -- test -f /app/report/tmdb_contract_report.html 2>/dev/null; do
-  echo "Waiting for contract tests to finish..."
-  sleep 10
-done
-kubectl cp $CON_POD:/app/report/tmdb_contract_report.html ./report/tmdb_contract_report.html
-
-# 7. Wait for jobs to finish, then stream logs
-kubectl wait --for=condition=complete --timeout=300s job/integration-tests job/contract-tests
-kubectl logs job/integration-tests
-kubectl logs job/contract-tests
-
-# 8. Cleanup
-kubectl delete job integration-tests contract-tests
-kubectl delete secret tmdb-secrets    # optional
-
-```
+Run the [run_k8s_tests.sh](./run_k8s_tests.sh) file to execute k8 commands in sequence.
+Feel free to see the step-by-step commands in the script.
 
 ### How It Works
 
