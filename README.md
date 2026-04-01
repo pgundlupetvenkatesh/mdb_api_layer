@@ -318,7 +318,7 @@ start 2 containers in parallel
   ↓
 reports saved to ./report/
 
-# Run in detached mode
+# Run in detached mode - Run in background
 docker compose up --build -d
 
 # View logs for a specific service

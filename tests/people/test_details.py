@@ -1,5 +1,4 @@
 import pytest
-from jsonschema import validate
 from loguru import logger
 
 from config.config import Config
@@ -51,7 +50,7 @@ class TestDetails(FieldAssertions):
         self.assert_float_field(res_body, 'popularity')
 
         # Validate against JSON schema
-        validate(instance=res_body, schema=load_schema('person_details_schema'))
+        load_schema('person_details_schema').model_validate(res_body)
 
     @pytest.mark.parametrize('invalid_person_details', TEST_DATA['get_person_details']['invalid'])
     def test_get_person_details_invalid(self, get_api_instance, load_schema, invalid_person_details):
@@ -83,4 +82,4 @@ class TestDetails(FieldAssertions):
 
         if 'success' in res_body:
             assert res_body['success'] is False, f"{self._test_name}: Expected 'success' to be False for invalid person ID"
-            validate(instance=res_body, schema=load_schema('generic_schema'))
+            load_schema('generic_schema').model_validate(res_body)

@@ -19,8 +19,6 @@ Usage:
 """
 
 import pytest
-from jsonschema import validate
-from loguru import logger
 
 from config.config import Config
 from tests.data.data_loader import load_test_data
@@ -85,7 +83,7 @@ class TestMoviesAPI(FieldAssertions):
             self.assert_float_field(it, 'vote_average', idx)
 
         # Validate response against JSON schema
-        validate(instance=res_body, schema=load_schema('popular_movies_schema'))
+        load_schema('popular_movies_schema').model_validate(res_body)
 
     @pytest.mark.parametrize('invalid_test', TEST_DATA['popular_movies']['invalid'])
     def test_get_popular_movies_invalid(self, get_api_instance, load_schema, invalid_test):
@@ -114,4 +112,4 @@ class TestMoviesAPI(FieldAssertions):
         })
         assert res_body['status_message'] == invalid_test['expected_message']
 
-        validate(instance=res_body, schema=load_schema('generic_schema'))
+        load_schema('generic_schema').model_validate(res_body)

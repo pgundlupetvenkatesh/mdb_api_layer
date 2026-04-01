@@ -1,5 +1,4 @@
 import pytest
-from jsonschema import validate
 from loguru import logger
 
 from config.config import Config
@@ -51,7 +50,7 @@ class TestUpdate(FieldAssertions):
 
         if 'success' in res_json:
             assert res_json['success'] is True, "Rating should be added successfully. Its false now"
-            validate(instance=res_json, schema=load_schema('generic_schema'))
+            load_schema('generic_schema').model_validate(res_json)
 
     @pytest.mark.parametrize('update_list_invalid', TEST_DATA['update_list']['invalid'])
     def test_update_list_description_invalid(self, get_api_instance, load_schema, update_list_invalid):
@@ -77,4 +76,4 @@ class TestUpdate(FieldAssertions):
 
         if 'success' in res_json:
             assert res_json['success'] is False, "Rating should not be added successfully. Its true now"
-            validate(instance=res_json, schema=load_schema('generic_schema'))
+            load_schema('generic_schema').model_validate(res_json)
