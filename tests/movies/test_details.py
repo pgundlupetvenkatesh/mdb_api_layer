@@ -19,7 +19,6 @@ Usage:
 """
 
 import pytest
-from jsonschema import validate
 from loguru import logger
 
 from config.config import Config
@@ -93,7 +92,7 @@ class TestDetails(FieldAssertions):
 
         # load_schema is a fixture from conftest.py
         # Validate response against JSON schema
-        validate(instance=res_body, schema=load_schema('movie_schema'))
+        load_schema('movie_schema').model_validate(res_body)
 
     @pytest.mark.parametrize('invalid_test', TEST_DATA['get_movie_details']['invalid'])
     def test_get_invalid_movie_details(self, get_api_instance, load_schema, invalid_test):
@@ -125,4 +124,4 @@ class TestDetails(FieldAssertions):
         })
         assert res_body['status_message'] == invalid_test['expected_message']
 
-        validate(instance=res_body, schema=load_schema('generic_schema'))
+        load_schema('generic_schema').model_validate(res_body)

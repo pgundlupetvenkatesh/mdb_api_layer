@@ -1,5 +1,4 @@
 import pytest
-from jsonschema import validate
 from loguru import logger
 
 from config.config import Config
@@ -54,7 +53,7 @@ class TestAddRating(FieldAssertions):
 
         if 'success' in res_json:
             assert res_json['success'] is True, "Rating should be added successfully. Its false now"
-            validate(instance=res_json, schema=load_schema('add_delete_rating_schema'))
+            load_schema('add_delete_rating_schema').model_validate(res_json)
 
     @pytest.mark.parametrize('add_invalid_rating', TEST_DATA['add_rating']['invalid'])
     def test_add_rating_unauthenticated(self, load_schema, get_api_instance, add_invalid_rating):
@@ -87,4 +86,4 @@ class TestAddRating(FieldAssertions):
         assert res_json['status_message'] in add_invalid_rating['expected_message'], \
             f"Unexpected message: '{res_json['status_message']}' not in {add_invalid_rating['expected_message']}"
 
-        validate(instance=res_json, schema=load_schema('generic_schema'))
+        load_schema('generic_schema').model_validate(res_json)

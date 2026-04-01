@@ -42,6 +42,7 @@ def configure_logging():
     # Always log to stderr
     logger.add(
         sys.stderr,
+        # 2026-03-25 23:01:32 | INFO | tests.people.test_details: test_get_person_details:22 - Random person ID picked: 7
         format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
         level=log_level,
         colorize=True

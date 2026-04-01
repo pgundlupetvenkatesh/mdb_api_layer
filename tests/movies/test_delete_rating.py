@@ -1,5 +1,4 @@
 import pytest
-from jsonschema import validate
 from loguru import logger
 
 from config.config import Config
@@ -54,7 +53,7 @@ class TestDeleteRating(FieldAssertions):
 
         if 'success' in res_json:
             assert res_json['success'] is True, "Rating should be deleted successfully. Its false now"
-            validate(instance=res_json, schema=load_schema('add_delete_rating_schema'))
+            load_schema('add_delete_rating_schema').model_validate(res_json)
 
     @pytest.mark.parametrize('delete_invalid_rating', TEST_DATA['delete_rating']['invalid'])
     def test_delete_invalid_rating(self, get_api_instance, load_schema, delete_invalid_rating):
@@ -93,4 +92,4 @@ class TestDeleteRating(FieldAssertions):
 
         if 'success' in res_json:
             assert res_json['success'] is False, "Rating should be deleted successfully. Its false now"
-            validate(instance=res_json, schema=load_schema('add_delete_rating_schema'))
+            load_schema('add_delete_rating_schema').model_validate(res_json)

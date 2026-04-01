@@ -318,7 +318,7 @@ start 2 containers in parallel
   ↓
 reports saved to ./report/
 
-# Run in detached mode
+# Run in detached mode - Run in background
 docker compose up --build -d
 
 # View logs for a specific service
@@ -519,7 +519,6 @@ k8s/
 
 * Allure reporting
 * Fake data library for data generation
-* pydantic for response validation
 * AI-based test generation
 * Load perf testing with Locust
 * Send test results to Grafana

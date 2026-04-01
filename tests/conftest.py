@@ -115,25 +115,31 @@ def get_api_instance():
 
     yield _create
 
+from tests.schemas.models import (
+    GenericResponse, RatingResponse, MovieDetails,
+    PopularMoviesResponse, PersonDetails
+)
+
 @pytest.fixture
 def load_schema():
     """
-    Fixture that provides a schema loader function for JSON schema validation.
+    Fixture that provides a Pydantic model loader for response validation.
 
-    Returns a callable that loads JSON schema files from the 'tests/schemas'
-    directory. Used to validate API responses against expected structures.
-
-    :return: A function that accepts a schema name (without extension) and
-             returns the parsed JSON schema as a dictionary.
-
-    Usage:
-        def test_example(load_schema):
-            schema = load_schema('movie_schema')
-            validate(instance=response.data, schema=schema)
+    Returns a callable that maps schema names to Pydantic model classes.
     """
+    schema_map = {
+        'generic_schema': GenericResponse,
+        'add_delete_rating_schema': RatingResponse,
+        'movie_schema': MovieDetails,
+        'popular_movies_schema': PopularMoviesResponse,
+        'person_details_schema': PersonDetails,
+    }
+
     def _load(name):
-        schema_path = Path(__file__).parent / "schemas" / f"{name}.json"
-        return json.loads(schema_path.read_text())
+        model = schema_map.get(name)
+        if model is None:
+            raise ValueError(f"Unknown schema: {name}")
+        return model
     return _load
 
 @pytest.fixture(scope="session")
