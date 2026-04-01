@@ -519,7 +519,6 @@ k8s/
 
 * Allure reporting
 * Fake data library for data generation
-* pydantic for response validation
 * AI-based test generation
 * Load perf testing with Locust
 * Send test results to Grafana
