@@ -1350,23 +1350,8 @@ test, allowing for more flexible test design.</p>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-prename descclassname"><span class="pre">tests.conftest.</span></span><span class="sig-name descname"><span class="pre">load_schema</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Fixture that provides a schema loader function for JSON schema validation.</p>
-<p>Returns a callable that loads JSON schema files from the ‘tests/schemas’
-directory. Used to validate API responses against expected structures.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A function that accepts a schema name (without extension) and
-returns the parsed JSON schema as a dictionary.</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>Usage:</dt><dd><dl class="simple">
-<dt>def test_example(load_schema):</dt><dd><p>schema = load_schema(‘movie_schema’)
-validate(instance=response.data, schema=schema)</p>
-</dd>
-</dl>
-</dd>
-</dl>
+<dd><p>Fixture that provides a Pydantic model loader for response validation.</p>
+<p>Returns a callable that maps schema names to Pydantic model classes.</p>
 </dd></dl>
 
 <dl class="py function">
