@@ -517,8 +517,6 @@ k8s/
 
 ## Future Improvements
 
-* Allure reporting
-* Fake data library for data generation
 * AI-based test generation
 * Load perf testing with Locust
 * Send test results to Grafana

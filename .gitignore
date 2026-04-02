@@ -213,3 +213,6 @@ assets/
 
 # Log files
 logs/*.log
+
+# Allure
+allure-results/
