@@ -9,6 +9,7 @@ x-common-config: &common-config
     - .env  # Load all env vars from your .env file
   volumes:
     - ./report:/app/report  # Mount report dir so HTML persists
+    - ./allure-results:/app/allure-results  # Mount allure-results for Allure report generation
 
 services:
   integration_tests:
@@ -18,6 +19,7 @@ services:
       pytest tests/
       --html=report/tmdb_non_contract_report.html
       --self-contained-html
+      --alluredir=allure-results/integration
       -v -s -m "not contract"
 
   contract_tests:
@@ -27,4 +29,5 @@ services:
       pytest tests/contracts/
       --html=report/tmdb_contract_report.html
       --self-contained-html
+      --alluredir=allure-results/contract
       -v -s -m contract

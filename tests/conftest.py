@@ -194,3 +194,25 @@ def pytest_html_results_summary(prefix, summary, postfix):
         "  <p style='color: #666;'>Failure logs are archived in the /logs workspace directory.</p>",
         "</div>"
     ])
+
+def pytest_sessionfinish(session, exitstatus):
+    """Write Allure environment properties from actual runtime config."""
+    allure_dir = session.config.getoption("--alluredir", default=None)
+
+    if allure_dir:
+        # Copy categories.json
+        import shutil
+        allure_dir = Path(allure_dir)
+        categories_file = Path(__file__).parent / "allure" / "categories.json"
+        if categories_file.exists():
+            shutil.copy(str(categories_file), str(allure_dir / "categories.json"))
+
+        # Write environment.properties with actual runtime config values
+        from config.config import Config
+        (allure_dir / "environment.properties").write_text(
+            f"Base.URL={Config.BASE_URL}\n"
+            f"API.Version={Config.API_VERSION}\n"
+            f"Timeout={Config.TIMEOUT}\n"
+            f"Log.Level={os.environ.get('LOG_LEVEL', 'INFO')}\n"
+            f"Framework=pytest\n"
+        )

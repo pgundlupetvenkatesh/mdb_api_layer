@@ -216,3 +216,4 @@ logs/*.log
 
 # Allure
 allure-results/
+allure-report/
