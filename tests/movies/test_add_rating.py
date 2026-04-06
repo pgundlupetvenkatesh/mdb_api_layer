@@ -1,3 +1,4 @@
+import allure
 import pytest
 from loguru import logger
 
@@ -8,6 +9,8 @@ from tests.helpers import *
 TEST_DATA = load_test_data("test_data.yaml")
 """Module-level test data loaded once at import time for parametrization."""
 
+@allure.epic("TMDB API")
+@allure.feature("Movies")
 class TestAddRating(FieldAssertions):
     """
     Test class for Movies API add_rating endpoint validation.
@@ -17,6 +20,8 @@ class TestAddRating(FieldAssertions):
     status codes, headers, response time, and body structure.
     """
 
+    @allure.story("Add Movie Rating")
+    @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.order(1)
     @pytest.mark.parametrize('add_valid_rating', TEST_DATA['add_rating']['valid'])
     def test_add_rating(self, get_api_instance, load_schema, add_valid_rating):
@@ -33,28 +38,37 @@ class TestAddRating(FieldAssertions):
         """
         movie_id = pick_random_movie_id()
         rating = add_valid_rating['rating_payload']['value']
+        allure.dynamic.title(f"Add rating {rating} for movie ID: {movie_id}")
         logger.info(f"Testing add_rating for movie_id: {movie_id} with rating: {rating}")
         movies_api = get_api_instance('movies_api')
-        response = movies_api.add_rating(movie_id, rating, query_params=Config.SESSION_ID)
-        res_json = response.data
 
-        assert_http_response(response, {
-            'exp_status_code': add_valid_rating['status_code'],
-            'exp_max_elp_seconds': add_valid_rating['exp_max_elp_secs'],
-            'exp_req_method': add_valid_rating['exp_post_req_method'],
-            'exp_content_type': add_valid_rating['exp_content_type'],
-            'exp_url_contains': str(movie_id),
-            'exp_req_reason': add_valid_rating['reason']
-        })
+        with allure.step(f"Send Add(POST) rating request for movie ID {movie_id}"):
+            response = movies_api.add_rating(movie_id, rating, query_params=Config.SESSION_ID)
+            res_json = response.data
 
-        self.assert_bool_field(res_json, 'success')
-        self.assert_int_field(res_json, 'status_code')
-        self.assert_str_field(res_json, 'status_message')
+        with allure.step("Validate HTTP response metadata"):
+            assert_http_response(response, {
+                'exp_status_code': add_valid_rating['status_code'],
+                'exp_max_elp_seconds': add_valid_rating['exp_max_elp_secs'],
+                'exp_req_method': add_valid_rating['exp_post_req_method'],
+                'exp_content_type': add_valid_rating['exp_content_type'],
+                'exp_url_contains': str(movie_id),
+                'exp_req_reason': add_valid_rating['reason']
+            })
+
+        with allure.step("Validate response structure"):
+            self.assert_bool_field(res_json, 'success')
+            self.assert_int_field(res_json, 'status_code')
+            self.assert_str_field(res_json, 'status_message')
 
         if 'success' in res_json:
             assert res_json['success'] is True, "Rating should be added successfully. Its false now"
-            load_schema('add_delete_rating_schema').model_validate(res_json)
 
+            with allure.step("Validate against Pydantic schema"):
+                load_schema('add_delete_rating_schema').model_validate(res_json)
+
+    @allure.story("Add Movie Rating Unauthenticated")
+    @allure.severity(allure.severity_level.NORMAL)
     @pytest.mark.parametrize('add_invalid_rating', TEST_DATA['add_rating']['invalid'])
     def test_add_rating_unauthenticated(self, load_schema, get_api_instance, add_invalid_rating):
         """
@@ -69,21 +83,25 @@ class TestAddRating(FieldAssertions):
         """
         movie_id = add_invalid_rating['movie_id']
         rating = add_invalid_rating['rating_payload']['value']
+        allure.dynamic.title(f"Add rating {rating} for movie ID: {movie_id}")
         logger.info(f"Testing add_rating for movie_id: {movie_id} with invalid rating: {rating}")
         movies_api = get_api_instance('movies_api')
-        response = movies_api.add_rating(movie_id, rating, query_params=Config.SESSION_ID)
-        res_json = response.data
 
-        assert_http_response(response, {
-            'exp_status_code': add_invalid_rating['status_code_bad_req'],
-            'exp_max_elp_seconds': add_invalid_rating['exp_max_elp_secs'],
-            'exp_req_method': add_invalid_rating['exp_post_req_method'],
-            'exp_content_type': add_invalid_rating['exp_content_type'],
-            'exp_url_contains': str(movie_id),
-            'exp_req_reason': add_invalid_rating['reason']
-        })
+        with allure.step(f"Send Add(POST) rating request for movie ID {movie_id}"):
+            response = movies_api.add_rating(movie_id, rating, query_params=Config.SESSION_ID)
+            res_json = response.data
 
-        assert res_json['status_message'] in add_invalid_rating['expected_message'], \
-            f"Unexpected message: '{res_json['status_message']}' not in {add_invalid_rating['expected_message']}"
+        with allure.step("Validate HTTP response metadata"):
+            assert_http_response(response, {
+                'exp_status_code': add_invalid_rating['status_code_bad_req'],
+                'exp_max_elp_seconds': add_invalid_rating['exp_max_elp_secs'],
+                'exp_req_method': add_invalid_rating['exp_post_req_method'],
+                'exp_content_type': add_invalid_rating['exp_content_type'],
+                'exp_url_contains': str(movie_id),
+                'exp_req_reason': add_invalid_rating['reason']
+            })
+            assert res_json['status_message'] in add_invalid_rating['expected_message'], \
+                f"Unexpected message: '{res_json['status_message']}' not in {add_invalid_rating['expected_message']}"
 
-        load_schema('generic_schema').model_validate(res_json)
+        with allure.step("Validate against Pydantic schema"):
+            load_schema('generic_schema').model_validate(res_json)

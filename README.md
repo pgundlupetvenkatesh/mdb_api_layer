@@ -290,9 +290,16 @@ poetry run pytest tests/ -v -s --log-to-file
 # Run with HTML report
 poetry run pytest tests/ --html=report/tmdb_report.html --self-contained-html -v -s
 
-# Run with Allure reporting
-poetry run pytest tests/ --alluredir=allure-results
+# Clean run with Allure reporting
+rm -rf allure-results && poetry run pytest tests/ --alluredir=allure-results -v && allure serve allure-results
+# View report (requires Allure CLI installed locally: brew install allure)
 allure serve allure-results
+
+# Generate static HTML from results. allure-report/ contains a full static site
+allure generate allure-results -o allure-report --clean
+
+# Keep history between local runs
+cp -r allure-report/history allure-results/ 2>/dev/null || true
 ```
 
 ## Running Tests in Docker
@@ -517,8 +524,6 @@ k8s/
 
 ## Future Improvements
 
-* Allure reporting
-* Fake data library for data generation
 * AI-based test generation
 * Load perf testing with Locust
 * Send test results to Grafana

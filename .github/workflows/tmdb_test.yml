@@ -58,8 +58,10 @@ jobs:
 
     # Create the report directory on the runner's filesystem
     # (needed for the volume mount — Docker won't create it automatically)
-    - name: Create report directory
-      run: mkdir -p report
+    - name: Create report directories
+      run: |
+        mkdir -p report
+        mkdir -p allure-results
 
     # Write secrets into a temporary .env file for docker compose.
     # docker-compose.yml reads env_file: .env, so secrets are passed
@@ -94,9 +96,14 @@ jobs:
 
     # List report files for debugging — helps verify both test
     # containers produced their HTML before the merge step runs.
-    - name: List report files
+    # Fix permissions on Docker-created directories. Docker runs as root,
+    # so mounted volumes are root-owned. The runner user needs write access for subsequent steps.
+    - name: List report files & Fix Docker output permissions
       if: always()
-      run: ls -la report/
+      run: |
+        sudo chown -R $USER:$USER allure-results/ report/
+        ls -la report/
+        ls -la allure-results/
 
     # Merge individual HTML reports into a single combined report.
     # Runs inside the Docker image because pytest-html-report-merger
@@ -135,6 +142,71 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./report # Deploy report directory to the remote GHP branch
         destination_dir: report # Destination subDir on a publishing branch
+        keep_files: true
+
+    # Write Allure executor metadata for CI context
+    # Creates executor.json directly inside each allure-results subdirectory
+    # so Allure knows which CI build produced the results.
+    - name: Write Allure executor info
+      if: always()
+      run: |
+        for dir in allure-results/integration allure-results/contract; do
+          if [ -d "$dir" ]; then
+            echo "Writing executor.json to $dir"
+            cat > "$dir/executor.json" <<'EXECUTOR'
+        {
+          "name": "GitHub Actions",
+          "type": "github",
+          "buildName": "${{ github.workflow }} #${{ github.run_number }}",
+          "buildUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+          "reportUrl": "https://pgundlupetvenkatesh.github.io/mdb_api_layer/allure/index.html"
+        }
+        EXECUTOR
+          fi
+        done
+
+    # Install Allure CLI on the runner
+    - name: Install Allure CLI
+      if: always() && github.event_name == 'push'
+      run: |
+        curl -sL https://github.com/allure-framework/allure2/releases/download/2.30.0/allure-2.30.0.tgz | tar -xz
+        echo "$PWD/allure-2.30.0/bin" >> $GITHUB_PATH
+
+    # Merge allure-results from both containers into one directory,
+    # then download previous history from gh-pages for trend charts.
+    # Order matters: merge results first, then add history on top.
+    - name: Prepare Allure results & history
+      if: always() && github.event_name == 'push'
+      run: |
+        # 1. Merge results from both test containers
+        mkdir -p allure-results-merged
+        cp -r allure-results/integration/* allure-results-merged/ 2>/dev/null || true
+        cp -r allure-results/contract/* allure-results-merged/ 2>/dev/null || true
+        echo "=== Merged allure results ==="
+        ls -la allure-results-merged/
+        
+        # 2. Download previous Allure history from gh-pages (for trend data)
+        git fetch origin gh-pages --depth=1 || true
+        mkdir -p allure-results-merged/history
+        for file in history-trend.json history.json categories-trend.json duration-trend.json retry-trend.json; do
+          git show "origin/gh-pages:allure/history/$file" > "allure-results-merged/history/$file" 2>/dev/null || true
+        done
+        echo "=== Allure history files ==="
+        ls -la allure-results-merged/history/ || echo "No history yet (first run)"
+
+    # Generate static Allure report from the merged results + history.
+    - name: Generate Allure Report
+      if: always() && github.event_name == 'push'
+      run: allure generate allure-results-merged -o allure-report --clean
+
+    # Deploy Allure report to GitHub Pages under /allure
+    - name: Deploy Allure report to GitHub Pages
+      if: always() && github.event_name == 'push'
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./allure-report
+        destination_dir: allure
         keep_files: true
 
     # Fail the workflow if tests failed (after report is deployed)

@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Product Defects",
+    "description": "API returned unexpected response",
+    "matchedStatuses": ["failed"]
+  },
+  {
+    "name": "Test Defects",
+    "description": "Test code errors (broken fixtures, import errors)",
+    "matchedStatuses": ["broken"]
+  },
+  {
+    "name": "Skipped Tests",
+    "description": "Tests that were skipped",
+    "matchedStatuses": ["skipped"]
+  }
+]

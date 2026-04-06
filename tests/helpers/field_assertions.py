@@ -34,7 +34,10 @@ class FieldAssertions:
             assert len(data[field]) == 2, f"{self._test_name}: Index {idx} {field} should be 2-char code"
 
         if field in ['overview', 'origin_country', 'place_of_birth', 'biography']:
-            # These fields can be empty/null, so only validate its type (done below)
+            if data[field] is None:
+                return
+
+            # These fields can be empty, so only validate its type (done below)
             pass
         else:
             assert len(data[field]) > 0, f"{self._test_name}: Index {idx} {field} should not be empty"
