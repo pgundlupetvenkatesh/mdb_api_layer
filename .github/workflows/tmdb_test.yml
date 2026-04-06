@@ -96,9 +96,14 @@ jobs:
 
     # List report files for debugging — helps verify both test
     # containers produced their HTML before the merge step runs.
-    - name: List report files
+    # Fix permissions on Docker-created directories. Docker runs as root,
+    # so mounted volumes are root-owned. The runner user needs write access for subsequent steps.
+    - name: List report files & Fix Docker output permissions
       if: always()
-      run: ls -la report/
+      run: |
+        sudo chown -R $USER:$USER allure-results/ report/
+        ls -la report/
+        ls -la allure-results/
 
     # Merge individual HTML reports into a single combined report.
     # Runs inside the Docker image because pytest-html-report-merger
