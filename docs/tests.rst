@@ -1,46 +1,6 @@
 Tests Module
 ============
 
-Test Data & Schema Files
-------------------------
-The test suite uses the following data and schema files:
-
-* ``tests/data/test_data.yaml`` - Test cases for Movies API
-* ``tests/schemas/movie_schema.json`` - JSON schema for response validation
-* ``tests/schemas/popular_movies_schema.json`` - JSON schema for popular movies response validation
-* ``tests/schemas/add_delete_rating_schema.json`` - JSON schema for adding and deleting movie rating response validation
-* ``tests/schemas/person_details_schema.json`` - JSON schema for person details response validation
-
-Movies Test Data
-~~~~~~~~~~~~~~~~
-.. literalinclude:: ../tests/data/test_data.yaml
-   :language: yaml
-   :caption: test_data.yaml
-
-Movie Schema
-~~~~~~~~~~~~
-.. literalinclude:: ../tests/schemas/movie_schema.json
-   :language: json
-   :caption: movie_schema.json
-
-Popular Movie Schema
-~~~~~~~~~~~~~~~~~~~~
-.. literalinclude:: ../tests/schemas/popular_movies_schema.json
-   :language: json
-   :caption: popular_movie_schema.json
-
-Add Rating Schema
-~~~~~~~~~~~~~~~~~
-.. literalinclude:: ../tests/schemas/person_details_schema.json
-   :language: json
-   :caption: person_details_schema.json
-
-Person Details Schema
-~~~~~~~~~~~~~~~~~~~~~
-.. literalinclude:: ../tests/schemas/add_delete_rating_schema.json
-   :language: json
-   :caption: add_delete_rating_schema.json
-
 Contracts
 ---------
 .. automodule:: tests.contracts.test_movie_details
@@ -63,6 +23,12 @@ Data
    :undoc-members:
    :show-inheritance:
 
+* ``tests/data/test_data.yaml`` - Test cases for Movies API
+
+.. literalinclude:: ../tests/data/test_data.yaml
+   :language: yaml
+   :caption: test_data.yaml
+
 Helpers
 -------
 .. automodule:: tests.helpers.response_assertions
@@ -83,6 +49,22 @@ Helpers
    :undoc-members:
    :show-inheritance:
 
+Lists
+-----------
+.. automodule:: tests.lists.test_update
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Movie Lists
+-----------
+.. automodule:: tests.movie_lists.test_popular
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Pacts
 -----
 .. literalinclude:: ../tests/pacts/test_movie_details-api_pvd.json
@@ -93,7 +75,6 @@ Pacts
    :language: json
    :caption: test_popular_movies-api_pvd.json
 
-
 Conftest
 --------
 .. automodule:: tests.conftest
@@ -102,17 +83,37 @@ Conftest
    :undoc-members:
    :show-inheritance:
 
-Test Movies
+Movies
 -----------
-.. automodule:: tests.test_movies
+.. automodule:: tests.movies.test_add_rating
    :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
-Test People
+.. automodule:: tests.movies.test_delete_rating
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: tests.movies.test_details
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+People
 -----------
 .. automodule:: tests.people.test_details
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Schema
+~~~~~~~~~~~~
+.. automodule:: tests.schemas.models
    :no-index:
    :members:
    :undoc-members:

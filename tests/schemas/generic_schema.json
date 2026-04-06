@@ -1,9 +1,0 @@
-{
-  "type": "object",
-  "properties": {
-    "status_message": { "type": "string" },
-    "success": { "type": "boolean" },
-    "status_code": { "type": "integer" }
-  },
-  "required": ["status_message", "success", "status_code"]
-}
