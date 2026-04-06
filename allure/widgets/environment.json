@@ -1,0 +1,1 @@
+[{"values":["https://api.themoviedb.org"],"name":"Base.URL"},{"values":["3"],"name":"API.Version"},{"values":["30"],"name":"Timeout"},{"values":["INFO"],"name":"Log.Level"},{"values":["pytest"],"name":"Framework"}]
