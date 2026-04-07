@@ -18,3 +18,4 @@ documentation for details.
    api
    config
    tests
+   k8s
