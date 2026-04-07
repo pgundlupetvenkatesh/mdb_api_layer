@@ -469,7 +469,7 @@ Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/docs/index.html
 
 ## Reports
 
-### HTML Report
+### Pytest HTML Report
 ```bash
 poetry run pytest tests/ --html=report/tmdb_report.html --self-contained-html -v -s
 ```
@@ -477,6 +477,15 @@ poetry run pytest tests/ --html=report/tmdb_report.html --self-contained-html -v
 Generate a simple pytest HTML test report:
 Open the generated `tmdb_report.html` in your web browser to view the test results.
 ![sample_report](sample_report.png)
+
+### Allure Report
+```bash
+# Generate Allure results
+poetry run pytest tests/ --alluredir=allure-results -v
+```
+`--alluredir` option tells pytest to save the test results in a format that Allure can process.
+See [Running Tests](#running-tests) section for more Allure details.
+![sample_allure_report](sample_allure_report.png)
 
 ### Docker Parallel Reports
 When running via `docker compose`, two separate reports are generated and then merged in CI:
