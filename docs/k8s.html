@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Kubernetes Jobs &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Tests Module" href="tests.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="kubernetes-jobs">
+<h1>Kubernetes Jobs<a class="headerlink" href="#kubernetes-jobs" title="Link to this heading">¶</a></h1>
+<p>A Kubernetes Job creates one or more Pods and ensures that a specified number of them successfully terminate.
+As pods successfully complete, the Job tracks the successful completions.
+When a specified number of successful completions is reached, the task (ie, Job) is complete.
+Deleting a Job will clean up the Pods it created.</p>
+<section id="job-files">
+<h2>Job Files<a class="headerlink" href="#job-files" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">k8s/contract-test-job.yaml</span></code> - A Kubernetes Job manifest for running contract tests.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">k8s/integration-test-job.yaml</span></code> - A Kubernetes Job manifest for running integration tests.</p></li>
+</ul>
+<section id="contract-test-job">
+<h3>Contract Test Job<a class="headerlink" href="#contract-test-job" title="Link to this heading">¶</a></h3>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">contract-test-job.yaml</span><a class="headerlink" href="#id1" title="Link to this code">¶</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Kubernetes Job for running contract tests only.</span>
+<span class="c1"># Uses the same mdb-api-tests image built from the Dockerfile.</span>
+<span class="c1"># Secrets are injected via the tmdb-secrets Secret (created from .env).</span>
+<span class="c1">#</span>
+<span class="c1"># Usage:</span>
+<span class="c1">#   kubectl apply -f k8s/contract-test-job.yaml</span>
+<span class="c1">#   kubectl logs -f job/contract-tests</span>
+<span class="c1">#   kubectl cp contract-tests-&lt;pod&gt;:/app/report/tmdb_contract_report.html ./report/</span>
+
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">batch/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Job</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">contract-tests</span>
+<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmdb-api-tests</span>
+<span class="w">    </span><span class="nt">suite</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">contract</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">backoffLimit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">           </span><span class="c1"># Don&#39;t retry on failure — test failures are expected</span>
+<span class="w">  </span><span class="nt">ttlSecondsAfterFinished</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span><span class="w">  </span><span class="c1"># Auto-cleanup pod 5 min after completion</span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmdb-api-tests</span>
+<span class="w">        </span><span class="nt">suite</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">contract</span>
+<span class="w">    </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">restartPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Never</span>
+<span class="w">      </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">contract-tests</span>
+<span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mdb-api-tests</span>
+<span class="w">          </span><span class="nt">imagePullPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Never</span><span class="w">    </span><span class="c1"># Use local Docker Desktop image</span>
+<span class="w">          </span><span class="nt">envFrom</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">secretRef</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmdb-secrets</span><span class="w">  </span><span class="c1"># Injects all keys from the Secret as env vars</span>
+<span class="w">          </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="s">&quot;sh&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;-c&quot;</span><span class="w"> </span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># Override Dockerfile CMD.</span>
+<span class="w">          </span><span class="nt">args</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">              </span><span class="no">pytest tests/ \</span>
+<span class="w">                </span><span class="no">--html=report/tmdb_contract_report.html \</span>
+<span class="w">                </span><span class="no">--self-contained-html \</span>
+<span class="w">                </span><span class="no">-v -s -m &quot;contract&quot;; \</span>
+<span class="w">              </span><span class="no">TEST_EXIT=$?; \</span>
+<span class="w">              </span><span class="no">echo &quot;Tests finished. Sleeping 60s for contract report extraction...&quot;; \</span>
+<span class="w">              </span><span class="no">sleep 60; \</span>
+<span class="w">              </span><span class="no">exit $TEST_EXIT</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="integration-test-job">
+<h3>Integration Test Job<a class="headerlink" href="#integration-test-job" title="Link to this heading">¶</a></h3>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">integration-test-job.yaml</span><a class="headerlink" href="#id2" title="Link to this code">¶</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Kubernetes Job for running integration tests (excludes contract tests).</span>
+<span class="c1"># Uses the same mdb-api-tests image built from the Dockerfile.</span>
+<span class="c1"># Secrets are injected via the tmdb-secrets Secret (created from .env).</span>
+<span class="c1">#</span>
+<span class="c1"># Usage:</span>
+<span class="c1">#   kubectl apply -f k8s/integration-test-job.yaml</span>
+<span class="c1">#   kubectl logs -f job/integration-tests</span>
+<span class="c1">#   kubectl cp integration-tests-&lt;pod&gt;:/app/report/tmdb_non_contract_report.html ./report/</span>
+
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">batch/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Job</span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w">                       </span><span class="c1"># Describes the Job itself</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integration-tests</span><span class="w">       </span><span class="c1"># Pod name</span>
+<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmdb-api-tests</span>
+<span class="w">    </span><span class="nt">suite</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integration</span>
+<span class="nt">spec</span><span class="p">:</span><span class="w">                           </span><span class="c1"># The Job&#39;s specification — HOW it should run.</span>
+<span class="w">  </span><span class="nt">backoffLimit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">               </span><span class="c1"># Don&#39;t retry on failure — test failures are expected</span>
+<span class="w">  </span><span class="nt">ttlSecondsAfterFinished</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span><span class="w">  </span><span class="c1"># Auto-delete the Job + Pod 300s (5 min) after it finishes. Prevents leftover pods.</span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w">                     </span><span class="c1"># Pod template — describes the Pod that will run the tests</span>
+<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w">                   </span><span class="c1"># Pod-level metadata.</span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w">                   </span><span class="c1"># Key-value tags for organizing/filtering resources</span>
+<span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmdb-api-tests</span>
+<span class="w">        </span><span class="nt">suite</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integration</span>
+<span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w">                       </span><span class="c1"># Pod specification — describes the container(s) and how to run them, what runs inside.</span>
+<span class="w">      </span><span class="nt">restartPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Never</span><span class="w">      </span><span class="c1"># If the container exits (pass or fail), don&#39;t restart it. Required for Jobs with backoffLimit: 0.</span>
+<span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w">               </span><span class="c1"># List of containers in this Pod (just one here).</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integration-tests</span><span class="w"> </span><span class="c1"># Container name (for logs/debugging).</span>
+<span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mdb-api-tests</span><span class="w">    </span><span class="c1"># The Docker image to use.</span>
+<span class="w">          </span><span class="nt">imagePullPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Never</span><span class="w">  </span><span class="c1"># Use local Docker Desktop image</span>
+<span class="w">          </span><span class="nt">envFrom</span><span class="p">:</span><span class="w">                </span><span class="c1"># Inject environment variables from a K8s Secret.</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">secretRef</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tmdb-secrets</span><span class="w">  </span><span class="c1"># The Secret name. Injects all keys from the Secret as env vars</span>
+<span class="w">          </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="s">&quot;sh&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;-c&quot;</span><span class="w"> </span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># Override Dockerfile CMD.</span>
+<span class="w">          </span><span class="nt">args</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">              </span><span class="no">pytest tests/ \</span>
+<span class="w">                </span><span class="no">--html=report/tmdb_non_contract_report.html \</span>
+<span class="w">                </span><span class="no">--self-contained-html \</span>
+<span class="w">                </span><span class="no">-v -s -m &quot;not contract&quot;; \</span>
+<span class="w">              </span><span class="no">TEST_EXIT=$?; \</span>
+<span class="w">              </span><span class="no">echo &quot;Tests finished. Sleeping 60s for report extraction...&quot;; \</span>
+<span class="w">              </span><span class="no">sleep 60; \</span>
+<span class="w">              </span><span class="no">exit $TEST_EXIT</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests.html">Tests Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Kubernetes Jobs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#job-files">Job Files</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="tests.html" title="previous chapter">Tests Module</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/k8s.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
