@@ -10,7 +10,7 @@ invalid test cases with expected values and defaults applied.
 
 Dependencies:
     - pytest: Test framework
-    - jsonschema: Response structure validation
+    - pydantic: Response structure validation
     - MoviesAPI: API client under test
     - load_test_data: YAML test data loader
 
