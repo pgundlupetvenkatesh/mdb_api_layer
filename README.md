@@ -1,7 +1,17 @@
 # mdb_api_layer
 
 [![Tests](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml)
-[![Docs](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml)
+[![Docs](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml)</br>
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=yellow)
+![pytest](https://img.shields.io/badge/Pytest-9.0%2B-orange?logo=pytest&logoColor=blue)
+![Allure](https://img.shields.io/badge/Allure-2.0%2B-purple?logo=allure&logoColor=white)
+![Loguru](https://img.shields.io/badge/Loguru-0.7%2B-green?logo=loguru&logoColor=white)
+![Pact](https://img.shields.io/badge/Pact-3.0%2B-red?logo=pact&logoColor=white)
+![pydantic](https://img.shields.io/badge/Pydantic-2.12%2B-cyan?logo=pydantic&logoColor=red)
+![Docker](https://img.shields.io/badge/Docker-29.2%2B-blue?logo=docker&logoColor=white)
+![Sphinx](https://img.shields.io/badge/Sphinx-7.0%2B-yellow?logo=sphinx&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes(K8s)-1.34%2B-blue?logo=kubernetes&logoColor=white)
+![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
 
 API Testing Framework for The Movie Database ([TMDB](https://themoviedb.org)) with Python
 
@@ -437,7 +447,7 @@ Pact files document the expected request/response structure and can be:
 ### Runtime
 - requests — HTTP client
 - python-dotenv — `.env` file loading
-- jsonschema — JSON schema validation
+- pydantic — Model validation
 - pyyaml — YAML test data parsing
 - loguru — Structured logging
 
