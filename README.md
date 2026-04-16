@@ -11,6 +11,7 @@
 ![Docker](https://img.shields.io/badge/Docker-29.2%2B-blue?logo=docker&logoColor=white)
 ![Sphinx](https://img.shields.io/badge/Sphinx-7.0%2B-yellow?logo=sphinx&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes(K8s)-1.34%2B-blue?logo=kubernetes&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-LLM%20Analysis-orange?logo=groq&logoColor=white)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
 
 API Testing Framework for The Movie Database ([TMDB](https://themoviedb.org)) with Python
@@ -33,6 +34,7 @@ Contract tests, and comprehensive response assertions.
 - Factory-pattern pytest fixtures for flexible API instance creation
 - Structured logging with [Loguru](https://github.com/Delgan/loguru) (configurable level & file output)
 - Configurable environment-based settings via `.env`
+- AI-powered test failure analysis using open-source LLMs via [Groq](https://groq.com/) (opt-in)
 - Pytest integration with HTML and Allure reporting
 - Sphinx documentation with GitHub Pages deployment
 
@@ -219,6 +221,10 @@ mdb_api_layer/
 ├── config/
 │   └── config.py               # Environment configuration & Loguru logging setup
 ├── tests/
+│   ├── allure/
+│   │   └── categories.json
+│   ├── ai_analysis/                 # Generated analysis reports (gitignored)
+│   │   └── failure_analysis.json
 │   ├── conftest.py             # Pytest fixtures, hooks & logging CLI options
 │   ├── contracts/
 │   │   ├── test_movie_details.py   # Movie details contract tests (Pact CDC)
@@ -228,6 +234,7 @@ mdb_api_layer/
 │   │   ├── test_data.yaml      # Parametrized test data for data-driven tests
 │   │   └── movie_ids.txt       # Movie IDs for random test data generation
 │   ├── helpers/
+│   │   ├── failure_analyzer.py     # LLM failure analysis client
 │   │   ├── field_assertions.py     # Reusable field validation assertion mixin
 │   │   ├── response_assertions.py  # HTTP response assertion helpers
 │   │   └── test_data_generators.py # Dynamic test data generators
@@ -442,6 +449,123 @@ Pact files document the expected request/response structure and can be:
 - Shared with API providers to verify
 - Used by CI/CD to detect breaking changes
 
+## AI-Powered Failure Analysis
+
+When a test fails, the framework can automatically send the failure context to an open-source LLM for instant
+root-cause diagnosis. This is **disabled by default** — no API calls are made unless the user explicitly opt in.
+
+### How It Works
+
+```
+Test Fails
+  ↓
+pytest_runtest_makereport hook captures:
+  • test name & file
+  • error message & traceback
+  • API URL, status code, response body (if available)
+  ↓
+FailureAnalyzer sends context to Groq API (Llama 4 Scout / Qwen 3)
+  ↓
+LLM returns structured JSON diagnosis:
+  { root_cause, category, suggested_fix, confidence, explanation }
+  ↓
+Diagnosis is:
+  • Logged to console (🤖 emoji prefix)
+  • Attached to Allure report as JSON
+  • Saved to tests/ai_analysis/failure_analysis.json at session end
+```
+
+### Failure Categories
+LLM classifies each failure into one of these categories:
+
+| Category           | Meaning                                                        |
+|--------------------|----------------------------------------------------------------|
+| `api_bug`          | API returned unexpected response (status code, missing field)  |
+| `test_bug`         | Test assertion or logic is incorrect                           |
+| `data_issue`       | Test data is stale, invalid, or resource was deleted           |
+| `timeout`          | Response time exceeded threshold                               |
+| `auth_error`       | Authentication/authorization failure (expired token, key)      |
+| `schema_mismatch`  | Response doesn't match Pydantic model or Pact contract         |
+| `environment`      | Config, connectivity, or environment setup issue               |
+
+### Setup
+
+1. **Get a free Groq API key** at [console.groq.com](https://console.groq.com/)
+2. **Add to `.env` file:**
+   ```bash
+   GROQ_API_KEY=your_groq_api_key_here
+   AI_ANALYSIS_ENABLED=true          # or use --failure-analysis CLI flag instead
+   ```
+3. **Install dependencies** (should be in `pyproject.toml`):
+   ```bash
+   poetry install  # groq package is included
+   ```
+
+### Usage
+
+```bash
+# Enable via CLI flag to keep .env clean
+poetry run pytest tests/ --failure-analysis -v
+
+# Or enable via environment variable
+AI_ANALYSIS_ENABLED=true poetry run pytest tests/ -v
+
+# Combine with other options
+poetry run pytest tests/ --failure-analysis --loguru-log-level=DEBUG --alluredir=allure-results -v
+```
+
+When enabled, each failed test produces a console log like:
+```
+🤖 AI Analysis [auth_error]: The Bearer token has expired, causing a 401 Unauthorized response.
+```
+
+### Output
+
+| Destination                               | Format | When                        |
+|-------------------------------------------|--------|-----------------------------|
+| Console log                               | Text   | Immediately on failure      |
+| Allure report (🤖 AI Failure Analysis)    | JSON   | Attached to failed test     |
+| `tests/ai_analysis/failure_analysis.json` | JSON   | End of test session         |
+
+**Sample diagnosis:**
+```json
+{
+  "root_cause": "The movie ID 999999 does not exist, causing a 404 response",
+  "category": "data_issue",
+  "suggested_fix": "Update test data to use a valid movie ID from TMDB",
+  "confidence": "high",
+  "explanation": "The test expects a 200 OK but the API returned 404 Not Found because the movie resource was deleted or never existed. Refresh test data with current valid IDs.",
+  "test_name": "test_get_movie_details[invalid_id]",
+  "model": "meta-llama/llama-4-scout-17b-16e-instruct"
+}
+```
+
+### Supported Models
+
+The default model is `meta-llama/llama-4-scout-17b-16e-instruct` on Groq's free tier.
+Override via environment variable:
+```bash
+# In .env
+AI_MODEL=qwen/qwen3-32b
+```
+
+### CI Integration
+
+In GitHub Actions, the feature works automatically when `GROQ_API_KEY` secret and `AI_ANALYSIS_ENABLED` variable is set in repository
+settings. The workflow writes them to the `.env` file so both Docker containers have access. Analysis results are
+attached to the Allure report deployed to GitHub Pages.
+
+### AI Environment Variables
+
+| Variable               | Description                               | Required   | Default                                      |
+|------------------------|-------------------------------------------|------------|----------------------------------------------|
+| `AI_ANALYSIS_ENABLED`  | Enable AI failure analysis                | No         | `false`                                      |
+| `GROQ_API_KEY`         | Groq API key for LLM access               | If enabled | -                                            |
+| `AI_MODEL`             | LLM model identifier on Groq              | No         | `meta-llama/llama-4-scout-17b-16e-instruct`  |
+
+> **Note:** Groq free tier has rate limits. For large test suites with many failures, analysis may be throttled.
+> The analyzer gracefully handles errors — if an LLM call fails, the test result is unaffected.
+
 ## Dependencies
 
 ### Runtime
@@ -450,6 +574,7 @@ Pact files document the expected request/response structure and can be:
 - pydantic — Model validation
 - pyyaml — YAML test data parsing
 - loguru — Structured logging
+- groq — LLM client for AI failure analysis
 
 ### Development
 - pytest — Test framework

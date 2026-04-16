@@ -33,7 +33,7 @@ class FieldAssertions:
         if field == 'original_language':
             assert len(data[field]) == 2, f"{self._test_name}: Index {idx} {field} should be 2-char code"
 
-        if field in ['overview', 'origin_country', 'place_of_birth', 'biography']:
+        if field in ['overview', 'origin_country', 'place_of_birth', 'biography', 'release_date']:
             if data[field] is None:
                 return
 

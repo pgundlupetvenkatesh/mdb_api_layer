@@ -73,18 +73,28 @@ jobs:
         echo "TMDB_AUTH_TOKEN=${{ secrets.TMDB_AUTH_TOKEN }}" >> .env
         echo "TMDB_USER_ACCESS_TOKEN=${{ secrets.TMDB_USER_ACCESS_TOKEN }}" >> .env
         echo "TMDB_REQ_TOKEN=${{ secrets.TMDB_REQ_TOKEN }}" >> .env
+        echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
+        echo "AI_ANALYSIS_ENABLED=${{ vars.AI_ANALYSIS_ENABLED }}" >> .env
 
     # Run integration and contract tests in parallel using docker compose.
     # --no-build: skip building since the image was already built by buildx above.
     # Both services run simultaneously and write separate reports to ./report.
     # Exit code is non-zero if any service fails; captured so the workflow
     # can continue to merge and deploy the report before failing.
+    # Use docker inspect to check each container's actual exit code after they finish.
+    # If either container exited non-zero, TEST_EXIT_CODE is set to 1
     - name: Run Tests in Docker
       id: tests
       run: |
-        EXIT_CODE=0
-        docker compose up --no-build || EXIT_CODE=$?
-        echo "TEST_EXIT_CODE=$EXIT_CODE" >> $GITHUB_ENV
+        docker compose up --no-build
+        INT_EXIT=$(docker inspect tmdb-api-integration-tests --format='{{.State.ExitCode}}')
+        CON_EXIT=$(docker inspect tmdb-api-contract-tests --format='{{.State.ExitCode}}')
+        echo "Integration exit code: $INT_EXIT, Contract exit code: $CON_EXIT"
+        if [ "$INT_EXIT" -ne 0 ] || [ "$CON_EXIT" -ne 0 ]; then
+          echo "TEST_EXIT_CODE=1" >> $GITHUB_ENV
+        else
+          echo "TEST_EXIT_CODE=0" >> $GITHUB_ENV
+        fi
 
     # Rotate the Docker cache to prevent unbounded growth
     # Runs even if tests fail (if: always())
