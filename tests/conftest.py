@@ -1,3 +1,16 @@
+"""
+Pytest configuration and shared fixtures for the TMDB API test suite.
+
+This module is automatically loaded by pytest before test collection. It provides:
+
+- **CLI options**: ``--loguru-log-level``, ``--log-to-file``, ``--failure-analysis``
+- **Hooks**: Logging setup, AI failure analysis, Allure/HTML report customization
+- **Fixtures**: API client factory, Pydantic schema loader, test data loader
+
+.. module:: tests.conftest
+   :synopsis: Pytest fixtures, hooks, and CLI options.
+"""
+
 import json
 import os
 import pytest
@@ -5,6 +18,7 @@ import pytest
 from pathlib import Path
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from tests.helpers.failure_analyzer import analyzer
 
 # Registering logger configuration options and setup before any test runs
 def pytest_addoption(parser):
@@ -37,6 +51,12 @@ def pytest_addoption(parser):
         default=False,
         help="Enable logging to file (default: False)"
     )
+    parser.addoption(
+        "--failure-analysis",
+        action="store_true",
+        default=False,
+        help="Enable AI-powered test failure analysis (requires GROQ_API_KEY)"
+    )
 
 # Set LOG_LEVEL to environment variable before any test modules are imported, ensuring loguru is configured correctly
 def pytest_configure(config):
@@ -58,6 +78,13 @@ def pytest_configure(config):
     os.environ["LOG_TO_FILE"] = str(config.getoption("--log-to-file"))
     from config.config import configure_logging
     configure_logging()
+
+    # For on demand local Poetry run pytest and user can opt-in per run locally without modifying .env
+    # AI_ANALYSIS_ENABLED=true from .env is used by Docker compose CI
+    if config.getoption('--failure-analysis'):
+        os.environ["AI_ANALYSIS_ENABLED"] = "true"
+        analyzer.enabled = True # Update instance
+        analyzer.api_key = os.getenv("GROQ_API_KEY")    # re-read in case .env loads later
 
 from tests.data.data_loader import load_test_data
 from api.movies_api import MoviesAPI
@@ -161,13 +188,24 @@ def movies_test_data():
 
 def pytest_html_report_title(report):
     """
-    Customize the title of the HTML test report.
-    :param report:
-    :return:
+    Customize the title shown in the pytest-html report header.
+
+    :param report: The pytest-html report object.
     """
     report.title = "Movies API Tests Report"
 
 def pytest_html_results_summary(prefix, summary, postfix):
+    """
+    Customize the results summary section of the pytest-html report.
+
+    Adds a branded header with run timestamp (Eastern Time), a description
+    of the test scope, and links to external documentation. Called once
+    by pytest-html after all tests have finished.
+
+    :param prefix: List of HTML strings rendered above the pass/fail counts.
+    :param summary: List of HTML strings rendered alongside the counts.
+    :param postfix: List of HTML strings rendered below the counts.
+    """
     # Get current Eastern time
     et_time = datetime.now(ZoneInfo("America/New_York"))
 
@@ -195,8 +233,77 @@ def pytest_html_results_summary(prefix, summary, postfix):
         "</div>"
     ])
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """
+    Capture test failure details and send to AI analyzer.
+
+    Runs after each test phase (setup/call/teardown). On failure during
+    the 'call' phase, extracts context from the test and API response,
+    then sends it to the LLM for diagnosis. The analysis is attached
+    to the Allure report as a text attachment.
+    """
+    outcome = yield
+    report = outcome.get_result()
+
+    if report.when != "call" or not report.failed:
+        return
+
+    # Build failure context from available information
+    failure_context = {
+        "test_name": item.name,
+        "test_file": str(item.fspath),
+        "error_message": str(report.longrepr).split("\n")[-1] if report.longrepr else "",
+        "traceback": str(report.longrepr) if report.longrepr else "",
+    }
+
+    # Try to extract API response details from the test's local variables
+    # (pytest stores them in the call excinfo)
+    if call.excinfo:
+        # Check if the test had an APIResponse in its locals
+        tb = call.excinfo.traceback[-1]
+        locals_dict = tb.locals if hasattr(tb, 'locals') else {}
+        if 'response' in locals_dict:
+            resp = locals_dict['response']
+            if hasattr(resp, 'url'):
+                failure_context["api_url"] = str(resp.url)
+            if hasattr(resp, 'status_code'):
+                failure_context["status_code"] = resp.status_code
+            if hasattr(resp, 'data'):
+                failure_context["response_body"] = resp.data
+
+    diagnosis = analyzer.analyze(failure_context)
+
+    # Attach analysis to Allure report
+    if diagnosis:
+        try:
+            import allure
+            allure.attach(
+                json.dumps(diagnosis, indent=2),
+                name="🤖 AI Failure Analysis",
+                attachment_type=allure.attachment_type.JSON
+            )
+        except Exception:
+            pass  # Allure not available
+
 def pytest_sessionfinish(session, exitstatus):
-    """Write Allure environment properties from actual runtime config."""
+    """
+    Perform cleanup and metadata writing after all tests complete.
+
+    Fires once at the end of the test session. Handles two tasks:
+
+    1. **Allure metadata** (if ``--alluredir`` was passed):
+       - Copies ``tests/allure/categories.json`` into the allure results dir
+         so Allure can classify failures (e.g., Product Defects vs Test Defects).
+       - Writes ``environment.properties`` with runtime config values
+         (base URL, API version, timeout, log level) for the Allure Environment widget.
+
+    2. **AI analysis report**: Calls ``analyzer.save_results()`` to write all
+       accumulated LLM diagnoses to ``ai_analysis/failure_analysis.json``.
+
+    :param session: The pytest ``Session`` object.
+    :param exitstatus: Integer exit code (0 = all passed, 1 = failures, etc.).
+    """
     allure_dir = session.config.getoption("--alluredir", default=None)
 
     if allure_dir:
@@ -216,3 +323,5 @@ def pytest_sessionfinish(session, exitstatus):
             f"Log.Level={os.environ.get('LOG_LEVEL', 'INFO')}\n"
             f"Framework=pytest\n"
         )
+
+    analyzer.save_results()
