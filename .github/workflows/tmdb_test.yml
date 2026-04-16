@@ -84,9 +84,15 @@ jobs:
     - name: Run Tests in Docker
       id: tests
       run: |
-        EXIT_CODE=0
-        docker compose up --no-build || EXIT_CODE=$?
-        echo "TEST_EXIT_CODE=$EXIT_CODE" >> $GITHUB_ENV
+        docker compose up --no-build
+        INT_EXIT=$(docker inspect tmdb-api-integration-tests --format='{{.State.ExitCode}}')
+        CON_EXIT=$(docker inspect tmdb-api-contract-tests --format='{{.State.ExitCode}}')
+        echo "Integration exit code: $INT_EXIT, Contract exit code: $CON_EXIT"
+        if [ "$INT_EXIT" -ne 0 ] || [ "$CON_EXIT" -ne 0 ]; then
+          echo "TEST_EXIT_CODE=1" >> $GITHUB_ENV
+        else
+          echo "TEST_EXIT_CODE=0" >> $GITHUB_ENV
+        fi
 
     # Rotate the Docker cache to prevent unbounded growth
     # Runs even if tests fail (if: always())
