@@ -292,14 +292,13 @@ def pytest_sessionfinish(session, exitstatus):
 
     Fires once at the end of the test session. Handles two tasks:
 
-    1. **Allure metadata** (if ``--alluredir`` was passed):
-       - Copies ``tests/allure/categories.json`` into the allure results dir
-         so Allure can classify failures (e.g., Product Defects vs Test Defects).
-       - Writes ``environment.properties`` with runtime config values
-         (base URL, API version, timeout, log level) for the Allure Environment widget.
-
-    2. **AI analysis report**: Calls ``analyzer.save_results()`` to write all
-       accumulated LLM diagnoses to ``ai_analysis/failure_analysis.json``.
+    - **Allure metadata** (if ``--alluredir`` was passed): copies
+      ``tests/allure/categories.json`` into the allure results dir so Allure
+      can classify failures, and writes ``environment.properties`` with
+      runtime config values (base URL, API version, timeout, log level)
+      for the Allure Environment widget.
+    - **AI analysis report**: calls ``analyzer.save_results()`` to write all
+      accumulated LLM diagnoses to ``ai_analysis/failure_analysis.json``.
 
     :param session: The pytest ``Session`` object.
     :param exitstatus: Integer exit code (0 = all passed, 1 = failures, etc.).

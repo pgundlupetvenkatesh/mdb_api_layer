@@ -31,23 +31,14 @@ Data
 
 Helpers
 -------
-.. automodule:: tests.helpers.response_assertions
-   :no-index:
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-.. automodule:: tests.helpers.field_assertions
-   :no-index:
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. toctree::
+   :maxdepth: 1
 
-.. automodule:: tests.helpers.test_data_generators
-   :no-index:
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   helpers_failure_analyzer
+   helpers_field_assertions
+   helpers_response_assertions
+   helpers_test_data_generators
 
 Lists
 -----------
