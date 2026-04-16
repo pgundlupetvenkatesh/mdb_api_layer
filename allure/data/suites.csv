@@ -1,17 +1,55 @@
 "DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
 "
+        Test retrieving popular movies with default parameters.
+
+        Validates that the default page of popular movies is returned
+        correctly, including response structure and content.
+
+        :param get_api_instance: Generic fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py
+        :param pop_movies: Parametrized test data containing valid query_param,
+                           expected status_code, and expected_message.
+        ","84","Get popular movies with query params: {'page': 2}","tests.movie_lists","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestMoviesAPI","test_popular","",""
+"
         Test error handling for invalid movie IDs.
 
         Validates proper error responses when requesting non-existent
         or invalid movie IDs, ensuring appropriate status codes and
         error messages are returned.
 
+        :param get_api_instance: Generic class fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param movie_details: Parametrized test data containing valid movie_id,
+                             expected status_code, and expected_message.
+        ","83","Get movie details for ID: 25862","tests.movies","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestDetails","test_details","",""
+"
+        Verify error response for invalid page parameter.
+
+        Tests the GET /movie/popular endpoint with an invalid page number.
+        Verifies the API returns a 400 Bad Request with appropriate error message.
+        ","2","Get Popular Movies for Invalid Page","tests.contracts","Thu Apr 16 23:32:41 UTC 2026","passed","Thu Apr 16 23:32:41 UTC 2026","TestPopularMovies","test_popular_movies","",""
+"
+        Test deleting a movie rating with invalid movie ID in the first iteration and without session ID authentication.
+
+        Validates that attempting to delete a rating without proper
+        authentication returns the expected error response.
+
         :param get_api_instance: Generic fixture instance.
         :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_test: Parametrized test data containing invalid movie_id,
-                             expected status_code, and expected_message.
-        ","125","Invalid movie ID: -1","tests.movies","Wed Apr 08 15:24:31 UTC 2026","passed","Wed Apr 08 15:24:31 UTC 2026","TestDetails","test_details","",""
-"Verify 404 error response structure for non-existent movie ID 99999999. Using matchers to allow flexible type-based matching.","2","Get Invalid Movie Details","tests.contracts","Wed Apr 08 15:24:19 UTC 2026","passed","Wed Apr 08 15:24:19 UTC 2026","TestMovieDetails","test_movie_details","",""
+        :param delete_invalid_rating: Parametrized test data containing invalid movie_id,
+                                      expected status_code, and expected_message.
+        ","83","Delete movie rating for ID: 0","tests.movies","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestDeleteRating","test_delete_rating","",""
+"
+        Test adding a movie rating without authentication.
+
+        Validates that attempting to add a rating without proper
+        authentication returns the expected error response.
+
+        :param get_api_instance: Generic fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param add_valid_rating: Parametrized test data containing valid movie_id,
+                                   expected status_code, and expected_message.
+        ","123","Add rating 0.5 for movie ID: 20546","tests.movies","Thu Apr 16 23:32:42 UTC 2026","passed","Thu Apr 16 23:32:42 UTC 2026","TestAddRating","test_add_rating","",""
 "
         Test retrieving popular movies with default parameters.
 
@@ -22,8 +60,62 @@
         :param load_schema: Schema loader fixture from conftest.py
         :param pop_movies: Parametrized test data containing valid query_param,
                            expected status_code, and expected_message.
-        ","132","Get popular movies with query params: {'language': 'en-US'}","tests.movie_lists","Wed Apr 08 15:24:30 UTC 2026","passed","Wed Apr 08 15:24:30 UTC 2026","TestMoviesAPI","test_popular","",""
-"","119","Update Description for invalid list ID 0","tests.lists","Wed Apr 08 15:24:30 UTC 2026","passed","Wed Apr 08 15:24:30 UTC 2026","TestUpdate","test_update","",""
+        ","85","Get popular movies with query params: {'language': 'en-US'}","tests.movie_lists","Thu Apr 16 23:32:45 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestMoviesAPI","test_popular","",""
+"
+        Test fetching person details with valid data.
+
+        Validates that the response contains expected fields and matches the
+        defined JSON schema for person details.
+
+        :param invalid_person_details: Dictionary containing test parameters for invalid case.
+        ","84","Get details for invalid person ID: 9999999999","tests.people","Thu Apr 16 23:32:47 UTC 2026","passed","Thu Apr 16 23:32:47 UTC 2026","TestDetails","test_details","",""
+"","82","Update Description for invalid list ID 0","tests.lists","Thu Apr 16 23:32:45 UTC 2026","passed","Thu Apr 16 23:32:45 UTC 2026","TestUpdate","test_update","",""
+"
+        Test adding a movie rating without authentication.
+
+        Validates that attempting to add a rating without proper
+        authentication returns the expected error response.
+
+        :param get_api_instance: Generic fixture instance.
+        :param add_invalid_rating: Parametrized test data containing invalid movie_id,
+                                   expected status_code, and expected_message.
+        ","82","Add rating 13.3 for movie ID: 680","tests.movies","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestAddRating","test_add_rating","",""
+"Verify 404 error response structure for non-existent movie ID 99999999. Using matchers to allow flexible type-based matching.","2","Get Invalid Movie Details","tests.contracts","Thu Apr 16 23:32:41 UTC 2026","passed","Thu Apr 16 23:32:41 UTC 2026","TestMovieDetails","test_movie_details","",""
+"
+        Verify popular movies list response structure.
+
+        Tests the GET /movie/popular endpoint with pagination.
+        Verifies the response contains proper pagination and movie array.
+        ","2","Get Popular Movies","tests.contracts","Thu Apr 16 23:32:41 UTC 2026","passed","Thu Apr 16 23:32:41 UTC 2026","TestPopularMovies","test_popular_movies","",""
+"
+        Test fetching person details with valid data.
+
+        Validates that the response contains expected fields and matches the
+        defined JSON schema for person details.
+
+        :param invalid_person_details: Dictionary containing test parameters for invalid case.
+        ","89","Get details for invalid person ID: -1","tests.people","Thu Apr 16 23:32:47 UTC 2026","passed","Thu Apr 16 23:32:47 UTC 2026","TestDetails","test_details","",""
+"
+        Test adding a movie rating without authentication.
+
+        Validates that attempting to add a rating without proper
+        authentication returns the expected error response.
+
+        :param get_api_instance: Generic fixture instance.
+        :param add_invalid_rating: Parametrized test data containing invalid movie_id,
+                                   expected status_code, and expected_message.
+        ","82","Add rating 12.9 for movie ID: 550","tests.movies","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestAddRating","test_add_rating","",""
+"
+        Test updating a list with valid parameters.
+
+        Validates that the list is updated correctly, including response structure and content.
+
+        :param get_api_instance: Generic fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py
+        :param update_list: Parametrized test data containing valid query_param,
+                            expected status_code, and expected_message.
+        ","509","Update Description for list ID 8637178","tests.lists","Thu Apr 16 23:32:45 UTC 2026","passed","Thu Apr 16 23:32:45 UTC 2026","TestUpdate","test_update","",""
+"","88","Update Description for invalid list ID 9999999999","tests.lists","Thu Apr 16 23:32:45 UTC 2026","passed","Thu Apr 16 23:32:45 UTC 2026","TestUpdate","test_update","",""
 "
         Test error handling for invalid movie IDs.
 
@@ -35,16 +127,43 @@
         :param load_schema: Schema loader fixture from conftest.py.
         :param invalid_test: Parametrized test data containing invalid movie_id,
                              expected status_code, and expected_message.
-        ","129","Invalid movie ID: 9999999999","tests.movies","Wed Apr 08 15:24:31 UTC 2026","passed","Wed Apr 08 15:24:31 UTC 2026","TestDetails","test_details","",""
-"","126","Update Description for invalid list ID 9999999999","tests.lists","Wed Apr 08 15:24:29 UTC 2026","passed","Wed Apr 08 15:24:30 UTC 2026","TestUpdate","test_update","",""
+        ","88","Invalid movie ID: 9999999999","tests.movies","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:47 UTC 2026","TestDetails","test_details","",""
+"Verify movie details response structure for movie ID 550 (Fight Club). Using matchers to allow flexible type-based matching.","8","Get Movie Details","tests.contracts","Thu Apr 16 23:32:41 UTC 2026","passed","Thu Apr 16 23:32:41 UTC 2026","TestMovieDetails","test_movie_details","",""
 "
-        Test fetching person details with valid data.
+        Test error handling for invalid movie IDs.
 
-        Validates that the response contains expected fields and matches the
-        defined JSON schema for person details.
+        Validates proper error responses when requesting non-existent
+        or invalid movie IDs, ensuring appropriate status codes and
+        error messages are returned.
 
-        :param invalid_person_details: Dictionary containing test parameters for invalid case.
-        ","132","Get details for invalid person ID: 0","tests.people","Wed Apr 08 15:24:32 UTC 2026","passed","Wed Apr 08 15:24:32 UTC 2026","TestDetails","test_details","",""
+        :param get_api_instance: Generic fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_test: Parametrized test data containing invalid movie_id,
+                             expected status_code, and expected_message.
+        ","85","Invalid movie ID: -1","tests.movies","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestDetails","test_details","",""
+"
+        Test error handling for invalid movie IDs.
+
+        Validates proper error responses when requesting non-existent
+        or invalid movie IDs, ensuring appropriate status codes and
+        error messages are returned.
+
+        :param get_api_instance: Generic class fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param movie_details: Parametrized test data containing valid movie_id,
+                             expected status_code, and expected_message.
+        ","83","Get movie details for ID: 28982","tests.movies","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestDetails","test_details","",""
+"
+        Test deleting a movie rating with invalid movie ID in the first iteration and without session ID authentication.
+
+        Validates that attempting to delete a rating without proper
+        authentication returns the expected error response.
+
+        :param get_api_instance: Generic fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param delete_invalid_rating: Parametrized test data containing invalid movie_id,
+                                      expected status_code, and expected_message.
+        ","86","Delete movie rating for ID: 9999999999","tests.movies","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestDeleteRating","test_delete_rating","",""
 "
         Test deleting a movie rating without authentication.
 
@@ -55,26 +174,48 @@
         :param load_schema: Schema loader fixture from conftest.py.
         :param delete_valid_rating: Parametrized test data containing valid movie_id,
                                      expected status_code, and expected_message.
-        ","288","Delete movie rating for ID: 55380","tests.movies","Wed Apr 08 15:24:20 UTC 2026","passed","Wed Apr 08 15:24:20 UTC 2026","TestDeleteRating","test_delete_rating","",""
+        ","186","Delete movie rating for ID: 41428","tests.movies","Thu Apr 16 23:32:42 UTC 2026","passed","Thu Apr 16 23:32:42 UTC 2026","TestDeleteRating","test_delete_rating","",""
+"
+        Test retrieving popular movies with invalid parameters.
+
+        Validates that appropriate error responses are returned when
+        invalid query parameters are provided for the popular movies endpoint.
+
+        :param get_api_instance: Generic fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_test: Parametrized test data containing invalid query_param,
+                             expected status_code, and expected_message.
+        ","80","Get invalid popular movies with query params: {'page': -1}","tests.movie_lists","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestMoviesAPI","test_popular","",""
 "
         Test fetching person details with valid data.
 
         Validates that the response contains expected fields and matches the
         defined JSON schema for person details.
 
-        :param person_details: Dictionary containing test parameters for a valid case.
-        ","172","Get details for person ID: 5","tests.people","Wed Apr 08 15:24:31 UTC 2026","passed","Wed Apr 08 15:24:31 UTC 2026","TestDetails","test_details","",""
+        :param invalid_person_details: Dictionary containing test parameters for invalid case.
+        ","82","Get details for invalid person ID: 0","tests.people","Thu Apr 16 23:32:47 UTC 2026","passed","Thu Apr 16 23:32:47 UTC 2026","TestDetails","test_details","",""
 "
-        Test deleting a movie rating with invalid movie ID in the first iteration and without session ID authentication.
+        Test error handling for invalid movie IDs.
 
-        Validates that attempting to delete a rating without proper
-        authentication returns the expected error response.
+        Validates proper error responses when requesting non-existent
+        or invalid movie IDs, ensuring appropriate status codes and
+        error messages are returned.
+
+        :param get_api_instance: Generic class fixture instance.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param movie_details: Parametrized test data containing valid movie_id,
+                             expected status_code, and expected_message.
+        ","81","Get movie details for ID: 21387","tests.movies","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestDetails","test_details","",""
+"
+        Test updating a list with valid parameters.
+
+        Validates that the list is updated correctly, including response structure and content.
 
         :param get_api_instance: Generic fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param delete_invalid_rating: Parametrized test data containing invalid movie_id,
-                                      expected status_code, and expected_message.
-        ","115","Delete movie rating for ID: 0","tests.movies","Wed Apr 08 15:24:30 UTC 2026","passed","Wed Apr 08 15:24:31 UTC 2026","TestDeleteRating","test_delete_rating","",""
+        :param load_schema: Schema loader fixture from conftest.py
+        :param update_list: Parametrized test data containing valid query_param,
+                            expected status_code, and expected_message.
+        ","2576","Update Description for list ID 8637178","tests.lists","Thu Apr 16 23:32:42 UTC 2026","passed","Thu Apr 16 23:32:45 UTC 2026","TestUpdate","test_update","",""
 "
         Test error handling for invalid movie IDs.
 
@@ -86,36 +227,15 @@
         :param load_schema: Schema loader fixture from conftest.py.
         :param invalid_test: Parametrized test data containing invalid movie_id,
                              expected status_code, and expected_message.
-        ","122","Invalid movie ID: 0","tests.movies","Wed Apr 08 15:24:31 UTC 2026","passed","Wed Apr 08 15:24:31 UTC 2026","TestDetails","test_details","",""
+        ","84","Invalid movie ID: 0","tests.movies","Thu Apr 16 23:32:46 UTC 2026","passed","Thu Apr 16 23:32:46 UTC 2026","TestDetails","test_details","",""
 "
-        Test retrieving popular movies with default parameters.
+        Test fetching person details with valid data.
 
-        Validates that the default page of popular movies is returned
-        correctly, including response structure and content.
+        Validates that the response contains expected fields and matches the
+        defined JSON schema for person details.
 
-        :param get_api_instance: Generic fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py
-        :param pop_movies: Parametrized test data containing valid query_param,
-                           expected status_code, and expected_message.
-        ","117","Get popular movies with query params: {'page': 2}","tests.movie_lists","Wed Apr 08 15:24:30 UTC 2026","passed","Wed Apr 08 15:24:30 UTC 2026","TestMoviesAPI","test_popular","",""
-"
-        Test error handling for invalid movie IDs.
-
-        Validates proper error responses when requesting non-existent
-        or invalid movie IDs, ensuring appropriate status codes and
-        error messages are returned.
-
-        :param get_api_instance: Generic class fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param movie_details: Parametrized test data containing valid movie_id,
-                             expected status_code, and expected_message.
-        ","128","Get movie details for ID: 54598","tests.movies","Wed Apr 08 15:24:31 UTC 2026","passed","Wed Apr 08 15:24:31 UTC 2026","TestDetails","test_details","",""
-"
-        Verify popular movies list response structure.
-
-        Tests the GET /movie/popular endpoint with pagination.
-        Verifies the response contains proper pagination and movie array.
-        ","2","Get Popular Movies","tests.contracts","Wed Apr 08 15:24:19 UTC 2026","passed","Wed Apr 08 15:24:19 UTC 2026","TestPopularMovies","test_popular_movies","",""
+        :param person_details: Dictionary containing test parameters for a valid case.
+        ","82","Get details for person ID: 9","tests.people","Thu Apr 16 23:32:47 UTC 2026","passed","Thu Apr 16 23:32:47 UTC 2026","TestDetails","test_details","",""
 "
         Test adding a movie rating without authentication.
 
@@ -126,124 +246,4 @@
         :param load_schema: Schema loader fixture from conftest.py.
         :param add_valid_rating: Parametrized test data containing valid movie_id,
                                    expected status_code, and expected_message.
-        ","145","Add rating 5.5 for movie ID: 69869","tests.movies","Wed Apr 08 15:24:20 UTC 2026","passed","Wed Apr 08 15:24:20 UTC 2026","TestAddRating","test_add_rating","",""
-"
-        Test adding a movie rating without authentication.
-
-        Validates that attempting to add a rating without proper
-        authentication returns the expected error response.
-
-        :param get_api_instance: Generic fixture instance.
-        :param add_invalid_rating: Parametrized test data containing invalid movie_id,
-                                   expected status_code, and expected_message.
-        ","124","Add rating 19.8 for movie ID: 680","tests.movies","Wed Apr 08 15:24:30 UTC 2026","passed","Wed Apr 08 15:24:30 UTC 2026","TestAddRating","test_add_rating","",""
-"
-        Test adding a movie rating without authentication.
-
-        Validates that attempting to add a rating without proper
-        authentication returns the expected error response.
-
-        :param get_api_instance: Generic fixture instance.
-        :param add_invalid_rating: Parametrized test data containing invalid movie_id,
-                                   expected status_code, and expected_message.
-        ","130","Add rating 18.3 for movie ID: 550","tests.movies","Wed Apr 08 15:24:30 UTC 2026","passed","Wed Apr 08 15:24:30 UTC 2026","TestAddRating","test_add_rating","",""
-"
-        Test updating a list with valid parameters.
-
-        Validates that the list is updated correctly, including response structure and content.
-
-        :param get_api_instance: Generic fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py
-        :param update_list: Parametrized test data containing valid query_param,
-                            expected status_code, and expected_message.
-        ","2708","Update Description for list ID 8637178","tests.lists","Wed Apr 08 15:24:27 UTC 2026","passed","Wed Apr 08 15:24:29 UTC 2026","TestUpdate","test_update","",""
-"
-        Test adding a movie rating without authentication.
-
-        Validates that attempting to add a rating without proper
-        authentication returns the expected error response.
-
-        :param get_api_instance: Generic fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param add_valid_rating: Parametrized test data containing valid movie_id,
-                                   expected status_code, and expected_message.
-        ","195","Add rating 8.5 for movie ID: 9086","tests.movies","Wed Apr 08 15:24:19 UTC 2026","passed","Wed Apr 08 15:24:20 UTC 2026","TestAddRating","test_add_rating","",""
-"
-        Verify error response for invalid page parameter.
-
-        Tests the GET /movie/popular endpoint with an invalid page number.
-        Verifies the API returns a 400 Bad Request with appropriate error message.
-        ","2","Get Popular Movies for Invalid Page","tests.contracts","Wed Apr 08 15:24:19 UTC 2026","passed","Wed Apr 08 15:24:19 UTC 2026","TestPopularMovies","test_popular_movies","",""
-"
-        Test error handling for invalid movie IDs.
-
-        Validates proper error responses when requesting non-existent
-        or invalid movie IDs, ensuring appropriate status codes and
-        error messages are returned.
-
-        :param get_api_instance: Generic class fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param movie_details: Parametrized test data containing valid movie_id,
-                             expected status_code, and expected_message.
-        ","134","Get movie details for ID: 39277","tests.movies","Wed Apr 08 15:24:31 UTC 2026","passed","Wed Apr 08 15:24:31 UTC 2026","TestDetails","test_details","",""
-"
-        Test error handling for invalid movie IDs.
-
-        Validates proper error responses when requesting non-existent
-        or invalid movie IDs, ensuring appropriate status codes and
-        error messages are returned.
-
-        :param get_api_instance: Generic class fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param movie_details: Parametrized test data containing valid movie_id,
-                             expected status_code, and expected_message.
-        ","121","Get movie details for ID: 33587","tests.movies","Wed Apr 08 15:24:31 UTC 2026","passed","Wed Apr 08 15:24:31 UTC 2026","TestDetails","test_details","",""
-"
-        Test fetching person details with valid data.
-
-        Validates that the response contains expected fields and matches the
-        defined JSON schema for person details.
-
-        :param invalid_person_details: Dictionary containing test parameters for invalid case.
-        ","128","Get details for invalid person ID: 9999999999","tests.people","Wed Apr 08 15:24:32 UTC 2026","passed","Wed Apr 08 15:24:32 UTC 2026","TestDetails","test_details","",""
-"
-        Test fetching person details with valid data.
-
-        Validates that the response contains expected fields and matches the
-        defined JSON schema for person details.
-
-        :param invalid_person_details: Dictionary containing test parameters for invalid case.
-        ","178","Get details for invalid person ID: -1","tests.people","Wed Apr 08 15:24:32 UTC 2026","passed","Wed Apr 08 15:24:32 UTC 2026","TestDetails","test_details","",""
-"
-        Test retrieving popular movies with invalid parameters.
-
-        Validates that appropriate error responses are returned when
-        invalid query parameters are provided for the popular movies endpoint.
-
-        :param get_api_instance: Generic fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_test: Parametrized test data containing invalid query_param,
-                             expected status_code, and expected_message.
-        ","124","Get invalid popular movies with query params: {'page': -1}","tests.movie_lists","Wed Apr 08 15:24:30 UTC 2026","passed","Wed Apr 08 15:24:30 UTC 2026","TestMoviesAPI","test_popular","",""
-"
-        Test updating a list with valid parameters.
-
-        Validates that the list is updated correctly, including response structure and content.
-
-        :param get_api_instance: Generic fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py
-        :param update_list: Parametrized test data containing valid query_param,
-                            expected status_code, and expected_message.
-        ","6648","Update Description for list ID 8637178","tests.lists","Wed Apr 08 15:24:20 UTC 2026","failed","Wed Apr 08 15:24:27 UTC 2026","TestUpdate","test_update","",""
-"Verify movie details response structure for movie ID 550 (Fight Club). Using matchers to allow flexible type-based matching.","10","Get Movie Details","tests.contracts","Wed Apr 08 15:24:19 UTC 2026","passed","Wed Apr 08 15:24:19 UTC 2026","TestMovieDetails","test_movie_details","",""
-"
-        Test deleting a movie rating with invalid movie ID in the first iteration and without session ID authentication.
-
-        Validates that attempting to delete a rating without proper
-        authentication returns the expected error response.
-
-        :param get_api_instance: Generic fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param delete_invalid_rating: Parametrized test data containing invalid movie_id,
-                                      expected status_code, and expected_message.
-        ","132","Delete movie rating for ID: 9999999999","tests.movies","Wed Apr 08 15:24:30 UTC 2026","passed","Wed Apr 08 15:24:30 UTC 2026","TestDeleteRating","test_delete_rating","",""
+        ","233","Add rating 6.0 for movie ID: 65212","tests.movies","Thu Apr 16 23:32:42 UTC 2026","passed","Thu Apr 16 23:32:42 UTC 2026","TestAddRating","test_add_rating","",""
