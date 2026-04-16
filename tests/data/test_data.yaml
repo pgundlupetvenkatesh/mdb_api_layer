@@ -90,7 +90,7 @@ get_person_details:
       status_code: 404
       reason: 'Not Found'
   valid:
-    - person_id: 15
+    - person_id: "$random_person_id"
   invalid:
     - person_id: 0
       expected_message: "Invalid id: The pre-requisite id is invalid or not found."
