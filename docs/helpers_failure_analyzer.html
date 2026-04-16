@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Failure Analyzer &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Field Assertions" href="helpers_field_assertions.html" />
+    <link rel="prev" title="Tests Module" href="tests.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="failure-analyzer">
+<h1>Failure Analyzer<a class="headerlink" href="#failure-analyzer" title="Link to this heading">¶</a></h1>
+<p>AI-powered test failure analyzer using open-source LLMs via Groq.</p>
+<p>Sends test failure context (error, test code, API response) to an LLM
+and returns a structured diagnosis with root cause, suggested fix, and
+failure classification.</p>
+<dl class="py class" id="module-tests.helpers.failure_analyzer">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.helpers.failure_analyzer.</span></span><span class="sig-name descname"><span class="pre">FailureAnalyzer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Analyzes test failures using an open-source LLM via Groq’s free API.</p>
+<p>Disabled by default. Enable by setting AI_ANALYSIS_ENABLED=true and
+GROQ_API_KEY in the .env file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> – The LLM model identifier to use on Groq.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">analyze</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">failure_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span></dt>
+<dd><p>Send failure context to the LLM and return structured diagnosis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>failure_context</strong> – Dictionary containing failure details:
+- test_name: Name of the failed test
+- test_file: Path to the test file
+- error_message: The assertion or exception message
+- traceback: Full traceback string
+- api_url: The API URL that was called (if available)
+- status_code: HTTP status code received (if available)
+- response_body: API response body snippet (if available)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed JSON diagnosis or None if analysis is disabled/fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">client</span></span></dt>
+<dd><p>Lazy-initialize the Groq client on first access.</p>
+<p>Delays the <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">groq</span> <span class="pre">import</span> <span class="pre">Groq</span></code> import until analysis is
+actually needed, avoiding import errors when the <code class="docutils literal notranslate"><span class="pre">groq</span></code> package
+is installed but never used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Configured <code class="docutils literal notranslate"><span class="pre">groq.Groq</span></code> client instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">save_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ai_analysis'</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Write all accumulated analysis results to a JSON file.</p>
+<p>Called once at the end of the test session by <code class="docutils literal notranslate"><span class="pre">pytest_sessionfinish</span></code>
+in <code class="docutils literal notranslate"><span class="pre">conftest.py</span></code>. Skips writing if no failures were analyzed.
+Creates the output directory if it doesn’t exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>output_dir</strong> – Directory path to write the results file to.
+Defaults to <code class="docutils literal notranslate"><span class="pre">ai_analysis/</span></code> relative to the project root.</p>
+</dd>
+</dl>
+<p>Output file: <code class="docutils literal notranslate"><span class="pre">&lt;output_dir&gt;/failure_analysis.json</span></code></p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Config Module</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="tests.html">Tests Module</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tests.html#contracts">Contracts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#data">Data</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="tests.html#helpers">Helpers</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Failure Analyzer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="helpers_field_assertions.html">Field Assertions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="helpers_response_assertions.html">Response Assertions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="helpers_test_data_generators.html">Test Data Generators</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#lists">Lists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#movie-lists">Movie Lists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#pacts">Pacts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#conftest">Conftest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#movies">Movies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#people">People</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="k8s.html">Kubernetes Jobs</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tests.html">Tests Module</a><ul>
+      <li>Previous: <a href="tests.html" title="previous chapter">Tests Module</a></li>
+      <li>Next: <a href="helpers_field_assertions.html" title="next chapter">Field Assertions</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/helpers_failure_analyzer.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
