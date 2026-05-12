@@ -16,6 +16,7 @@ import os
 import pytest
 
 from pathlib import Path
+from loguru import logger
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from tests.helpers.failure_analyzer import analyzer
@@ -276,6 +277,15 @@ def pytest_runtest_makereport(item, call):
 
     # Attach analysis to Allure report
     if diagnosis:
+        confidence = diagnosis.get("confidence", 0)
+
+        if confidence >= 80:
+            logger.info(f"🤖 High confidence [{confidence}%] - {diagnosis['root_cause']}")
+        elif confidence >= 50:
+            logger.warning(f"🤖 Medium confidence [{confidence}%] - {diagnosis['root_cause']}")
+        else:
+            logger.debug(f"🤖 Low confidence [{confidence}%] - treat with caution: {diagnosis['root_cause']}")
+
         try:
             import allure
             allure.attach(
