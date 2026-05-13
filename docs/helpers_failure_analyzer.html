@@ -66,7 +66,9 @@ GROQ_API_KEY in the .env file.</p>
 - response_body: API response body snippet (if available)</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Parsed JSON diagnosis or None if analysis is disabled/fails.</p>
+<dd class="field-even"><p>Parsed JSON diagnosis dict (keys: <code class="docutils literal notranslate"><span class="pre">root_cause</span></code>, <code class="docutils literal notranslate"><span class="pre">category</span></code>,
+<code class="docutils literal notranslate"><span class="pre">suggested_fix</span></code>, <code class="docutils literal notranslate"><span class="pre">confidence</span></code> (0–100 int), <code class="docutils literal notranslate"><span class="pre">explanation</span></code>, <code class="docutils literal notranslate"><span class="pre">evidence</span></code>,
+<code class="docutils literal notranslate"><span class="pre">test_name</span></code>, <code class="docutils literal notranslate"><span class="pre">model</span></code>) or None if analysis is disabled/fails.</p>
 </dd>
 </dl>
 </dd></dl>
