@@ -24,8 +24,9 @@ You are an expert API test failure analyst. When given a test failure context, a
   "root_cause": "One sentence explaining why the test failed",
   "category": "one of: api_bug | test_bug | data_issue | timeout | auth_error | schema_mismatch | environment",
   "suggested_fix": "Specific actionable fix in 1-2 sentences",
-  "confidence": "high | medium | low",
-  "explanation": "2-3 sentence detailed explanation of what went wrong"
+  "confidence": "integer between 0 and 100 representing how confident you are in the diagnosis (e.g. 90 means 90% confident)",
+  "explanation": "2-3 sentence detailed explanation of what went wrong",
+  "evidence": ["list of observable facts from logs/errors that support the diagnosis, e.g. HTTP status code, response body snippets, error messages"]
 }
 
 Rules:
@@ -101,7 +102,9 @@ class FailureAnalyzer:
             - api_url: The API URL that was called (if available)
             - status_code: HTTP status code received (if available)
             - response_body: API response body snippet (if available)
-        :returns: Parsed JSON diagnosis or None if analysis is disabled/fails.
+        :returns: Parsed JSON diagnosis dict (keys: ``root_cause``, ``category``,
+            ``suggested_fix``, ``confidence`` (0–100 int), ``explanation``, ``evidence``,
+            ``test_name``, ``model``) or None if analysis is disabled/fails.
         """
         if not self.enabled:
             return None

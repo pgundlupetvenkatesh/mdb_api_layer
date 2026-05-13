@@ -467,7 +467,7 @@ pytest_runtest_makereport hook captures:
 FailureAnalyzer sends context to Groq API (Llama 4 Scout / Qwen 3)
   ↓
 LLM returns structured JSON diagnosis:
-  { root_cause, category, suggested_fix, confidence, explanation }
+  { root_cause, category, suggested_fix, confidence, explanation, evidence }
   ↓
 Diagnosis is:
   • Logged to console (🤖 emoji prefix)
@@ -533,12 +533,14 @@ When enabled, each failed test produces a console log like:
   "root_cause": "The movie ID 999999 does not exist, causing a 404 response",
   "category": "data_issue",
   "suggested_fix": "Update test data to use a valid movie ID from TMDB",
-  "confidence": "high",
-  "explanation": "The test expects a 200 OK but the API returned 404 Not Found because the movie resource was deleted or never existed. Refresh test data with current valid IDs.",
+  "confidence": 90,
+  "explanation": "The test expects a 200 OK but the API returned 404 Not Found because the movie resource was deleted or never existed. Refresh test data with current valid IDs.", 
+  "evidence": ["HTTP status code: 404", "Response body: {'status_code':34, 'status_message':'The resource you requested could not be found.'}"],
   "test_name": "test_get_movie_details[invalid_id]",
   "model": "meta-llama/llama-4-scout-17b-16e-instruct"
 }
 ```
+![allure_failure_ss](allure_failure_ss.png)
 
 ### Supported Models
 
