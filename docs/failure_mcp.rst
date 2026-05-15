@@ -1,3 +1,13 @@
+MCP Server (failure_mcp)
+========================
+
+Exposes :class:`~tests.helpers.failure_analyzer.FailureAnalyzer` capabilities
+as callable tools over the `Model Context Protocol (MCP) <https://modelcontextprotocol.io/>`_
+stdio transport. Compatible with Claude Desktop, Cursor, VS Code Copilot Chat,
+and any other MCP-compatible AI client.
+
+Server
+------
 .. automodule:: failure_mcp.server
    :no-index:
    :members:

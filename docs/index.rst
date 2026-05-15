@@ -19,3 +19,4 @@ documentation for details.
    config
    tests
    k8s
+   failure_mcp
