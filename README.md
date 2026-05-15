@@ -266,6 +266,12 @@ mdb_api_layer/
 │   └── Makefile                # Unix build script
 ├── logs/
 │   └── test_run.log            # Log file (when --log-to-file is used)
+├── failure_mcp/
+│   ├── __init__.py
+│   ├── server.py               # entry point, registers tools, runs stdio server
+│   └── tools/
+│       ├── __init__.py
+│       ├── analyze_test_failure.py     # TOOLS list + handle_call() dispatcher
 ├── report/
 │   └── tmdb_report.html        # Generated HTML test reports
 ├── .env                        # Environment variables (not committed)
@@ -667,6 +673,87 @@ k8s/
                     │ tests Job    │    tests Job       │
                     └──────────────┴────────────────────┘
 ```
+
+## MCP Integration
+
+The framework ships a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that exposes
+`FailureAnalyzer` capabilities as callable tools for any MCP-compatible AI client
+(Claude Desktop, Cursor, VS Code Copilot Chat, custom agents, etc.).
+
+### Project Structure
+
+```
+failure_mcp/
+├── __init__.py
+├── server.py                   # Entry point — registers tools, runs stdio transport
+└── tools/
+    ├── __init__.py
+    └── analyze_test_failure.py # TOOLS list + handle_call() dispatcher
+```
+
+> `failure_analyzer.py` is **not modified** — the MCP server wraps the existing singleton.
+
+### Exposed Tools
+
+| Tool              | Required Args                | Optional Args                                                       | Description                                                                       |
+|-------------------|------------------------------|---------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| `analyze_failure` | `test_name`, `error_message` | `test_file`, `traceback`, `api_url`, `status_code`, `response_body` | Send failure context to LLM and get structured diagnosis                          |
+| `get_results`     | —                            | `min_confidence` (0–100, default `0`)                               | Return accumulated diagnosis results, optionally filtered by confidence threshold |
+| `save_results`    | —                            | `output_dir` (default `"ai_analysis"`)                              | Flush all results to `<output_dir>/failure_analysis.json`                         |
+
+### Sample `analyze_failure` Response
+
+```json
+{
+  "root_cause": "The Bearer token has expired, causing a 401 Unauthorized response.",
+  "category": "auth_error",
+  "suggested_fix": "Refresh the TMDB_AUTH_TOKEN in your .env file and re-run the tests.",
+  "confidence": 92,
+  "explanation": "The API rejected the request with HTTP 401...",
+  "evidence": ["HTTP status code 401", "Response body contains 'Invalid API key'"],
+  "test_name": "test_get_movie_details",
+  "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+  "confidence_tier": "high"
+}
+```
+
+`confidence_tier` is derived from the raw `confidence` score:
+
+| Score | Tier                       |
+|-------|----------------------------|
+| >= 80 | `high` — act on it         |
+| 50–79 | `medium` — review it       |
+| < 50  | `low` — treat with caution |
+
+### Running the MCP Server
+
+```bash
+# Requires AI_ANALYSIS_ENABLED=true and GROQ_API_KEY in .env
+poetry run python -m failure_mcp.server
+```
+
+### MCP Client Config
+
+Add to `~/.cursor/mcp.json` (Cursor) or Claude Desktop's settings:
+
+```json
+{
+  "mcpServers": {
+    "failure-analyzer": {
+      "command": "poetry",
+      "args": ["run", "python", "-m", "failure_mcp.server"],
+      "cwd": "/path/to/mdb_api_layer",
+      "env": {
+        "AI_ANALYSIS_ENABLED": "true",
+        "GROQ_API_KEY": "<your-groq-key>"
+      }
+    }
+  }
+}
+```
+
+Once connected, your AI client can call `analyze_failure` directly by passing a failure context dict — 
+no changes to any test file needed.
 
 ## Future Improvements
 

@@ -41,7 +41,7 @@ Helpers
    helpers_test_data_generators
 
 Lists
------------
+-----
 .. automodule:: tests.lists.test_update
    :no-index:
    :members:
@@ -75,7 +75,7 @@ Conftest
    :show-inheritance:
 
 Movies
------------
+------
 .. automodule:: tests.movies.test_add_rating
    :no-index:
    :members:
@@ -95,7 +95,7 @@ Movies
    :show-inheritance:
 
 People
------------
+------
 .. automodule:: tests.people.test_details
    :no-index:
    :members:
@@ -103,7 +103,7 @@ People
    :show-inheritance:
 
 Schema
-~~~~~~~~~~~~
+~~~~~~
 .. automodule:: tests.schemas.models
    :no-index:
    :members:
