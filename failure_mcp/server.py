@@ -36,6 +36,7 @@ MCP client config example (``~/.cursor/mcp.json`` or Claude Desktop settings)::
 
 .. module:: failure_mcp.server
    :synopsis: MCP server bootstrap for AI-powered test failure analysis.
+   :no-index:
 """
 
 import asyncio
@@ -53,7 +54,7 @@ from failure_mcp.tools.analyze_test_failure import TOOLS, handle_call
 #: Decorated handler functions below are registered against this instance.
 app = Server("failure-analyzer")
 
-
+# Tool request handler
 @app.list_tools()
 async def list_tools():
     """Advertise all available tools to the connecting MCP client.
@@ -72,7 +73,7 @@ async def list_tools():
 
 @app.call_tool()
 async def call_tool(name: str, arguments: dict):
-    """Receive and forward a tool invocation from the MCP client.
+    """Receive and forward a tool invocation from the MCP client. A pure call handling router.
 
     Acts as a thin router: every tool call that arrives over the stdio
     transport is immediately delegated to

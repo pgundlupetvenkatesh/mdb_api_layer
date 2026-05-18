@@ -604,6 +604,8 @@ poetry update
 cd docs
 make html
 ```
+To clean previous builds and rebuild run - `make clean && make html`
+
 ### View documentation
 Open `docs/_build/html/index.html` in your web browser.
 ![doc_sample](doc_sample.png)

@@ -4,13 +4,11 @@ Tests Module
 Contracts
 ---------
 .. automodule:: tests.contracts.test_movie_details
-   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: tests.contracts.test_popular_movies
-   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -18,7 +16,6 @@ Contracts
 Data
 ----
 .. automodule:: tests.data.data_loader
-   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -43,7 +40,6 @@ Helpers
 Lists
 -----
 .. automodule:: tests.lists.test_update
-   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -51,7 +47,6 @@ Lists
 Movie Lists
 -----------
 .. automodule:: tests.movie_lists.test_popular
-   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -69,7 +64,6 @@ Pacts
 Conftest
 --------
 .. automodule:: tests.conftest
-   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -77,19 +71,16 @@ Conftest
 Movies
 ------
 .. automodule:: tests.movies.test_add_rating
-   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: tests.movies.test_delete_rating
-   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: tests.movies.test_details
-   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -97,7 +88,6 @@ Movies
 People
 ------
 .. automodule:: tests.people.test_details
-   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:
@@ -105,7 +95,6 @@ People
 Schema
 ~~~~~~
 .. automodule:: tests.schemas.models
-   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

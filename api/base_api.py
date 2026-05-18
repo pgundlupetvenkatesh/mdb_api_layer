@@ -6,7 +6,7 @@ This module provides the foundation for all API interactions with the Movie Data
 
 .. module:: api.base_api
    :synopsis: Base API client with common HTTP methods.
-
+   :no-index:
 """
 
 import requests

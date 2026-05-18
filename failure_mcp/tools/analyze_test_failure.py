@@ -20,6 +20,7 @@ Each entry in :data:`TOOLS` is a :class:`mcp.types.Tool` that carries:
 
 .. module:: failure_mcp.tools.analyze_test_failure
    :synopsis: MCP tool definitions wrapping FailureAnalyzer.
+   :no-index:
 """
 
 import json
@@ -27,7 +28,8 @@ from typing import Any
 
 from mcp import types
 
-# Import the singleton — failure_analyzer.py is NOT modified
+# Import the singleton — failure_analyzer.py is NOT modified. The whole point is to expose the object's methods without
+# modifying it.
 from tests.helpers.failure_analyzer import analyzer
 
 
@@ -137,11 +139,12 @@ TOOLS: list[types.Tool] = [
 # ---------------------------------------------------------------------------
 
 def _confidence_tier(score: int) -> str:
-    """Map a 0–100 confidence score to a human-readable tier label.
+    """A pure helper def: Map a 0–100 confidence score the LLM returns to a human-readable tier label.
 
-    Used to attach a ``confidence_tier`` field alongside the raw numeric
-    ``confidence`` value in the ``analyze_failure`` response, so MCP clients
-    can display or filter results without implementing their own thresholds.
+    Used to attach a ``confidence_tier`` field alongside the raw numeric ``confidence`` value in the ``analyze_failure``
+    response, so MCP clients can display or filter results without implementing their own thresholds. This will enrich
+    the diagnosis before returning it to the client without modifying
+    :py:class:`tests.helpers.failure_analyzer.FailureAnalyzer`.
 
     Thresholds:
 
@@ -226,6 +229,7 @@ async def handle_call(name: str, arguments: dict[str, Any]) -> list[types.TextCo
     if name == "analyze_failure":
         diagnosis = analyzer.analyze(failure_context=arguments)
 
+        # When `self.enabled == False`, return a friendly error
         if diagnosis is None:
             result = {
                 "error": "Analysis disabled or failed.",
@@ -251,5 +255,6 @@ async def handle_call(name: str, arguments: dict[str, Any]) -> list[types.TextCo
     else:
         raise ValueError(f"Unknown tool: {name}")
 
+    # A human-readable output in the client UI.
     return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 

@@ -19,13 +19,21 @@ release = '1.0'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-'sphinx.ext.autodoc',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
+]
+
+# Packages that may not be installed in the doc-build environment.
+# Sphinx will generate stub objects for these so imports don't fail.
+autodoc_mock_imports = [
+    "groq",
+    "mcp",
+    "pact",
+    "allure",
 ]
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
-
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

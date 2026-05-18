@@ -6,6 +6,7 @@ Each model corresponds to a former .json schema in tests/schemas/.
 
 .. module:: tests.schemas.models
    :synopsis: Pydantic response models for TMDB API validation.
+   :no-index:
 """
 
 from typing import Optional
