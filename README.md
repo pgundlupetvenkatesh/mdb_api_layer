@@ -750,19 +750,19 @@ Opens at `http://localhost:6274` in your browser.
 > **Important:** MCP Inspector does not have a `cwd` field. Use the **full path** to the `poetry` binary so it
 > resolves the correct virtual environment regardless of where Inspector is launched from.
 
-| Field              | Value                                                |
-|--------------------|------------------------------------------------------|
-| Transport Type     | `STDIO`                                              |
-| Command            | `/Users/pratikgv/git/mdb_api_layer/.venv/bin/poetry` |
-| Arguments          | `run python -m failure_mcp.server`                   |
+| Field              | Value                                      |
+|--------------------|--------------------------------------------|
+| Transport Type     | `STDIO`                                    |
+| Command            | `<path_to>/mdb_api_layer/.venv/bin/poetry` |
+| Arguments          | `run python -m failure_mcp.server`         |
 
 Expand **Environment Variables** and add:
 
-| Key                   | Value                               |
-|-----------------------|-------------------------------------|
-| `AI_ANALYSIS_ENABLED` | `true`                              |
-| `GROQ_API_KEY`        | your actual key from `.env`         |
-| `PYTHONPATH`          | `/Users/pratikgv/git/mdb_api_layer` |
+| Key                   | Value                       |
+|-----------------------|-----------------------------|
+| `AI_ANALYSIS_ENABLED` | `true`                      |
+| `GROQ_API_KEY`        | your actual key from `.env` |
+| `PYTHONPATH`          | `<path_to>/mdb_api_layer`   |
 
 Click **Connect**. On success the right panel shows all 3 tools: `analyze_failure`, `get_results`, `save_results`.
 
