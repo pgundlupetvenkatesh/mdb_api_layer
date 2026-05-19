@@ -32,15 +32,15 @@
 
           <div class="body" role="main">
             
-  <section id="failure-analyzer">
-<h1>Failure Analyzer<a class="headerlink" href="#failure-analyzer" title="Link to this heading">¶</a></h1>
+  <section id="module-tests.helpers.failure_analyzer">
+<span id="failure-analyzer"></span><h1>Failure Analyzer<a class="headerlink" href="#module-tests.helpers.failure_analyzer" title="Link to this heading">¶</a></h1>
 <p>AI-powered test failure analyzer using open-source LLMs via Groq.</p>
 <p>Sends test failure context (error, test code, API response) to an LLM
 and returns a structured diagnosis with root cause, suggested fix, and
 failure classification.</p>
-<dl class="py class" id="module-tests.helpers.failure_analyzer">
-<dt class="sig sig-object py">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.helpers.failure_analyzer.</span></span><span class="sig-name descname"><span class="pre">FailureAnalyzer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.helpers.failure_analyzer.FailureAnalyzer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.helpers.failure_analyzer.</span></span><span class="sig-name descname"><span class="pre">FailureAnalyzer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/helpers/failure_analyzer.html#FailureAnalyzer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.helpers.failure_analyzer.FailureAnalyzer" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Analyzes test failures using an open-source LLM via Groq’s free API.</p>
 <p>Disabled by default. Enable by setting AI_ANALYSIS_ENABLED=true and
@@ -51,8 +51,8 @@ GROQ_API_KEY in the .env file.</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">analyze</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">failure_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span></dt>
+<dt class="sig sig-object py" id="tests.helpers.failure_analyzer.FailureAnalyzer.analyze">
+<span class="sig-name descname"><span class="pre">analyze</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">failure_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/tests/helpers/failure_analyzer.html#FailureAnalyzer.analyze"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.helpers.failure_analyzer.FailureAnalyzer.analyze" title="Link to this definition">¶</a></dt>
 <dd><p>Send failure context to the LLM and return structured diagnosis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -74,8 +74,8 @@ GROQ_API_KEY in the .env file.</p>
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">client</span></span></dt>
+<dt class="sig sig-object py" id="tests.helpers.failure_analyzer.FailureAnalyzer.client">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">client</span></span><a class="headerlink" href="#tests.helpers.failure_analyzer.FailureAnalyzer.client" title="Link to this definition">¶</a></dt>
 <dd><p>Lazy-initialize the Groq client on first access.</p>
 <p>Delays the <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">groq</span> <span class="pre">import</span> <span class="pre">Groq</span></code> import until analysis is
 actually needed, avoiding import errors when the <code class="docutils literal notranslate"><span class="pre">groq</span></code> package
@@ -88,8 +88,8 @@ is installed but never used.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">save_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ai_analysis'</span></span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="tests.helpers.failure_analyzer.FailureAnalyzer.save_results">
+<span class="sig-name descname"><span class="pre">save_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ai_analysis'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/helpers/failure_analyzer.html#FailureAnalyzer.save_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.helpers.failure_analyzer.FailureAnalyzer.save_results" title="Link to this definition">¶</a></dt>
 <dd><p>Write all accumulated analysis results to a JSON file.</p>
 <p>Called once at the end of the test session by <code class="docutils literal notranslate"><span class="pre">pytest_sessionfinish</span></code>
 in <code class="docutils literal notranslate"><span class="pre">conftest.py</span></code>. Skips writing if no failures were analyzed.
@@ -129,8 +129,8 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">ai_anal
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="config.html">Config Module</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="tests.html">Tests Module</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="tests.html#contracts">Contracts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tests.html#data">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.contracts.test_movie_details">Contracts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.data.data_loader">Data</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="tests.html#helpers">Helpers</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Failure Analyzer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="helpers_field_assertions.html">Field Assertions</a></li>
@@ -138,15 +138,16 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">ai_anal
 <li class="toctree-l3"><a class="reference internal" href="helpers_test_data_generators.html">Test Data Generators</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="tests.html#lists">Lists</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tests.html#movie-lists">Movie Lists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.lists.test_update">Lists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.movie_lists.test_popular">Movie Lists</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tests.html#pacts">Pacts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tests.html#conftest">Conftest</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tests.html#movies">Movies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tests.html#people">People</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.conftest">Conftest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.movies.test_add_rating">Movies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.people.test_details">People</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="failure_mcp.html">MCP Server (failure_mcp)</a></li>
 </ul>
 
 <div class="relations">

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tests.helpers.response_assertions &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for tests.helpers.response_assertions</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="assert_http_response">
+<a class="viewcode-back" href="../../../helpers_response_assertions.html#tests.helpers.response_assertions.assert_http_response">[docs]</a>
+<span></span><span class="k">def</span><span class="w"> </span><span class="nf">assert_http_response</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">exp_val</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assert common HTTP response properties.</span>
+
+<span class="sd">    :param response: The HTTP response object to validate.</span>
+<span class="sd">    :param exp_val: A dictionary containing expected values:</span>
+<span class="sd">        - &#39;exp_req_method&#39;: Expected HTTP method (e.g., &#39;GET&#39;).</span>
+<span class="sd">        - &#39;exp_status_code&#39;: Expected HTTP status code (e.g., 200).</span>
+<span class="sd">        - &#39;exp_content_type&#39;: Expected content type substring (e.g., &#39;application/json&#39;).</span>
+<span class="sd">        - &#39;exp_max_elp_seconds&#39;: Maximum allowed response time in seconds (e.g., 2).</span>
+<span class="sd">        - &#39;exp_url_contains&#39;: Substring that should be present in the response URL (e.g., movie ID).</span>
+<span class="sd">    :raises AssertionError: If any validation fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">exp_req_method</span> <span class="o">=</span> <span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_req_method&#39;</span><span class="p">]</span>
+
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">request</span> <span class="o">==</span> <span class="n">exp_req_method</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;HTTP method is not </span><span class="si">{</span><span class="n">exp_req_method</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_status_code&#39;</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;returned status code is not </span><span class="si">{</span><span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_status_code&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">assert</span> <span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_content_type&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">],</span> <span class="s1">&#39;response is not in JSON format&#39;</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">elapsed_seconds</span> <span class="o">&lt;</span> <span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_max_elp_seconds&#39;</span><span class="p">],</span> \
+        <span class="sa">f</span><span class="s2">&quot;Actual response time is greater than expected. Actual: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">elapsed_seconds</span><span class="si">}</span><span class="s2"> seconds, Expected: &lt; </span><span class="si">{</span><span class="n">exp_val</span><span class="p">[</span><span class="s2">&quot;exp_max_elp_seconds&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2"> seconds&quot;</span>
+    <span class="k">assert</span> <span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_url_contains&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Response url should contain movie ID &#39;</span><span class="si">{</span><span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_url_contains&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">reason</span> <span class="o">==</span> <span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_req_reason&#39;</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Response reason should be &#39;</span><span class="si">{</span><span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;expr_req_reason&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; but it&#39;s &#39;</span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">&#39;&quot;</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tests.data.data_loader &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for tests.data.data_loader</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tests.helpers.test_data_generators</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+
+<span class="c1"># Map YAML placeholder strings to generator functions</span>
+<span class="n">GENERATORS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;$random_rating&#39;</span><span class="p">:</span> <span class="n">random_rating</span><span class="p">,</span>
+    <span class="s1">&#39;$random_invalid_rating&#39;</span><span class="p">:</span> <span class="n">random_invalid_rating</span><span class="p">,</span>
+    <span class="s1">&#39;$random_movie_id&#39;</span><span class="p">:</span> <span class="n">pick_random_movie_id</span><span class="p">,</span>
+    <span class="s1">&#39;$invalid_session_id&#39;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="s1">&#39;a1b2c3d4e5f6g7h8i9j0&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;$random_person_id&#39;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">14</span><span class="p">),</span>
+    <span class="s1">&#39;$current_timestamp&#39;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+<span class="p">}</span>
+
+<div class="viewcode-block" id="load_test_data">
+<a class="viewcode-back" href="../../../tests.html#tests.data.data_loader.load_test_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_test_data</span><span class="p">(</span><span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load test data from a YAML file and apply default values.</span>
+
+<span class="sd">        Reads a YAML file from the same directory as this module and applies</span>
+<span class="sd">        any defined defaults to test case entries. Also processes dynamic</span>
+<span class="sd">        placeholders like &#39;$random_rating&#39; by calling the mapped generator functions.</span>
+
+<span class="sd">        :param file_name: Name of the YAML file containing test data.</span>
+<span class="sd">        :return: Parsed data from the YAML file with defaults applied.</span>
+<span class="sd">        :raises FileNotFoundError: If the specified file does not exist.</span>
+<span class="sd">        :raises yaml.YAMLError: If the file contains invalid YAML.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="n">data_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">file_name</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+
+        <span class="n">_apply_defaults</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">_process_generators</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_apply_defaults</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply default values to test data sections in-place.</span>
+
+<span class="sd">    Iterates through each section in the data dictionary. If a section</span>
+<span class="sd">    contains a &#39;defaults&#39; key, those default values are applied to each</span>
+<span class="sd">    test case in the corresponding category using setdefault (existing</span>
+<span class="sd">    values are not overwritten).</span>
+
+<span class="sd">    Global defaults (top-level &#39;defaults&#39; key) are applied to ALL test cases</span>
+<span class="sd">    across all sections.</span>
+
+<span class="sd">    Expected YAML structure:</span>
+<span class="sd">        defaults:              # Global defaults applied to all test cases</span>
+<span class="sd">          key: default_value</span>
+<span class="sd">        section_name:</span>
+<span class="sd">          defaults:            # Section-specific defaults</span>
+<span class="sd">            category_name:</span>
+<span class="sd">              key: default_value</span>
+<span class="sd">          category_name:</span>
+<span class="sd">            - test_case_1</span>
+<span class="sd">            - test_case_2</span>
+
+<span class="sd">    :param data: Dictionary of test data to modify. Modified in-place.</span>
+<span class="sd">    :return: None. The input dictionary is modified directly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Extract global defaults</span>
+    <span class="n">global_defaults</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;defaults&#39;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">section</span><span class="p">,</span> <span class="n">content</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">continue</span>    <span class="c1"># Skip non-dict values</span>
+
+        <span class="n">defaults</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;defaults&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># Apply defaults to each category in the section</span>
+        <span class="k">for</span> <span class="n">category</span><span class="p">,</span> <span class="n">test_cases</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">test_cases</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Get category-specific defaults</span>
+            <span class="n">category_defaults</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">defaults</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">defaults</span><span class="p">:</span>
+                <span class="n">category_defaults</span> <span class="o">=</span> <span class="n">defaults</span><span class="p">[</span><span class="n">category</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">test_case</span> <span class="ow">in</span> <span class="n">test_cases</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">test_case</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="c1"># Apply global defaults first</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">global_defaults</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="n">test_case</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+                    <span class="c1"># Apply category-specific defaults (can override global if same key)</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">category_defaults</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="n">test_case</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_process_generators</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Process generator placeholders in test data.</span>
+
+<span class="sd">    Recursively searches for string values matching generator placeholders</span>
+<span class="sd">    (e.g., &#39;$random_rating&#39;) and replaces them with generated values.</span>
+
+<span class="sd">    :param data: Dictionary of test data to modify. Modified in-place.</span>
+<span class="sd">    :return: None. The input dictionary is modified directly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">GENERATORS</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">GENERATORS</span><span class="p">[</span><span class="n">value</span><span class="p">]()</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">_process_generators</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">_process_generators_list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">_process_generators_list</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_process_generators_list</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Process generator placeholders in a list.</span>
+
+<span class="sd">    :param data: List to process. Modified in-place.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">GENERATORS</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">GENERATORS</span><span class="p">[</span><span class="n">item</span><span class="p">]()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">_process_generators</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">_process_generators_list</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

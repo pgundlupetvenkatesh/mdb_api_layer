@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tests.helpers.test_data_generators &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for tests.helpers.test_data_generators</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Test data generators for dynamic test values.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+
+<div class="viewcode-block" id="random_rating">
+<a class="viewcode-back" href="../../../helpers_test_data_generators.html#tests.helpers.test_data_generators.random_rating">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">random_rating</span><span class="p">(</span><span class="n">min_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">max_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a random valid movie rating in 0.5 increments.</span>
+
+<span class="sd">    :param min_val: Minimum rating value (default: 0.5)</span>
+<span class="sd">    :param max_val: Maximum rating value (default: 10.0)</span>
+<span class="sd">    :return: Random rating rounded to 1 decimal place</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">max_val</span> <span class="o">-</span> <span class="n">min_val</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">min_val</span> <span class="o">+</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="n">steps</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span></div>
+
+
+
+<div class="viewcode-block" id="random_invalid_rating">
+<a class="viewcode-back" href="../../../helpers_test_data_generators.html#tests.helpers.test_data_generators.random_invalid_rating">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">random_invalid_rating</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a random invalid movie rating (outside 0.5-10.0 range).</span>
+
+<span class="sd">    :return: Random invalid rating</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">]):</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Too low</span>
+    <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">10.1</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Too high</span></div>
+
+
+<div class="viewcode-block" id="pick_random_movie_id">
+<a class="viewcode-back" href="../../../helpers_test_data_generators.html#tests.helpers.test_data_generators.pick_random_movie_id">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pick_random_movie_id</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads numbers from a tests/data/movie_ids.txt file and returns a random one.</span>
+<span class="sd">    Assumes one number per line.</span>
+
+<span class="sd">    :return: Random movie ID</span>
+<span class="sd">    :raises FileNotFoundError: If movie_ids.txt doesn&#39;t exist</span>
+<span class="sd">    :raises ValueError: If file is empty or contains invalid data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span> <span class="o">/</span> <span class="s2">&quot;movie_ids.txt&quot;</span>
+
+    <span class="c1"># Open the file and read all lines into a list</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+
+    <span class="c1"># Strip whitespace (like newline characters) and convert to integers</span>
+    <span class="n">numbers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">numbers</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;movie_ids.txt is empty or contains no valid numbers.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">numbers</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="pick_random_rated_movie_id">
+<a class="viewcode-back" href="../../../helpers_test_data_generators.html#tests.helpers.test_data_generators.pick_random_rated_movie_id">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pick_random_rated_movie_id</span><span class="p">(</span><span class="n">acc_id</span><span class="p">,</span> <span class="n">session_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fetches rated movies from the account and returns a random movie ID.</span>
+
+<span class="sd">    :return: Random rated movie ID</span>
+<span class="sd">    :raises ValueError: If no rated movies are found</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">api.account_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">AccountAPI</span>
+
+    <span class="n">account_api</span> <span class="o">=</span> <span class="n">AccountAPI</span><span class="p">()</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">account_api</span><span class="o">.</span><span class="n">get_rated_movies</span><span class="p">(</span><span class="n">acc_id</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;session_id&#39;</span><span class="p">:</span> <span class="n">session_id</span><span class="p">})</span>
+    <span class="n">rated_movies</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;results&#39;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="c1"># print(f&quot;Rated Movies: {rated_movies}&quot;)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rated_movies</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No rated movies found for this account.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">rated_movies</span><span class="p">)[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

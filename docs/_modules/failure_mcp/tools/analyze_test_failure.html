@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>failure_mcp.tools.analyze_test_failure &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for failure_mcp.tools.analyze_test_failure</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">MCP tool definitions for AI-powered test failure analysis.</span>
+
+<span class="sd">Exposes three tools:</span>
+
+<span class="sd">- ``analyze_failure`` — send a failure context to the LLM and get a structured diagnosis.</span>
+<span class="sd">- ``get_results``     — retrieve accumulated diagnosis results (with optional confidence filter).</span>
+<span class="sd">- ``save_results``    — flush all results to ``&lt;output_dir&gt;/failure_analysis.json``.</span>
+
+<span class="sd">This module is imported by ``failure_mcp/server.py``, which registers the handlers</span>
+<span class="sd">on the :class:`mcp.server.Server` instance.</span>
+
+<span class="sd">Tool Schemas</span>
+<span class="sd">------------</span>
+<span class="sd">Each entry in :data:`TOOLS` is a :class:`mcp.types.Tool` that carries:</span>
+
+<span class="sd">- ``name``        — identifier used by the MCP client when calling the tool.</span>
+<span class="sd">- ``description`` — human-readable summary shown in the client UI.</span>
+<span class="sd">- ``inputSchema`` — JSON Schema object describing required and optional arguments.</span>
+
+<span class="sd">.. module:: failure_mcp.tools.analyze_test_failure</span>
+<span class="sd">   :synopsis: MCP tool definitions wrapping FailureAnalyzer.</span>
+<span class="sd">   :no-index:</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">types</span>
+
+<span class="c1"># Import the singleton — failure_analyzer.py is NOT modified. The whole point is to expose the object&#39;s methods without</span>
+<span class="c1"># modifying it.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tests.helpers.failure_analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="n">analyzer</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Tool schemas</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="c1">#: List of :class:`mcp.types.Tool` objects advertised to MCP clients.</span>
+<span class="c1">#:</span>
+<span class="c1">#: Contains three tools:</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``analyze_failure``</span>
+<span class="c1">#:     Required args: ``test_name``, ``error_message``.</span>
+<span class="c1">#:     Optional args: ``test_file``, ``traceback``, ``api_url``, ``status_code``,</span>
+<span class="c1">#:     ``response_body``.</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``get_results``</span>
+<span class="c1">#:     Optional arg: ``min_confidence`` (int 0–100, default 0).</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``save_results``</span>
+<span class="c1">#:     Optional arg: ``output_dir`` (str, default ``&quot;ai_analysis&quot;``).</span>
+<span class="n">TOOLS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">Tool</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">types</span><span class="o">.</span><span class="n">Tool</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;analyze_failure&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Send a test failure context to the LLM and receive a structured &quot;</span>
+            <span class="s2">&quot;diagnosis with root_cause, category, suggested_fix, confidence (0-100 %), &quot;</span>
+            <span class="s2">&quot;explanation, evidence, and a human-readable confidence_tier.&quot;</span>
+        <span class="p">),</span>
+        <span class="n">inputSchema</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Name of the failed test function.&quot;</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;test_file&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Relative path to the test file.&quot;</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;error_message&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The assertion or exception message.&quot;</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;traceback&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Full traceback string.&quot;</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;api_url&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;The API URL that was called (optional).&quot;</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;status_code&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;HTTP status code received (optional).&quot;</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;response_body&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;API response body or snippet (optional).&quot;</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;test_name&quot;</span><span class="p">,</span> <span class="s2">&quot;error_message&quot;</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">),</span>
+    <span class="n">types</span><span class="o">.</span><span class="n">Tool</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;get_results&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Return all diagnosis results accumulated during this MCP server &quot;</span>
+            <span class="s2">&quot;session as a JSON array. Optionally filter by minimum confidence.&quot;</span>
+        <span class="p">),</span>
+        <span class="n">inputSchema</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;min_confidence&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Only return results with confidence &gt;= this value (0–100). Defaults to 0.&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="mi">0</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[]</span>
+        <span class="p">}</span>
+    <span class="p">),</span>
+    <span class="n">types</span><span class="o">.</span><span class="n">Tool</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;save_results&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Flush all accumulated diagnosis results to &quot;</span>
+            <span class="s2">&quot;&lt;output_dir&gt;/failure_analysis.json. &quot;</span>
+            <span class="s2">&quot;Returns the number of results written and the output path.&quot;</span>
+        <span class="p">),</span>
+        <span class="n">inputSchema</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;output_dir&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Directory to write failure_analysis.json. Defaults to &#39;ai_analysis&#39;.&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;ai_analysis&quot;</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[]</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+<span class="p">]</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Call dispatcher</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="_confidence_tier">
+<a class="viewcode-back" href="../../../failure_mcp.html#failure_mcp.tools.analyze_test_failure._confidence_tier">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_confidence_tier</span><span class="p">(</span><span class="n">score</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A pure helper def: Map a 0–100 confidence score the LLM returns to a human-readable tier label.</span>
+
+<span class="sd">    Used to attach a ``confidence_tier`` field alongside the raw numeric ``confidence`` value in the ``analyze_failure``</span>
+<span class="sd">    response, so MCP clients can display or filter results without implementing their own thresholds. This will enrich</span>
+<span class="sd">    the diagnosis before returning it to the client without modifying</span>
+<span class="sd">    :py:class:`tests.helpers.failure_analyzer.FailureAnalyzer`.</span>
+
+<span class="sd">    Thresholds:</span>
+
+<span class="sd">    +----------+-----------+</span>
+<span class="sd">    | Range    | Tier      |</span>
+<span class="sd">    +==========+===========+</span>
+<span class="sd">    | &gt;= 80    | ``high``  |</span>
+<span class="sd">    +----------+-----------+</span>
+<span class="sd">    | 50 – 79  | ``medium``|</span>
+<span class="sd">    +----------+-----------+</span>
+<span class="sd">    | &lt; 50     | ``low``   |</span>
+<span class="sd">    +----------+-----------+</span>
+
+<span class="sd">    :param score: Integer confidence score (0–100) returned by the LLM.</span>
+<span class="sd">    :returns: One of ``&quot;high&quot;``, ``&quot;medium&quot;``, or ``&quot;low&quot;``.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        &gt;&gt;&gt; _confidence_tier(92)</span>
+<span class="sd">        &#39;high&#39;</span>
+<span class="sd">        &gt;&gt;&gt; _confidence_tier(65)</span>
+<span class="sd">        &#39;medium&#39;</span>
+<span class="sd">        &gt;&gt;&gt; _confidence_tier(30)</span>
+<span class="sd">        &#39;low&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mi">80</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;high&quot;</span>
+    <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mi">50</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;medium&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;low&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="handle_call">
+<a class="viewcode-back" href="../../../failure_mcp.html#failure_mcp.tools.analyze_test_failure.handle_call">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle_call</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">arguments</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">TextContent</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dispatch an MCP tool call to the appropriate :class:`FailureAnalyzer` method.</span>
+
+<span class="sd">    Called by ``failure_mcp/server.py``&#39;s ``call_tool`` hook for every tool</span>
+<span class="sd">    invocation arriving from the MCP client. Delegates to the</span>
+<span class="sd">    :data:`~tests.helpers.failure_analyzer.analyzer` singleton without</span>
+<span class="sd">    modifying ``failure_analyzer.py``.</span>
+
+<span class="sd">    **Tool behavior:**</span>
+
+<span class="sd">    ``analyze_failure``</span>
+<span class="sd">        Calls :meth:`~tests.helpers.failure_analyzer.FailureAnalyzer.analyze`</span>
+<span class="sd">        with the supplied ``arguments`` dict as the ``failure_context``.</span>
+<span class="sd">        On success, enriches the diagnosis with a ``confidence_tier`` field.</span>
+<span class="sd">        On failure or when analysis is disabled, returns an ``error`` and</span>
+<span class="sd">        ``hint`` dict instead.</span>
+
+<span class="sd">    ``get_results``</span>
+<span class="sd">        Reads :attr:`~tests.helpers.failure_analyzer.FailureAnalyzer._results`</span>
+<span class="sd">        and filters entries whose ``confidence`` is &gt;= ``min_confidence``</span>
+<span class="sd">        (defaults to ``0``, i.e. return everything).</span>
+
+<span class="sd">    ``save_results``</span>
+<span class="sd">        Calls :meth:`~tests.helpers.failure_analyzer.FailureAnalyzer.save_results`</span>
+<span class="sd">        with the given ``output_dir`` (defaults to ``&quot;ai_analysis&quot;``), then</span>
+<span class="sd">        returns the count of results written and the output file path.</span>
+
+<span class="sd">    :param name: Tool name requested by the MCP client. Must be one of</span>
+<span class="sd">        ``&quot;analyze_failure&quot;``, ``&quot;get_results&quot;``, or ``&quot;save_results&quot;``.</span>
+<span class="sd">    :param arguments: Key/value arguments supplied by the MCP client,</span>
+<span class="sd">        validated against the JSON Schema in :data:`TOOLS`.</span>
+<span class="sd">    :returns: A single-element list of :class:`mcp.types.TextContent` whose</span>
+<span class="sd">        ``text`` field contains the JSON-serialized result (2-space indent).</span>
+<span class="sd">    :raises ValueError: If ``name`` does not match any registered tool.</span>
+
+<span class="sd">    Example response for ``analyze_failure``::</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;root_cause&quot;: &quot;...&quot;,</span>
+<span class="sd">          &quot;category&quot;: &quot;auth_error&quot;,</span>
+<span class="sd">          &quot;suggested_fix&quot;: &quot;...&quot;,</span>
+<span class="sd">          &quot;confidence&quot;: 92,</span>
+<span class="sd">          &quot;explanation&quot;: &quot;...&quot;,</span>
+<span class="sd">          &quot;evidence&quot;: [&quot;HTTP 401&quot;, &quot;Response: Invalid API key&quot;],</span>
+<span class="sd">          &quot;test_name&quot;: &quot;test_get_movie_details&quot;,</span>
+<span class="sd">          &quot;model&quot;: &quot;meta-llama/llama-4-scout-17b-16e-instruct&quot;,</span>
+<span class="sd">          &quot;confidence_tier&quot;: &quot;high&quot;</span>
+<span class="sd">        }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;analyze_failure&quot;</span><span class="p">:</span>
+        <span class="n">diagnosis</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">analyze</span><span class="p">(</span><span class="n">failure_context</span><span class="o">=</span><span class="n">arguments</span><span class="p">)</span>
+
+        <span class="c1"># When `self.enabled == False`, return a friendly error</span>
+        <span class="k">if</span> <span class="n">diagnosis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Analysis disabled or failed.&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;hint&quot;</span><span class="p">:</span> <span class="s2">&quot;Set AI_ANALYSIS_ENABLED=true and GROQ_API_KEY in the environment.&quot;</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">confidence</span> <span class="o">=</span> <span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">diagnosis</span><span class="p">,</span> <span class="s2">&quot;confidence_tier&quot;</span><span class="p">:</span> <span class="n">_confidence_tier</span><span class="p">(</span><span class="n">confidence</span><span class="p">)}</span>
+
+    <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;get_results&quot;</span><span class="p">:</span>
+        <span class="n">min_confidence</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;min_confidence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">_results</span>
+            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_confidence</span>
+        <span class="p">]</span>
+
+    <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;save_results&quot;</span><span class="p">:</span>
+        <span class="n">output_dir</span> <span class="o">=</span> <span class="n">arguments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;output_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;ai_analysis&quot;</span><span class="p">)</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">analyzer</span><span class="o">.</span><span class="n">_results</span><span class="p">)</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">save_results</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;saved&quot;</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/failure_analysis.json&quot;</span><span class="p">}</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown tool: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># A human-readable output in the client UI.</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">TextContent</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))]</span></div>
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

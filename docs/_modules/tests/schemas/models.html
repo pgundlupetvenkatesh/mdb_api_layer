@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tests.schemas.models &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for tests.schemas.models</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Pydantic models for API response validation.</span>
+
+<span class="sd">Replaces JSON schema files with type-safe Python models.</span>
+<span class="sd">Each model corresponds to a former .json schema in tests/schemas/.</span>
+
+<span class="sd">.. module:: tests.schemas.models</span>
+<span class="sd">   :synopsis: Pydantic response models for TMDB API validation.</span>
+<span class="sd">   :no-index:</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<div class="viewcode-block" id="GenericResponse">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.GenericResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenericResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schema for generic error/status responses.</span>
+
+<span class="sd">    Used to validate error responses across all endpoints when the API</span>
+<span class="sd">    returns a status message instead of resource data (e.g., 404, 401).</span>
+
+<span class="sd">    Replaces: ``generic_schema.json``</span>
+
+<span class="sd">    Example response::</span>
+<span class="sd">        {&quot;status_message&quot;: &quot;Resource not found.&quot;, &quot;success&quot;: false, &quot;status_code&quot;: 34}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">status_message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+<div class="viewcode-block" id="RatingResponse">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.RatingResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RatingResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schema for add/delete movie rating responses.</span>
+
+<span class="sd">    Validates the response structure when a rating is submitted or removed.</span>
+<span class="sd">    Uses ``extra = &quot;forbid&quot;`` to reject any unexpected fields, matching the</span>
+<span class="sd">    strict ``additionalProperties: false`` from the original JSON schema.</span>
+
+<span class="sd">    Replaces: ``add_delete_rating_schema.json``</span>
+
+<span class="sd">    Example response::</span>
+<span class="sd">        {&quot;success&quot;: true, &quot;status_code&quot;: 1, &quot;status_message&quot;: &quot;Success.&quot;}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;forbid&quot;</span><span class="p">}</span>  <span class="c1"># equivalent to additionalProperties: false</span>
+
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">status_message</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+<span class="c1"># Nested model for production companies</span>
+<div class="viewcode-block" id="ProductionCompany">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.ProductionCompany">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProductionCompany</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Nested model for a production company within movie details.</span>
+
+<span class="sd">    :param id: Unique identifier for the production company.</span>
+<span class="sd">    :param logo_path: Path to the company logo image, or None if unavailable.</span>
+<span class="sd">    :param name: Name of the production company.</span>
+<span class="sd">    :param origin_country: ISO 3166-1 country code of the company&#39;s origin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">logo_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">origin_country</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<span class="c1"># Nested model for genres</span>
+<div class="viewcode-block" id="Genre">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.Genre">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Genre</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Nested model for a movie genre.</span>
+
+<span class="sd">    :param id: Unique identifier for the genre.</span>
+<span class="sd">    :param name: Display name of the genre (e.g., &quot;Action&quot;, &quot;Comedy&quot;).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+<div class="viewcode-block" id="MovieDetails">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.MovieDetails">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MovieDetails</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schema for movie details response from ``GET /3/movie/{movie_id}``.</span>
+
+<span class="sd">    Validates the core fields returned by the TMDB movie details endpoint.</span>
+<span class="sd">    Uses ``extra = &quot;allow&quot;`` to accept additional fields not explicitly</span>
+<span class="sd">    defined here (e.g., overview, budget, revenue, runtime).</span>
+
+<span class="sd">    Replaces: ``movie_schema.json``</span>
+
+<span class="sd">    :param adult: Whether the movie is classified as adult content.</span>
+<span class="sd">    :param id: Unique TMDB movie identifier.</span>
+<span class="sd">    :param origin_country: List of ISO 3166-1 country codes.</span>
+<span class="sd">    :param original_language: ISO 639-1 language code of the original language.</span>
+<span class="sd">    :param original_title: Original title in the movie&#39;s native language.</span>
+<span class="sd">    :param title: Localized title of the movie.</span>
+<span class="sd">    :param release_date: Release date in ``YYYY-MM-DD`` format, or None.</span>
+<span class="sd">    :param production_companies: List of companies that produced the movie.</span>
+<span class="sd">    :param genres: List of genres the movie belongs to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">adult</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">origin_country</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">original_language</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">original_title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">release_date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">production_companies</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProductionCompany</span><span class="p">]</span>
+    <span class="n">genres</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Genre</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">}</span>  <span class="c1"># allow fields not defined here (overview, etc.)</span></div>
+
+
+<span class="c1"># Nested model for popular movie items</span>
+<div class="viewcode-block" id="PopularMovieItem">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.PopularMovieItem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PopularMovieItem</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Nested model for a single movie in the popular movies list.</span>
+
+<span class="sd">    Represents one item in the ``results`` array returned by</span>
+<span class="sd">    ``GET /3/movie/popular``.</span>
+
+<span class="sd">    :param adult: Whether the movie is classified as adult content.</span>
+<span class="sd">    :param backdrop_path: Path to the backdrop image, or None.</span>
+<span class="sd">    :param genre_ids: List of genre IDs associated with the movie.</span>
+<span class="sd">    :param id: Unique TMDB movie identifier.</span>
+<span class="sd">    :param original_language: ISO 639-1 language code.</span>
+<span class="sd">    :param original_title: Original title in the movie&#39;s native language.</span>
+<span class="sd">    :param overview: Brief plot summary.</span>
+<span class="sd">    :param popularity: TMDB popularity score.</span>
+<span class="sd">    :param poster_path: Path to the poster image, or None.</span>
+<span class="sd">    :param release_date: Release date in ``YYYY-MM-DD`` format.</span>
+<span class="sd">    :param title: Localized title of the movie.</span>
+<span class="sd">    :param video: Whether the movie has an associated video.</span>
+<span class="sd">    :param vote_average: Average user rating (0.0–10.0).</span>
+<span class="sd">    :param vote_count: Total number of user votes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">adult</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">backdrop_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">genre_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">original_language</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">original_title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">overview</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">popularity</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">poster_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">release_date</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">video</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">vote_average</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">vote_count</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="PopularMoviesResponse">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.PopularMoviesResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PopularMoviesResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schema for popular movies list response from ``GET /3/movie/popular``.</span>
+
+<span class="sd">    Validates the paginated response structure containing a list of</span>
+<span class="sd">    popular movies.</span>
+
+<span class="sd">    Replaces: ``popular_movies_schema.json``</span>
+
+<span class="sd">    :param page: Current page number in the paginated results.</span>
+<span class="sd">    :param results: List of popular movie items for this page.</span>
+<span class="sd">    :param total_pages: Total number of available pages.</span>
+<span class="sd">    :param total_results: Total number of popular movies across all pages.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">page</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PopularMovieItem</span><span class="p">]</span>
+    <span class="n">total_pages</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">total_results</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+<div class="viewcode-block" id="PersonDetails">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.PersonDetails">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PersonDetails</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schema for person details response from ``GET /3/person/{person_id}``.</span>
+
+<span class="sd">    Validates the response structure for the TMDB person details endpoint.</span>
+<span class="sd">    Uses ``extra = &quot;allow&quot;`` to accept additional fields not explicitly</span>
+<span class="sd">    defined here (e.g., external_ids, combined_credits).</span>
+
+<span class="sd">    Replaces: ``person_details_schema.json``</span>
+
+<span class="sd">    :param adult: Whether the person is associated with adult content.</span>
+<span class="sd">    :param also_known_as: Alternative names or aliases, or None.</span>
+<span class="sd">    :param biography: Biographical text about the person.</span>
+<span class="sd">    :param birthday: Date of birth in ``YYYY-MM-DD`` format.</span>
+<span class="sd">    :param deathday: Date of death in ``YYYY-MM-DD`` format, or None if alive.</span>
+<span class="sd">    :param gender: Gender identifier (0=not specified, 1=female, 2=male, 3=non-binary).</span>
+<span class="sd">    :param homepage: Personal website URL, or None.</span>
+<span class="sd">    :param id: Unique TMDB person identifier.</span>
+<span class="sd">    :param imdb_id: IMDb identifier (e.g., ``nm0000093``).</span>
+<span class="sd">    :param known_for_department: Primary department (e.g., &quot;Acting&quot;, &quot;Directing&quot;).</span>
+<span class="sd">    :param name: Full name of the person.</span>
+<span class="sd">    :param place_of_birth: City/country of birth, or None if unknown.</span>
+<span class="sd">    :param popularity: TMDB popularity score.</span>
+<span class="sd">    :param profile_path: Path to the profile image, or None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">adult</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">also_known_as</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">biography</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">birthday</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">deathday</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">gender</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">homepage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">imdb_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">known_for_department</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">place_of_birth</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">popularity</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">profile_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">}</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

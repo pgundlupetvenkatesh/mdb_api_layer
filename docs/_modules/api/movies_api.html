@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>api.movies_api &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for api.movies_api</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Movies API client for The Movie Database (TMDB) endpoints.</span>
+
+<span class="sd">This module provides a high-level interface for interacting with movie-related</span>
+<span class="sd">TMDB API endpoints. It extends BaseAPI to inherit authentication, request</span>
+<span class="sd">handling, and response parsing functionality.</span>
+
+<span class="sd">Usage:</span>
+<span class="sd">    api = MoviesAPI()</span>
+<span class="sd">    response = api.get_movie_details(550)  # Get Fight Club details</span>
+<span class="sd">    logger.info(response.data[&#39;title&#39;])</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">api.base_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseAPI</span>
+
+<div class="viewcode-block" id="MoviesAPI">
+<a class="viewcode-back" href="../../api.html#api.movies_api.MoviesAPI">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MoviesAPI</span><span class="p">(</span><span class="n">BaseAPI</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Client for TMDB Movies API endpoints.</span>
+
+<span class="sd">    Provides methods for retrieving movie details, popular movies,</span>
+<span class="sd">    top-rated movies, and alternative titles. All methods return</span>
+<span class="sd">    a response object containing status code, headers, and parsed data.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        _sub_path (str): Base path segment for movie endpoints.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        api = MoviesAPI()</span>
+<span class="sd">        movie = api.get_movie_details(550)</span>
+<span class="sd">        popular = api.get_popular_movies({&#39;page&#39;: 2})</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_sub_path</span> <span class="o">=</span> <span class="s2">&quot;movie&quot;</span>
+
+<div class="viewcode-block" id="MoviesAPI.get_movie_details">
+<a class="viewcode-back" href="../../api.html#api.movies_api.MoviesAPI.get_movie_details">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_movie_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movie_id</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve detailed information for a specific movie.</span>
+
+<span class="sd">        :param movie_id: TMDB movie ID (e.g., 550 for Fight Club).</span>
+<span class="sd">        :return: Response object with movie details including title,</span>
+<span class="sd">                 genres, production companies, and release info.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MoviesAPI.get_popular_movies">
+<a class="viewcode-back" href="../../api.html#api.movies_api.MoviesAPI.get_popular_movies">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_popular_movies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve a paginated list of currently popular movies.</span>
+
+<span class="sd">        :param query_params: Optional dict of query parameters.</span>
+<span class="sd">                             Defaults to page 1 if not specified.</span>
+<span class="sd">        :return: Response object with paginated list of popular movies.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query_params</span> <span class="o">=</span><span class="p">{</span> <span class="s1">&#39;page&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">query_params</span> <span class="ow">or</span> <span class="p">{})}</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;query_params: </span><span class="si">{</span><span class="n">query_params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/popular&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MoviesAPI.get_top_rated">
+<a class="viewcode-back" href="../../api.html#api.movies_api.MoviesAPI.get_top_rated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_top_rated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve a paginated list of top-rated movies.</span>
+
+<span class="sd">        :param query_params: Optional dict of query parameters.</span>
+<span class="sd">                             Defaults to page 1 if not specified.</span>
+<span class="sd">        :return: Response object with paginated list of top-rated movies.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query_params</span> <span class="o">=</span><span class="p">{</span> <span class="s1">&#39;page&#39;</span><span class="p">:</span> <span class="mi">1</span> <span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">query_params</span> <span class="ow">or</span> <span class="p">{})}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/top_rated&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MoviesAPI.get_alt_title">
+<a class="viewcode-back" href="../../api.html#api.movies_api.MoviesAPI.get_alt_title">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_alt_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movie_id</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve alternative titles for a specific movie.</span>
+
+<span class="sd">        Returns localized and regional title variations for the movie.</span>
+
+<span class="sd">        :param movie_id: TMDB movie ID.</span>
+<span class="sd">        :return: Response object with list of alternative titles</span>
+<span class="sd">                 including country codes and title strings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">/alternative_titles&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MoviesAPI.add_rating">
+<a class="viewcode-back" href="../../api.html#api.movies_api.MoviesAPI.add_rating">[docs]</a>
+    <span class="k">def</span><span class="w">  </span><span class="nf">add_rating</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movie_id</span><span class="p">,</span> <span class="n">rating</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a user rating for a specific movie.</span>
+
+<span class="sd">        :param movie_id: TMDB movie ID.</span>
+<span class="sd">        :param rating: User rating value (0.5 to 10.0).</span>
+<span class="sd">        :param query_params: Optional dict of query parameters, such as session_id for authentication.</span>
+<span class="sd">        :return: Response object with status of the rating submission.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">rating</span><span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">/rating&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MoviesAPI.delete_rating">
+<a class="viewcode-back" href="../../api.html#api.movies_api.MoviesAPI.delete_rating">[docs]</a>
+    <span class="k">def</span><span class="w">  </span><span class="nf">delete_rating</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movie_id</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete a user rating for a specific movie.</span>
+<span class="sd">        :param movie_id: TMDB movie ID.</span>
+<span class="sd">        :param query_params: Optional dict of query parameters, such as session_id for authentication.</span>
+<span class="sd">        :return: Response object with status of the rating deletion.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">/rating&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

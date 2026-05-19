@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tests.conftest &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for tests.conftest</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Pytest configuration and shared fixtures for the TMDB API test suite.</span>
+
+<span class="sd">This module is automatically loaded by pytest before test collection. It provides:</span>
+
+<span class="sd">- **CLI options**: ``--loguru-log-level``, ``--log-to-file``, ``--failure-analysis``</span>
+<span class="sd">- **Hooks**: Logging setup, AI failure analysis, Allure/HTML report customization</span>
+<span class="sd">- **Fixtures**: API client factory, Pydantic schema loader, test data loader</span>
+
+<span class="sd">.. module:: tests.conftest</span>
+<span class="sd">   :synopsis: Pytest fixtures, hooks, and CLI options.</span>
+<span class="sd">   :no-index:</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">zoneinfo</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZoneInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tests.helpers.failure_analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="n">analyzer</span>
+
+<span class="c1"># Registering logger configuration options and setup before any test runs</span>
+<div class="viewcode-block" id="pytest_addoption">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.pytest_addoption">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytest_addoption</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Register custom command-line options for pytest.</span>
+
+<span class="sd">    Adds --loguru-log-level option to control application logging verbosity</span>
+<span class="sd">    during test runs. This hook runs during pytest&#39;s startup phase before</span>
+<span class="sd">    any tests are collected.</span>
+
+<span class="sd">    :param parser: Pytest&#39;s argument parser instance.</span>
+
+<span class="sd">    Usage:</span>
+<span class="sd">        poetry run pytest tests/* --loguru-log-level=DEBUG</span>
+<span class="sd">        poetry run pytest tests/* --loguru-log-level=WARNING</span>
+<span class="sd">        poetry run pytest tests/* --log-to-file</span>
+
+<span class="sd">    Available log levels:</span>
+<span class="sd">        DEBUG, INFO (default), WARNING, ERROR, CRITICAL</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">addoption</span><span class="p">(</span>
+        <span class="s2">&quot;--loguru-log-level&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;INFO&quot;</span><span class="p">,</span> <span class="s2">&quot;WARNING&quot;</span><span class="p">,</span> <span class="s2">&quot;ERROR&quot;</span><span class="p">,</span> <span class="s2">&quot;CRITICAL&quot;</span><span class="p">],</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Set log level for tests&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">addoption</span><span class="p">(</span>
+        <span class="s2">&quot;--log-to-file&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Enable logging to file (default: False)&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">addoption</span><span class="p">(</span>
+        <span class="s2">&quot;--failure-analysis&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Enable AI-powered test failure analysis (requires GROQ_API_KEY)&quot;</span>
+    <span class="p">)</span></div>
+
+
+<span class="c1"># Set LOG_LEVEL to environment variable before any test modules are imported, ensuring loguru is configured correctly</span>
+<div class="viewcode-block" id="pytest_configure">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.pytest_configure">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytest_configure</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configure the test environment before test collection begins.</span>
+
+<span class="sd">    Sets the LOG_LEVEL environment variable based on the --loguru-log-level</span>
+<span class="sd">    CLI option, then reconfigures loguru to use the new level. This ensures</span>
+<span class="sd">    logging is properly configured before any test modules are imported.</span>
+
+<span class="sd">    :param config: Pytest&#39;s Config object containing parsed CLI options.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        This hook runs after pytest_addoption but before test collection.</span>
+<span class="sd">        The configure_logging() call is necessary because loguru may have</span>
+<span class="sd">        already been initialized with default settings at module import time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;LOG_LEVEL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--loguru-log-level&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;LOG_TO_FILE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--log-to-file&quot;</span><span class="p">))</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">config.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_logging</span>
+    <span class="n">configure_logging</span><span class="p">()</span>
+
+    <span class="c1"># For on demand local Poetry run pytest and user can opt-in per run locally without modifying .env</span>
+    <span class="c1"># AI_ANALYSIS_ENABLED=true from .env is used by Docker compose CI</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s1">&#39;--failure-analysis&#39;</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AI_ANALYSIS_ENABLED&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;true&quot;</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># Update instance</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">)</span>    <span class="c1"># re-read in case .env loads later</span></div>
+
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tests.data.data_loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_test_data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">api.movies_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">MoviesAPI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">api.account_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">AccountAPI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">api.people_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">PeopleAPI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">api.lists_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListsAPI</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">autouse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_store_test_name</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Auto-use fixture that injects the current test name into class-based test instances.</span>
+
+<span class="sd">    Runs automatically before every test. For class-based tests, it sets</span>
+<span class="sd">    ``_test_name`` on the test instance so helper methods (e.g., FieldAssertions)</span>
+<span class="sd">    can include the test name in assertion messages and log output.</span>
+
+<span class="sd">    Function-based tests are silently skipped (no instance to attach to).</span>
+
+<span class="sd">    :param request: Pytest&#39;s FixtureRequest object providing test context.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        class TestMovies(FieldAssertions):</span>
+<span class="sd">            def test_get_movie(self, get_api_instance):</span>
+<span class="sd">                # self._test_name is automatically set to &quot;test_get_movie&quot;</span>
+<span class="sd">                ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">instance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_test_name</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">name</span>
+
+<div class="viewcode-block" id="get_api_instance">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.get_api_instance">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_api_instance</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fixture that provides a generic API client instance for each test.</span>
+
+<span class="sd">    Creates a fresh API client before each test and yields it for use. This</span>
+<span class="sd">    fixture can be used when the specific API type is not important for the</span>
+<span class="sd">    test, allowing for more flexible test design.</span>
+
+<span class="sd">    :yields: Configured BaseAPI instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">class_map</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;movies_api&#39;</span><span class="p">:</span> <span class="n">MoviesAPI</span><span class="p">,</span>
+        <span class="s1">&#39;account_api&#39;</span><span class="p">:</span> <span class="n">AccountAPI</span><span class="p">,</span>
+        <span class="s1">&#39;people_api&#39;</span><span class="p">:</span> <span class="n">PeopleAPI</span><span class="p">,</span>
+        <span class="s1">&#39;lists_api&#39;</span><span class="p">:</span> <span class="n">ListsAPI</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create</span><span class="p">(</span><span class="n">api_class</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">class_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">api_class</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported API class: </span><span class="si">{</span><span class="n">api_class</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">()</span>    <span class="c1"># instantiate class only when requested</span>
+
+    <span class="k">yield</span> <span class="n">_create</span></div>
+
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tests.schemas.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GenericResponse</span><span class="p">,</span> <span class="n">RatingResponse</span><span class="p">,</span> <span class="n">MovieDetails</span><span class="p">,</span>
+    <span class="n">PopularMoviesResponse</span><span class="p">,</span> <span class="n">PersonDetails</span>
+<span class="p">)</span>
+
+<div class="viewcode-block" id="load_schema">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.load_schema">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_schema</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fixture that provides a Pydantic model loader for response validation.</span>
+
+<span class="sd">    Returns a callable that maps schema names to Pydantic model classes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">schema_map</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;generic_schema&#39;</span><span class="p">:</span> <span class="n">GenericResponse</span><span class="p">,</span>
+        <span class="s1">&#39;add_delete_rating_schema&#39;</span><span class="p">:</span> <span class="n">RatingResponse</span><span class="p">,</span>
+        <span class="s1">&#39;movie_schema&#39;</span><span class="p">:</span> <span class="n">MovieDetails</span><span class="p">,</span>
+        <span class="s1">&#39;popular_movies_schema&#39;</span><span class="p">:</span> <span class="n">PopularMoviesResponse</span><span class="p">,</span>
+        <span class="s1">&#39;person_details_schema&#39;</span><span class="p">:</span> <span class="n">PersonDetails</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">schema_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown schema: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span>
+    <span class="k">return</span> <span class="n">_load</span></div>
+
+
+<div class="viewcode-block" id="movies_test_data">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.movies_test_data">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;session&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">movies_test_data</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Session-scoped fixture that loads movies API test data from YAML.</span>
+
+<span class="sd">    Loads test data once per test session and shares it across all tests,</span>
+<span class="sd">    improving performance by avoiding repeated file reads.</span>
+
+<span class="sd">    Note: This fixture is currently unused. The test module uses a module-level</span>
+<span class="sd">    constant with @pytest.mark.parametrize instead, which is required because</span>
+<span class="sd">    parametrize decorators are evaluated at collection time before fixtures</span>
+<span class="sd">    are available.</span>
+
+<span class="sd">    :return: Dictionary containing test data with defaults applied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">load_test_data</span><span class="p">(</span><span class="s2">&quot;test_data.yaml&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="pytest_html_report_title">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.pytest_html_report_title">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytest_html_report_title</span><span class="p">(</span><span class="n">report</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Customize the title shown in the pytest-html report header.</span>
+
+<span class="sd">    :param report: The pytest-html report object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Movies API Tests Report&quot;</span></div>
+
+
+<div class="viewcode-block" id="pytest_html_results_summary">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.pytest_html_results_summary">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytest_html_results_summary</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">summary</span><span class="p">,</span> <span class="n">postfix</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Customize the results summary section of the pytest-html report.</span>
+
+<span class="sd">    Adds a branded header with run timestamp (Eastern Time), a description</span>
+<span class="sd">    of the test scope, and links to external documentation. Called once</span>
+<span class="sd">    by pytest-html after all tests have finished.</span>
+
+<span class="sd">    :param prefix: List of HTML strings rendered above the pass/fail counts.</span>
+<span class="sd">    :param summary: List of HTML strings rendered alongside the counts.</span>
+<span class="sd">    :param postfix: List of HTML strings rendered below the counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Get current Eastern time</span>
+    <span class="n">et_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">ZoneInfo</span><span class="p">(</span><span class="s2">&quot;America/New_York&quot;</span><span class="p">))</span>
+
+    <span class="c1"># Quick status header</span>
+    <span class="n">prefix</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span>
+        <span class="s2">&quot;&lt;h2&gt;🎬 TMDB API Automation Suite&lt;/h2&gt;&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;&lt;p&gt;Run Date: </span><span class="si">{</span><span class="n">et_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/p&gt;&quot;</span>
+    <span class="p">])</span>
+
+    <span class="c1"># Env callout</span>
+    <span class="c1"># Note: Passed/Failed counts are automatically added here by pytest-html</span>
+    <span class="n">summary</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span>
+        <span class="s2">&quot;&lt;h3&gt;Report Summary&lt;/h3&gt;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&lt;p&gt;Validation of critical TMDB endpoints including Movies, TV, and Search services.&lt;/p&gt;&quot;</span>
+    <span class="p">])</span>
+
+    <span class="c1"># Links to doc, logs</span>
+    <span class="n">postfix</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span>
+        <span class="s2">&quot;&lt;hr&gt;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&lt;div&gt;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  &lt;p&gt;For detailed API specs, visit the &quot;</span>
+        <span class="s2">&quot;    &lt;a href=&#39;https://developer.themoviedb.org&#39;&gt;TMDB Documentation&lt;/a&gt;&quot;</span>
+        <span class="s2">&quot;  &lt;/p&gt;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;  &lt;p style=&#39;color: #666;&#39;&gt;Failure logs are archived in the /logs workspace directory.&lt;/p&gt;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;&lt;/div&gt;&quot;</span>
+    <span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="pytest_runtest_makereport">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.pytest_runtest_makereport">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">hookimpl</span><span class="p">(</span><span class="n">hookwrapper</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytest_runtest_makereport</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">call</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Capture test failure details and send to AI analyzer.</span>
+
+<span class="sd">    Runs after each test phase (setup/call/teardown). On failure during</span>
+<span class="sd">    the &#39;call&#39; phase, extracts context from the test and API response,</span>
+<span class="sd">    then sends it to the LLM for diagnosis. The analysis is attached</span>
+<span class="sd">    to the Allure report as a text attachment.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">outcome</span> <span class="o">=</span> <span class="k">yield</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">outcome</span><span class="o">.</span><span class="n">get_result</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">when</span> <span class="o">!=</span> <span class="s2">&quot;call&quot;</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">failed</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Build failure context from available information</span>
+    <span class="n">failure_context</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="s2">&quot;test_file&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">fspath</span><span class="p">),</span>
+        <span class="s2">&quot;error_message&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">longrepr</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">longrepr</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;traceback&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">longrepr</span><span class="p">)</span> <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">longrepr</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Try to extract API response details from the test&#39;s local variables</span>
+    <span class="c1"># (pytest stores them in the call excinfo)</span>
+    <span class="k">if</span> <span class="n">call</span><span class="o">.</span><span class="n">excinfo</span><span class="p">:</span>
+        <span class="c1"># Check if the test had an APIResponse in its locals</span>
+        <span class="n">tb</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="n">excinfo</span><span class="o">.</span><span class="n">traceback</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">locals_dict</span> <span class="o">=</span> <span class="n">tb</span><span class="o">.</span><span class="n">locals</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tb</span><span class="p">,</span> <span class="s1">&#39;locals&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="s1">&#39;response&#39;</span> <span class="ow">in</span> <span class="n">locals_dict</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">locals_dict</span><span class="p">[</span><span class="s1">&#39;response&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="s1">&#39;url&#39;</span><span class="p">):</span>
+                <span class="n">failure_context</span><span class="p">[</span><span class="s2">&quot;api_url&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="s1">&#39;status_code&#39;</span><span class="p">):</span>
+                <span class="n">failure_context</span><span class="p">[</span><span class="s2">&quot;status_code&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">status_code</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">):</span>
+                <span class="n">failure_context</span><span class="p">[</span><span class="s2">&quot;response_body&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">data</span>
+
+    <span class="n">diagnosis</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">analyze</span><span class="p">(</span><span class="n">failure_context</span><span class="p">)</span>
+
+    <span class="c1"># Attach analysis to Allure report</span>
+    <span class="k">if</span> <span class="n">diagnosis</span><span class="p">:</span>
+        <span class="n">confidence</span> <span class="o">=</span> <span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="mi">80</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 High confidence [</span><span class="si">{</span><span class="n">confidence</span><span class="si">}</span><span class="s2">%] - </span><span class="si">{</span><span class="n">diagnosis</span><span class="p">[</span><span class="s1">&#39;root_cause&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="mi">50</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 Medium confidence [</span><span class="si">{</span><span class="n">confidence</span><span class="si">}</span><span class="s2">%] - </span><span class="si">{</span><span class="n">diagnosis</span><span class="p">[</span><span class="s1">&#39;root_cause&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 Low confidence [</span><span class="si">{</span><span class="n">confidence</span><span class="si">}</span><span class="s2">%] - treat with caution: </span><span class="si">{</span><span class="n">diagnosis</span><span class="p">[</span><span class="s1">&#39;root_cause&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">allure</span>
+            <span class="n">allure</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;🤖 AI Failure Analysis&quot;</span><span class="p">,</span>
+                <span class="n">attachment_type</span><span class="o">=</span><span class="n">allure</span><span class="o">.</span><span class="n">attachment_type</span><span class="o">.</span><span class="n">JSON</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>  <span class="c1"># Allure not available</span></div>
+
+
+<div class="viewcode-block" id="pytest_sessionfinish">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.pytest_sessionfinish">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytest_sessionfinish</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">exitstatus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Perform cleanup and metadata writing after all tests complete.</span>
+
+<span class="sd">    Fires once at the end of the test session. Handles two tasks:</span>
+
+<span class="sd">    - **Allure metadata** (if ``--alluredir`` was passed): copies</span>
+<span class="sd">      ``tests/allure/categories.json`` into the allure results dir so Allure</span>
+<span class="sd">      can classify failures, and writes ``environment.properties`` with</span>
+<span class="sd">      runtime config values (base URL, API version, timeout, log level)</span>
+<span class="sd">      for the Allure Environment widget.</span>
+<span class="sd">    - **AI analysis report**: calls ``analyzer.save_results()`` to write all</span>
+<span class="sd">      accumulated LLM diagnoses to ``ai_analysis/failure_analysis.json``.</span>
+
+<span class="sd">    :param session: The pytest ``Session`` object.</span>
+<span class="sd">    :param exitstatus: Integer exit code (0 = all passed, 1 = failures, etc.).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">allure_dir</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--alluredir&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">allure_dir</span><span class="p">:</span>
+        <span class="c1"># Copy categories.json</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+        <span class="n">allure_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">allure_dir</span><span class="p">)</span>
+        <span class="n">categories_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;allure&quot;</span> <span class="o">/</span> <span class="s2">&quot;categories.json&quot;</span>
+        <span class="k">if</span> <span class="n">categories_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">categories_file</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">allure_dir</span> <span class="o">/</span> <span class="s2">&quot;categories.json&quot;</span><span class="p">))</span>
+
+        <span class="c1"># Write environment.properties with actual runtime config values</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">config.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span>
+        <span class="p">(</span><span class="n">allure_dir</span> <span class="o">/</span> <span class="s2">&quot;environment.properties&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Base.URL=</span><span class="si">{</span><span class="n">Config</span><span class="o">.</span><span class="n">BASE_URL</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;API.Version=</span><span class="si">{</span><span class="n">Config</span><span class="o">.</span><span class="n">API_VERSION</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Timeout=</span><span class="si">{</span><span class="n">Config</span><span class="o">.</span><span class="n">TIMEOUT</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Log.Level=</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;LOG_LEVEL&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;INFO&#39;</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Framework=pytest</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">analyzer</span><span class="o">.</span><span class="n">save_results</span><span class="p">()</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
