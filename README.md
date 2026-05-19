@@ -727,6 +727,94 @@ failure_mcp/
 | 50–79 | `medium` — review it       |
 | < 50  | `low` — treat with caution |
 
+### Testing MCP Server
+
+[MCP Inspector](https://github.com/modelcontextprotocol/inspector) is a web-based UI to interactively call MCP tools
+and inspect responses — no AI client needed.
+
+#### Prerequisites
+Node.js must be installed (`brew install node` on macOS).
+
+#### Launch
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+Opens at `http://localhost:6274` in your browser.
+
+#### Step 1 — Connect
+
+> **Important:** MCP Inspector does not have a `cwd` field. Use the **full path** to the `poetry` binary so it
+> resolves the correct virtual environment regardless of where Inspector is launched from.
+
+| Field              | Value                                                |
+|--------------------|------------------------------------------------------|
+| Transport Type     | `STDIO`                                              |
+| Command            | `/Users/pratikgv/git/mdb_api_layer/.venv/bin/poetry` |
+| Arguments          | `run python -m failure_mcp.server`                   |
+
+Expand **Environment Variables** and add:
+
+| Key                 | Value                               |
+|---------------------|-------------------------------------|
+| `AI_ANALYSIS_ENABLED` | `true`                            |
+| `GROQ_API_KEY`      | your actual key from `.env`         |
+| `PYTHONPATH`        | `/Users/pratikgv/git/mdb_api_layer` |
+
+Click **Connect**. On success the right panel shows all 3 tools: `analyze_failure`, `get_results`, `save_results`.
+
+![mcp_inspector](mcp_inspect_ui_1.png)
+
+#### Step 2 — Call `analyze_failure`
+
+Select the tool, paste the input JSON and click **Run**:
+
+```json
+{
+  "test_name": "test_get_movie_details",
+  "error_message": "HTTP 401 Unauthorized: Invalid API key",
+  "test_file": "tests/movies/test_details.py",
+  "traceback": "Traceback (most recent call last): ...",
+  "api_url": "https://api.themoviedb.org/3/movie/12345",
+  "status_code": 401,
+  "response_body": {"status_code": 7, "status_message": "Invalid API key: You must be granted a valid key."}
+}
+```
+
+Expected response includes `root_cause`, `category`, `confidence` (0–100), `confidence_tier`, `evidence`, and `suggested_fix`.
+
+![mcp_inspector_op](mcp_inspect_ui_2.png)
+
+#### Step 3 — Call `get_results`
+
+Returns all diagnoses accumulated in the current session. Optionally filter by confidence:
+
+```json
+{ "min_confidence": 80 }
+```
+
+Pass `{}` (empty object) to return everything.
+
+#### Step 4 — Call `save_results`
+
+Flushes all accumulated results to `ai_analysis/failure_analysis.json`:
+
+```json
+{ "output_dir": "ai_analysis" }
+```
+
+Returns `{ "saved": <count>, "path": "ai_analysis/failure_analysis.json" }`.
+
+#### Troubleshooting Connection Errors
+
+| Symptom                                                  | Fix                                                                                                                                |
+|----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `Connection Error — Check if your MCP server is running` | Verify the Command path is correct with `which poetry`                                                                             |
+| `ModuleNotFoundError: No module named 'tests'`           | Make sure `PYTHONPATH` is set to the project root                                                                                  |
+| `AI analysis disabled` in response                       | Confirm `AI_ANALYSIS_ENABLED=true` and `GROQ_API_KEY` are set in Environment Variables                                             |
+| Server starts but immediately exits                      | Run `PYTHONPATH=. poetry run python -m failure_mcp.server` in terminal — a hanging prompt (no output) means it's working correctly |
+
 ### Running the MCP Server
 
 ```bash
