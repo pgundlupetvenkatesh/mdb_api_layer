@@ -9,6 +9,7 @@ This module is automatically loaded by pytest before test collection. It provide
 
 .. module:: tests.conftest
    :synopsis: Pytest fixtures, hooks, and CLI options.
+   :no-index:
 """
 
 import json

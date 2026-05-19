@@ -44,15 +44,16 @@ Contract tests, and comprehensive response assertions.
 
 ### How the Layers Connect
 
-| Layer | Responsibility |
-|---|---|
-| **Config** | Loads `.env`, exposes `Config` class, sets up Loguru logging |
-| **API** | `BaseAPI` handles HTTP + auth; endpoint classes (`MoviesAPI`, etc.) add domain methods |
-| **Tests** | `conftest.py` wires fixtures/hooks; suites use helpers, schemas, and data-driven YAML |
-| **Contracts** | Pact CDC tests generate `.json` contract files in `tests/pacts/` |
-| **Docker** | `Dockerfile` builds image; `docker-compose.yml` runs tests locally with `.env` and volume |
-| **CI/CD** | Two GH Actions workflows: one for Docker test runs + report deploy, one for Sphinx docs |
-| **Docs** | Sphinx auto-generates API docs from docstrings, deployed to GitHub Pages |
+| Layer         | Responsibility                                                                            |
+|---------------|-------------------------------------------------------------------------------------------|
+| **Config**    | Loads `.env`, exposes `Config` class, sets up Loguru logging                              |
+| **API**       | `BaseAPI` handles HTTP + auth; endpoint classes (`MoviesAPI`, etc.) add domain methods    |
+| **Tests**     | `conftest.py` wires fixtures/hooks; suites use helpers, schemas, and data-driven YAML     |
+| **Contracts** | Pact CDC tests generate `.json` contract files in `tests/pacts/`                          |
+| **Docker**    | `Dockerfile` builds image; `docker-compose.yml` runs tests locally with `.env` and volume |
+| **CI/CD**     | Two GH Actions workflows: one for Docker test runs + report deploy, one for Sphinx docs   |
+| **Docs**      | Sphinx auto-generates API docs from docstrings, deployed to GitHub Pages                  |
+| **MCP**       | `failure_mcp/` exposes `FailureAnalyzer` as 3 callable tools over stdio transport         |
 
 ## Prerequisites
 
@@ -266,6 +267,12 @@ mdb_api_layer/
 │   └── Makefile                # Unix build script
 ├── logs/
 │   └── test_run.log            # Log file (when --log-to-file is used)
+├── failure_mcp/
+│   ├── __init__.py
+│   ├── server.py               # entry point, registers tools, runs stdio server
+│   └── tools/
+│       ├── __init__.py
+│       ├── analyze_test_failure.py     # TOOLS list + handle_call() dispatcher
 ├── report/
 │   └── tmdb_report.html        # Generated HTML test reports
 ├── .env                        # Environment variables (not committed)
@@ -577,6 +584,7 @@ attached to the Allure report deployed to GitHub Pages.
 - pyyaml — YAML test data parsing
 - loguru — Structured logging
 - groq — LLM client for AI failure analysis
+- mcp — Model Context Protocol server SDK (MCP integration)
 
 ### Development
 - pytest — Test framework
@@ -598,6 +606,8 @@ poetry update
 cd docs
 make html
 ```
+To clean previous builds and rebuild run - `make clean && make html`
+
 ### View documentation
 Open `docs/_build/html/index.html` in your web browser.
 ![doc_sample](doc_sample.png)
@@ -667,6 +677,177 @@ k8s/
                     │ tests Job    │    tests Job       │
                     └──────────────┴────────────────────┘
 ```
+
+## MCP Integration
+
+The framework ships a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that exposes
+`FailureAnalyzer` capabilities as callable tools for any MCP-compatible AI client
+(Claude Desktop, Cursor, VS Code Copilot Chat, custom agents, etc.).
+
+### Project Structure
+
+```
+failure_mcp/
+├── __init__.py
+├── server.py                   # Entry point — registers tools, runs stdio transport
+└── tools/
+    ├── __init__.py
+    └── analyze_test_failure.py # TOOLS list + handle_call() dispatcher
+```
+
+> `failure_analyzer.py` is **not modified** — the MCP server wraps the existing singleton.
+
+### Exposed Tools
+
+| Tool              | Required Args                | Optional Args                                                       | Description                                                                       |
+|-------------------|------------------------------|---------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| `analyze_failure` | `test_name`, `error_message` | `test_file`, `traceback`, `api_url`, `status_code`, `response_body` | Send failure context to LLM and get structured diagnosis                          |
+| `get_results`     | —                            | `min_confidence` (0–100, default `0`)                               | Return accumulated diagnosis results, optionally filtered by confidence threshold |
+| `save_results`    | —                            | `output_dir` (default `"ai_analysis"`)                              | Flush all results to `<output_dir>/failure_analysis.json`                         |
+
+### Sample `analyze_failure` Response
+
+```json
+{
+  "root_cause": "The Bearer token has expired, causing a 401 Unauthorized response.",
+  "category": "auth_error",
+  "suggested_fix": "Refresh the TMDB_AUTH_TOKEN in your .env file and re-run the tests.",
+  "confidence": 92,
+  "explanation": "The API rejected the request with HTTP 401...",
+  "evidence": ["HTTP status code 401", "Response body contains 'Invalid API key'"],
+  "test_name": "test_get_movie_details",
+  "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+  "confidence_tier": "high"
+}
+```
+
+`confidence_tier` is derived from the raw `confidence` score:
+
+| Score | Tier                       |
+|-------|----------------------------|
+| >= 80 | `high` — act on it         |
+| 50–79 | `medium` — review it       |
+| < 50  | `low` — treat with caution |
+
+### Testing MCP Server
+
+[MCP Inspector](https://github.com/modelcontextprotocol/inspector) is a web-based UI to interactively call MCP tools
+and inspect responses — no AI client needed.
+
+#### Prerequisites
+Node.js must be installed (`brew install node` on macOS).
+
+#### Launch
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+Opens at `http://localhost:6274` in your browser.
+
+#### Step 1 — Connect
+
+> **Important:** MCP Inspector does not have a `cwd` field. Use the **full path** to the `poetry` binary so it
+> resolves the correct virtual environment regardless of where Inspector is launched from.
+
+| Field              | Value                                                |
+|--------------------|------------------------------------------------------|
+| Transport Type     | `STDIO`                                              |
+| Command            | `/Users/pratikgv/git/mdb_api_layer/.venv/bin/poetry` |
+| Arguments          | `run python -m failure_mcp.server`                   |
+
+Expand **Environment Variables** and add:
+
+| Key                   | Value                               |
+|-----------------------|-------------------------------------|
+| `AI_ANALYSIS_ENABLED` | `true`                              |
+| `GROQ_API_KEY`        | your actual key from `.env`         |
+| `PYTHONPATH`          | `/Users/pratikgv/git/mdb_api_layer` |
+
+Click **Connect**. On success the right panel shows all 3 tools: `analyze_failure`, `get_results`, `save_results`.
+
+![mcp_inspector](mcp_inspect_ui_1.png)
+
+#### Step 2 — Call `analyze_failure`
+
+Select the tool, paste the input JSON and click **Run**:
+- Feed this sample input JSON
+```json
+{
+  "test_name": "test_get_movie_details",
+  "error_message": "HTTP 401 Unauthorized: Invalid API key",
+  "test_file": "tests/movies/test_details.py",
+  "traceback": "Traceback (most recent call last): ...",
+  "api_url": "https://api.themoviedb.org/3/movie/12345",
+  "status_code": 401,
+  "response_body": "{\"status_code\": 7, \"status_message\": \"Invalid API key: You must be granted a valid key.\"}"
+}
+```
+
+> **Note:** `response_body` must be a **string**, not a JSON object. Stringify it before passing.
+
+Expected response includes `root_cause`, `category`, `confidence` (0–100), `confidence_tier`, `evidence`, and `suggested_fix`.
+
+![mcp_inspector_op](mcp_inspect_ui_2.png)
+
+#### Step 3 — Call `get_results`
+
+Returns all diagnoses accumulated in the current session. Optionally filter by confidence:
+
+```json
+{ "min_confidence": 80 }
+```
+
+Pass `{}` (empty object) to return everything.
+
+#### Step 4 — Call `save_results`
+
+Flushes all accumulated results to `ai_analysis/failure_analysis.json`:
+
+```json
+{ "output_dir": "ai_analysis" }
+```
+
+Returns `{ "saved": <count>, "path": "ai_analysis/failure_analysis.json" }`.
+
+#### Troubleshooting Connection Errors
+
+| Symptom                                                                                | Fix                                                                                                                                |
+|----------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `Connection Error — Check if your MCP server is running`                               | Verify the Command path is correct with `which poetry`                                                                             |
+| `ModuleNotFoundError: No module named 'tests'`                                         | Make sure `PYTHONPATH` is set to the project root                                                                                  |
+| `{"error": "Analysis disabled or failed.", "hint": "Set AI_ANALYSIS_ENABLED=true..."}` | Confirm `AI_ANALYSIS_ENABLED=true` and `GROQ_API_KEY` are set in Environment Variables                                             |
+| Server starts but immediately exits                                                    | Run `PYTHONPATH=. poetry run python -m failure_mcp.server` in terminal — a hanging prompt (no output) means it's working correctly |
+
+### Running the MCP Server
+
+```bash
+# Requires AI_ANALYSIS_ENABLED=true and GROQ_API_KEY in .env
+poetry run python -m failure_mcp.server
+```
+
+### MCP Client Config
+
+Add to `~/.cursor/mcp.json` (Cursor) or Claude Desktop's settings:
+
+```json
+{
+  "mcpServers": {
+    "failure-analyzer": {
+      "command": "poetry",
+      "args": ["run", "python", "-m", "failure_mcp.server"],
+      "cwd": "/path/to/mdb_api_layer",
+      "env": {
+        "AI_ANALYSIS_ENABLED": "true",
+        "GROQ_API_KEY": "<your-groq-key>"
+      }
+    }
+  }
+}
+```
+
+Once connected, your AI client can call `analyze_failure` directly by passing a failure context dict — 
+no changes to any test file needed.
 
 ## Future Improvements
 

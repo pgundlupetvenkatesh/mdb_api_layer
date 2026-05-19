@@ -7,6 +7,7 @@ failure classification.
 
 .. module:: tests.helpers.failure_analyzer
    :synopsis: LLM-based test failure analysis.
+   :no-index:
 """
 
 import os
