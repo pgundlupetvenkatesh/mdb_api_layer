@@ -44,15 +44,16 @@ Contract tests, and comprehensive response assertions.
 
 ### How the Layers Connect
 
-| Layer | Responsibility |
-|---|---|
-| **Config** | Loads `.env`, exposes `Config` class, sets up Loguru logging |
-| **API** | `BaseAPI` handles HTTP + auth; endpoint classes (`MoviesAPI`, etc.) add domain methods |
-| **Tests** | `conftest.py` wires fixtures/hooks; suites use helpers, schemas, and data-driven YAML |
-| **Contracts** | Pact CDC tests generate `.json` contract files in `tests/pacts/` |
-| **Docker** | `Dockerfile` builds image; `docker-compose.yml` runs tests locally with `.env` and volume |
-| **CI/CD** | Two GH Actions workflows: one for Docker test runs + report deploy, one for Sphinx docs |
-| **Docs** | Sphinx auto-generates API docs from docstrings, deployed to GitHub Pages |
+| Layer         | Responsibility                                                                            |
+|---------------|-------------------------------------------------------------------------------------------|
+| **Config**    | Loads `.env`, exposes `Config` class, sets up Loguru logging                              |
+| **API**       | `BaseAPI` handles HTTP + auth; endpoint classes (`MoviesAPI`, etc.) add domain methods    |
+| **Tests**     | `conftest.py` wires fixtures/hooks; suites use helpers, schemas, and data-driven YAML     |
+| **Contracts** | Pact CDC tests generate `.json` contract files in `tests/pacts/`                          |
+| **Docker**    | `Dockerfile` builds image; `docker-compose.yml` runs tests locally with `.env` and volume |
+| **CI/CD**     | Two GH Actions workflows: one for Docker test runs + report deploy, one for Sphinx docs   |
+| **Docs**      | Sphinx auto-generates API docs from docstrings, deployed to GitHub Pages                  |
+| **MCP**       | `failure_mcp/` exposes `FailureAnalyzer` as 3 callable tools over stdio transport         |
 
 ## Prerequisites
 
@@ -583,6 +584,7 @@ attached to the Allure report deployed to GitHub Pages.
 - pyyaml — YAML test data parsing
 - loguru — Structured logging
 - groq — LLM client for AI failure analysis
+- mcp — Model Context Protocol server SDK (MCP integration)
 
 ### Development
 - pytest — Test framework
@@ -756,11 +758,11 @@ Opens at `http://localhost:6274` in your browser.
 
 Expand **Environment Variables** and add:
 
-| Key                 | Value                               |
-|---------------------|-------------------------------------|
-| `AI_ANALYSIS_ENABLED` | `true`                            |
-| `GROQ_API_KEY`      | your actual key from `.env`         |
-| `PYTHONPATH`        | `/Users/pratikgv/git/mdb_api_layer` |
+| Key                   | Value                               |
+|-----------------------|-------------------------------------|
+| `AI_ANALYSIS_ENABLED` | `true`                              |
+| `GROQ_API_KEY`        | your actual key from `.env`         |
+| `PYTHONPATH`          | `/Users/pratikgv/git/mdb_api_layer` |
 
 Click **Connect**. On success the right panel shows all 3 tools: `analyze_failure`, `get_results`, `save_results`.
 
@@ -769,7 +771,7 @@ Click **Connect**. On success the right panel shows all 3 tools: `analyze_failur
 #### Step 2 — Call `analyze_failure`
 
 Select the tool, paste the input JSON and click **Run**:
-
+- Feed this sample input JSON
 ```json
 {
   "test_name": "test_get_movie_details",
@@ -778,9 +780,11 @@ Select the tool, paste the input JSON and click **Run**:
   "traceback": "Traceback (most recent call last): ...",
   "api_url": "https://api.themoviedb.org/3/movie/12345",
   "status_code": 401,
-  "response_body": {"status_code": 7, "status_message": "Invalid API key: You must be granted a valid key."}
+  "response_body": "{\"status_code\": 7, \"status_message\": \"Invalid API key: You must be granted a valid key.\"}"
 }
 ```
+
+> **Note:** `response_body` must be a **string**, not a JSON object. Stringify it before passing.
 
 Expected response includes `root_cause`, `category`, `confidence` (0–100), `confidence_tier`, `evidence`, and `suggested_fix`.
 
@@ -808,12 +812,12 @@ Returns `{ "saved": <count>, "path": "ai_analysis/failure_analysis.json" }`.
 
 #### Troubleshooting Connection Errors
 
-| Symptom                                                  | Fix                                                                                                                                |
-|----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
-| `Connection Error — Check if your MCP server is running` | Verify the Command path is correct with `which poetry`                                                                             |
-| `ModuleNotFoundError: No module named 'tests'`           | Make sure `PYTHONPATH` is set to the project root                                                                                  |
-| `AI analysis disabled` in response                       | Confirm `AI_ANALYSIS_ENABLED=true` and `GROQ_API_KEY` are set in Environment Variables                                             |
-| Server starts but immediately exits                      | Run `PYTHONPATH=. poetry run python -m failure_mcp.server` in terminal — a hanging prompt (no output) means it's working correctly |
+| Symptom                                                                                | Fix                                                                                                                                |
+|----------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `Connection Error — Check if your MCP server is running`                               | Verify the Command path is correct with `which poetry`                                                                             |
+| `ModuleNotFoundError: No module named 'tests'`                                         | Make sure `PYTHONPATH` is set to the project root                                                                                  |
+| `{"error": "Analysis disabled or failed.", "hint": "Set AI_ANALYSIS_ENABLED=true..."}` | Confirm `AI_ANALYSIS_ENABLED=true` and `GROQ_API_KEY` are set in Environment Variables                                             |
+| Server starts but immediately exits                                                    | Run `PYTHONPATH=. poetry run python -m failure_mcp.server` in terminal — a hanging prompt (no output) means it's working correctly |
 
 ### Running the MCP Server
 
