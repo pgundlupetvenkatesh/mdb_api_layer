@@ -92,7 +92,6 @@ def pytest_configure(config):
 
 from tests.data.data_loader import load_test_data
 from api.movies_api import MoviesAPI
-from api.account_api import AccountAPI
 from api.people_api import PeopleAPI
 from api.lists_api import ListsAPI
 
@@ -111,38 +110,12 @@ def _store_test_name(request):
 
     Example:
         class TestMovies(FieldAssertions):
-            def test_get_movie(self, get_api_instance):
+            def test_get_movie(self, movies_api):
                 # self._test_name is automatically set to "test_get_movie"
                 ...
     """
     if request.instance is not None:
         request.instance._test_name = request.node.name
-
-@pytest.fixture
-def get_api_instance():
-    """
-    Fixture that provides a generic API client instance for each test.
-
-    Creates a fresh API client before each test and yields it for use. This
-    fixture can be used when the specific API type is not important for the
-    test, allowing for more flexible test design.
-
-    :yields: Configured BaseAPI instance.
-    """
-    class_map = {
-        'account_api': AccountAPI,
-        'people_api': PeopleAPI,
-    }
-
-    def _create(api_class: str):
-        cls = class_map.get(api_class)
-
-        if cls is None:
-            raise ValueError(f"Unsupported API class: {api_class}")
-
-        return cls()    # instantiate class only when requested
-
-    yield _create
 
 @pytest.fixture
 def movies_api() -> MoviesAPI:
@@ -169,6 +142,19 @@ def lists_api() -> ListsAPI:
     :return: A configured ``ListsAPI`` instance.
     """
     return ListsAPI()
+
+@pytest.fixture
+def people_api() -> PeopleAPI:
+    """
+    Provide a fresh ``PeopleAPI`` client for a test.
+
+    Dedicated, type-annotated alternative to ``get_api_instance('people_api')``
+    — the dependency is declared in the test signature, typo-checked at
+    collection time, and gives editor autocomplete for people endpoints.
+
+    :return: A configured ``PeopleAPI`` instance.
+    """
+    return PeopleAPI()
 
 from tests.schemas.models import (
     GenericResponse, RatingResponse, MovieDetails,

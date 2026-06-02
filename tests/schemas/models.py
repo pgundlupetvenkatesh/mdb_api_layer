@@ -191,19 +191,19 @@ class PersonDetails(BaseModel):
     :param popularity: TMDB popularity score.
     :param profile_path: Path to the profile image, or None.
     """
-    adult: bool
-    also_known_as: Optional[list[str]] = None
-    biography: str
-    birthday: str
+    adult: StrictBool
+    also_known_as: list[str]                                   # always present, may be empty
+    biography: StrictStr                                       # may be empty
+    birthday: Optional[str] = None                             # null for some people
     deathday: Optional[str] = None
-    gender: int
+    gender: StrictInt = Field(ge=0, le=3)                      # 0=n/a, 1=F, 2=M, 3=non-binary
     homepage: Optional[str] = None
-    id: int
-    imdb_id: str
-    known_for_department: str
-    name: str
+    id: StrictInt = Field(ge=0)
+    imdb_id: Optional[str] = None                              # null for some people
+    known_for_department: StrictStr = Field(min_length=1)
+    name: StrictStr = Field(min_length=1)
     place_of_birth: Optional[str] = None
-    popularity: float
-    profile_path: Optional[str] = None
+    popularity: StrictFloat = Field(ge=0)
+    profile_path: Optional[str] = Field(default=None, pattern=r".*\.(png|jpg)$")
 
     model_config = {"extra": "allow"}
