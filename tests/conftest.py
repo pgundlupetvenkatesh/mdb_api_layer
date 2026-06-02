@@ -132,7 +132,6 @@ def get_api_instance():
     class_map = {
         'account_api': AccountAPI,
         'people_api': PeopleAPI,
-        'lists_api': ListsAPI
     }
 
     def _create(api_class: str):
@@ -157,6 +156,19 @@ def movies_api() -> MoviesAPI:
     :return: A configured ``MoviesAPI`` instance.
     """
     return MoviesAPI()
+
+@pytest.fixture
+def lists_api() -> ListsAPI:
+    """
+    Provide a fresh ``ListsAPI`` client for a test.
+
+    Dedicated, type-annotated alternative to ``get_api_instance('lists_api')``
+    — the dependency is declared in the test signature, typo-checked at
+    collection time, and gives editor autocomplete for list endpoints.
+
+    :return: A configured ``ListsAPI`` instance.
+    """
+    return ListsAPI()
 
 from tests.schemas.models import (
     GenericResponse, RatingResponse, MovieDetails,
