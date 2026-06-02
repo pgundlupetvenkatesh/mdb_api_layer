@@ -10,7 +10,7 @@ Each model corresponds to a former .json schema in tests/schemas/.
 """
 
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictBool, StrictInt, StrictStr
 
 class GenericResponse(BaseModel):
     """
@@ -57,9 +57,9 @@ class ProductionCompany(BaseModel):
     :param name: Name of the production company.
     :param origin_country: ISO 3166-1 country code of the company's origin.
     """
-    id: int
-    logo_path: Optional[str] = None
-    name: str
+    id: StrictInt = Field(ge=0)
+    logo_path: Optional[str] = Field(default=None, pattern=r".*\.(png|jpg)$")
+    name: StrictStr = Field(min_length=1)
     origin_country: Optional[str] = None
 
 # Nested model for genres
@@ -70,8 +70,8 @@ class Genre(BaseModel):
     :param id: Unique identifier for the genre.
     :param name: Display name of the genre (e.g., "Action", "Comedy").
     """
-    id: int
-    name: str
+    id: StrictInt = Field(ge=0)
+    name: StrictStr = Field(min_length=1)
 
 class MovieDetails(BaseModel):
     """
@@ -93,15 +93,15 @@ class MovieDetails(BaseModel):
     :param production_companies: List of companies that produced the movie.
     :param genres: List of genres the movie belongs to.
     """
-    adult: bool
-    id: int
-    origin_country: list[str]
-    original_language: str
-    original_title: str
-    title: str
+    adult: StrictBool
+    id: StrictInt = Field(ge=0)
+    origin_country: list[str]                                  # may be empty
+    original_language: StrictStr = Field(min_length=2, max_length=2)  # ISO 639-1
+    original_title: StrictStr = Field(min_length=1)
+    title: StrictStr = Field(min_length=1)
     release_date: Optional[str] = None
-    production_companies: list[ProductionCompany]
-    genres: Optional[list[Genre]] = None
+    production_companies: list[ProductionCompany]             # may be empty
+    genres: list[Genre]                                       # may be empty
 
     model_config = {"extra": "allow"}  # allow fields not defined here (overview, etc.)
 

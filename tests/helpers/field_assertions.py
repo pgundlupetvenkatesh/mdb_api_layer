@@ -116,7 +116,7 @@ class FieldAssertions:
         assert field in data, f"{self._test_name}: Index {idx} should contain {field} field"
         assert isinstance(data[field], list), f"{self._test_name}: Index {idx} {field} Response should be a list"
 
-        if field in ['genres', 'production_companies', 'also_known_as', 'genre_ids']:
+        if field in ['also_known_as', 'genre_ids']:
             # These fields can be empty lists, so only validate it's a list (done above)
             return
 

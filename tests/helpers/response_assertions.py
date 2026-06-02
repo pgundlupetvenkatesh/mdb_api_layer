@@ -19,4 +19,4 @@ def assert_http_response(response, exp_val):
     assert response.elapsed_seconds < exp_val['exp_max_elp_seconds'], \
         f"Actual response time is greater than expected. Actual: {response.elapsed_seconds} seconds, Expected: < {exp_val["exp_max_elp_seconds"]} seconds"
     assert exp_val['exp_url_contains'] in response.url, f"Response url should contain movie ID '{exp_val['exp_url_contains']}'"
-    assert response.reason == exp_val['exp_req_reason'], f"Response reason should be '{exp_val['expr_req_reason']}' but it's '{response.reason}'"
+    assert response.reason == exp_val['exp_req_reason'], f"Response reason should be '{exp_val['exp_req_reason']}' but it's '{response.reason}'"

@@ -40,16 +40,40 @@ class TestDetails(FieldAssertions):
     method, status codes, headers, response time, and body structure.
     """
 
+    @staticmethod
+    def _assert_get_metadata(response, case, url_contains):
+        """
+        Assert standard GET response metadata from a parametrized test case.
+
+        Builds the expected-values dict from a test case (valid or invalid)
+        and delegates to ``assert_http_response``, keeping the metadata key
+        names in one place.
+
+        :param response: APIResponse returned by the client.
+        :param case: Parametrized test data dict (expects ``status_code``,
+                     ``exp_max_elp_secs``, ``exp_get_req_method``,
+                     ``exp_content_type``, ``reason``).
+        :param url_contains: Substring expected in the response URL.
+        """
+        assert_http_response(response, {
+            'exp_status_code': case['status_code'],
+            'exp_max_elp_seconds': case['exp_max_elp_secs'],
+            'exp_req_method': case['exp_get_req_method'],
+            'exp_content_type': case['exp_content_type'],
+            'exp_url_contains': str(url_contains),
+            'exp_req_reason': case['reason']
+        })
+
     @allure.story("Get Movie Details")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.parametrize('movie_details', TEST_DATA['get_movie_details']['valid'])
     def test_get_movie_details(self, get_api_instance, load_schema, movie_details):
         """
-        Test error handling for invalid movie IDs.
+        Test successful retrieval of movie details for valid movie IDs.
 
-        Validates proper error responses when requesting non-existent
-        or invalid movie IDs, ensuring appropriate status codes and
-        error messages are returned.
+        Validates the response for existing movie IDs, ensuring the
+        expected status code, HTTP metadata, response structure, and
+        Pydantic schema all match for a valid request.
 
         :param get_api_instance: Generic class fixture instance.
         :param load_schema: Schema loader fixture from conftest.py.
@@ -67,41 +91,13 @@ class TestDetails(FieldAssertions):
 
         # Basic response validations
         with allure.step("Validate HTTP response metadata"):
-            assert_http_response(response, {
-                'exp_status_code': movie_details['status_code'],
-                'exp_max_elp_seconds': movie_details['exp_max_elp_secs'],
-                'exp_req_method': movie_details['exp_get_req_method'],
-                'exp_content_type': movie_details['exp_content_type'],
-                'exp_url_contains': str(movie_id),
-                'exp_req_reason': movie_details['reason']
-            })
+            self._assert_get_metadata(response, movie_details, movie_id)
 
-        # response structure validation
-        with allure.step("Validate response structure"):
-            self.assert_list_field(res_body, 'genres')
-            self.assert_list_field(res_body, 'origin_country')
-            self.assert_list_field(res_body, 'production_companies')
-
-            if len(res_body['genres']) > 0:
-                for idx, it in enumerate(res_body['genres']):
-                    self.assert_int_field(it, 'id', idx)
-                    self.assert_str_field(it, 'name', idx)
-
-            self.assert_int_field(res_body, 'id')
-            self.assert_bool_field(res_body, 'adult')
-            self.assert_str_field(res_body, 'original_language')
-            self.assert_str_field(res_body, 'title')
-            self.assert_str_field(res_body, 'original_title')
-
-            if len(res_body['production_companies']) > 0:
-                for idx, it in enumerate(res_body['production_companies']):
-                    self.assert_int_field(it, 'id', idx)
-                    self.assert_path_field(it, 'logo_path', idx)
-                    self.assert_str_field(it, 'name', idx)
-                    self.assert_str_field(it, 'origin_country', idx)
-
+        # Structure, types, and field semantics (presence, strict types,
+        # non-empty/ISO/path rules, nested genres & production_companies, and
+        # empty-list handling) are all enforced by the MovieDetails model.
         # load_schema is a fixture from conftest.py
-        with allure.step("Validate against Pydantic schema"):
+        with allure.step("Validate response structure & schema (MovieDetails)"):
             load_schema('movie_schema').model_validate(res_body)
 
     @allure.story("Get Movie Details - Invalid")
@@ -130,20 +126,13 @@ class TestDetails(FieldAssertions):
             res_body = response.data
 
         with allure.step("Validate HTTP response metadata"):
-            assert_http_response(response, {
-                'exp_status_code': invalid_test['status_code'],
-                'exp_max_elp_seconds': invalid_test['exp_max_elp_secs'],
-                'exp_req_method': invalid_test['exp_get_req_method'],
-                'exp_content_type': invalid_test['exp_content_type'],
-                'exp_url_contains': str(movie_id),
-                'exp_req_reason': invalid_test['reason']
-            })
-            assert res_body['status_message'] == invalid_test['expected_message']
+            self._assert_get_metadata(response, invalid_test, movie_id)
 
         with allure.step("Validate response structure"):
             self.assert_str_field(res_body, 'status_message')
             self.assert_int_field(res_body, 'status_code')
-            self.assert_int_field(res_body, 'success')
+            self.assert_bool_field(res_body, 'success')
+            assert res_body['status_message'] == invalid_test['expected_message']
 
         with allure.step("Validate against Pydantic schema"):
             load_schema('generic_schema').model_validate(res_body)

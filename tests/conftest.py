@@ -80,6 +80,7 @@ def pytest_configure(config):
     os.environ["LOG_TO_FILE"] = str(config.getoption("--log-to-file"))
     from config.config import configure_logging
     configure_logging()
+    logger.info(f"Log level set to {os.environ['LOG_LEVEL']}, log to file: {os.environ['LOG_TO_FILE']}")
 
     # For on demand local Poetry run pytest and user can opt-in per run locally without modifying .env
     # AI_ANALYSIS_ENABLED=true from .env is used by Docker compose CI
@@ -87,6 +88,7 @@ def pytest_configure(config):
         os.environ["AI_ANALYSIS_ENABLED"] = "true"
         analyzer.enabled = True # Update instance
         analyzer.api_key = os.getenv("GROQ_API_KEY")    # re-read in case .env loads later
+        logger.info(f"AI analysis is enabled. AI_ANALYSIS_ENABLED = {os.environ["AI_ANALYSIS_ENABLED"]}")
 
 from tests.data.data_loader import load_test_data
 from api.movies_api import MoviesAPI
