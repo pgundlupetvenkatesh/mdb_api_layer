@@ -10,7 +10,7 @@ Each model corresponds to a former .json schema in tests/schemas/.
 """
 
 from typing import Optional
-from pydantic import BaseModel, Field, StrictBool, StrictInt, StrictStr
+from pydantic import BaseModel, Field, StrictBool, StrictFloat, StrictInt, StrictStr
 
 class GenericResponse(BaseModel):
     """
@@ -130,20 +130,20 @@ class PopularMovieItem(BaseModel):
     :param vote_average: Average user rating (0.0–10.0).
     :param vote_count: Total number of user votes.
     """
-    adult: bool
-    backdrop_path: Optional[str] = None
-    genre_ids: list[int]
-    id: int
-    original_language: str
-    original_title: str
-    overview: str
-    popularity: float
-    poster_path: Optional[str] = None
-    release_date: str
-    title: str
-    video: bool
-    vote_average: float
-    vote_count: int
+    adult: StrictBool
+    backdrop_path: Optional[str] = Field(default=None, pattern=r".*\.(png|jpg)$")
+    genre_ids: list[int]                                       # may be empty
+    id: StrictInt = Field(ge=0)
+    original_language: StrictStr = Field(min_length=2, max_length=2)  # ISO 639-1
+    original_title: StrictStr = Field(min_length=1)
+    overview: str                                              # may be empty
+    popularity: StrictFloat = Field(ge=0)
+    poster_path: Optional[str] = Field(default=None, pattern=r".*\.(png|jpg)$")
+    release_date: str                                          # may be empty
+    title: StrictStr = Field(min_length=1)
+    video: StrictBool
+    vote_average: StrictFloat = Field(ge=0, le=10)
+    vote_count: StrictInt = Field(ge=0)
 
     model_config = {"extra": "allow"}
 
@@ -161,10 +161,10 @@ class PopularMoviesResponse(BaseModel):
     :param total_pages: Total number of available pages.
     :param total_results: Total number of popular movies across all pages.
     """
-    page: int
-    results: list[PopularMovieItem]
-    total_pages: int
-    total_results: int
+    page: StrictInt = Field(ge=0)
+    results: list[PopularMovieItem] = Field(min_length=1)
+    total_pages: StrictInt = Field(ge=0)
+    total_results: StrictInt = Field(ge=0)
 
 class PersonDetails(BaseModel):
     """

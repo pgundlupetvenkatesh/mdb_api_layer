@@ -130,7 +130,6 @@ def get_api_instance():
     :yields: Configured BaseAPI instance.
     """
     class_map = {
-        'movies_api': MoviesAPI,
         'account_api': AccountAPI,
         'people_api': PeopleAPI,
         'lists_api': ListsAPI
