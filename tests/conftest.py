@@ -146,6 +146,19 @@ def get_api_instance():
 
     yield _create
 
+@pytest.fixture
+def movies_api() -> MoviesAPI:
+    """
+    Provide a fresh ``MoviesAPI`` client for a test.
+
+    Dedicated, type-annotated alternative to ``get_api_instance('movies_api')``
+    — the dependency is declared in the test signature, typo-checked at
+    collection time, and gives editor autocomplete for movie endpoints.
+
+    :return: A configured ``MoviesAPI`` instance.
+    """
+    return MoviesAPI()
+
 from tests.schemas.models import (
     GenericResponse, RatingResponse, MovieDetails,
     PopularMoviesResponse, PersonDetails

@@ -43,7 +43,7 @@ All runtime config comes from environment variables loaded from `.env` (gitignor
 
 Layered, with a strict separation between the API client and the tests:
 
-**`api/`** — `BaseAPI` (`base_api.py`) owns the `requests.Session`, auth header (Bearer token from `Config`), URL construction (`{base_url}/{api_version}/{endpoint}`), and the four HTTP verbs. Every verb returns a standardized `APIResponse` dataclass (`.data`, `.status_code`, `.url`, `.elapsed_seconds`, etc.) — tests assert against this object, never a raw `requests.Response`. Endpoint classes (`MoviesAPI`, `PeopleAPI`, `ListsAPI`, `AccountAPI`, `SearchAPI`) subclass `BaseAPI`, set a `_sub_path` class attr, and add thin domain methods that call `self.get/post/put/delete`. To add an endpoint: add a method to the relevant class (or a new subclass) — do not put HTTP logic in tests.
+**`api/`** — `BaseAPI` (`base_api.py`) owns the `requests.Session`, auth header (Bearer token from `Config`), URL construction (`{base_url}/{api_version}/{endpoint}`), and the four HTTP verbs. Every verb returns a standardized `APIResponse` dataclass (`.data`, `.status_code`, `.url`, `.elapsed_seconds`, etc.) — tests assert against this object, never a raw `requests.Response`. Endpoint classes (`MoviesAPI`, `PeopleAPI`, `ListsAPI`, `AccountAPI`) subclass `BaseAPI`, set a `_sub_path` class attr, and add thin domain methods that call `self.get/post/put/delete`. To add an endpoint: add a method to the relevant class (or a new subclass) — do not put HTTP logic in tests.
 
 **`config/config.py`** — loads `.env`, exposes the `Config` class, and configures Loguru. `configure_logging()` is re-invoked from `pytest_configure` so the CLI log-level flag takes effect before test modules import.
 

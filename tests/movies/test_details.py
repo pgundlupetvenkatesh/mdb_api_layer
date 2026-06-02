@@ -67,7 +67,7 @@ class TestDetails(FieldAssertions):
     @allure.story("Get Movie Details")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.parametrize('movie_details', TEST_DATA['get_movie_details']['valid'])
-    def test_get_movie_details(self, get_api_instance, load_schema, movie_details):
+    def test_get_movie_details(self, movies_api, load_schema, movie_details):
         """
         Test successful retrieval of movie details for valid movie IDs.
 
@@ -75,7 +75,7 @@ class TestDetails(FieldAssertions):
         expected status code, HTTP metadata, response structure, and
         Pydantic schema all match for a valid request.
 
-        :param get_api_instance: Generic class fixture instance.
+        :param movies_api: MoviesAPI client fixture from conftest.py.
         :param load_schema: Schema loader fixture from conftest.py.
         :param movie_details: Parametrized test data containing valid movie_id,
                              expected status_code, and expected_message.
@@ -83,7 +83,6 @@ class TestDetails(FieldAssertions):
         movie_id = movie_details['movie_id']
         allure.dynamic.title(f"Get movie details for ID: {movie_id}")
         logger.info(f"Running test: {self._test_name} for movie_id: {movie_id}")
-        movies_api = get_api_instance('movies_api')
 
         with allure.step(f"Send GET request for movie {movie_id}"):
             response = movies_api.get_movie_details(movie_id)
@@ -103,7 +102,7 @@ class TestDetails(FieldAssertions):
     @allure.story("Get Movie Details - Invalid")
     @allure.severity(allure.severity_level.NORMAL)
     @pytest.mark.parametrize('invalid_test', TEST_DATA['get_movie_details']['invalid'])
-    def test_get_invalid_movie_details(self, get_api_instance, load_schema, invalid_test):
+    def test_get_invalid_movie_details(self, movies_api, load_schema, invalid_test):
         """
         Test error handling for invalid movie IDs.
 
@@ -111,7 +110,7 @@ class TestDetails(FieldAssertions):
         or invalid movie IDs, ensuring appropriate status codes and
         error messages are returned.
 
-        :param get_api_instance: Generic fixture instance.
+        :param movies_api: MoviesAPI client fixture from conftest.py.
         :param load_schema: Schema loader fixture from conftest.py.
         :param invalid_test: Parametrized test data containing invalid movie_id,
                              expected status_code, and expected_message.
@@ -119,7 +118,6 @@ class TestDetails(FieldAssertions):
         movie_id = invalid_test['movie_id']
         allure.dynamic.title(f"Invalid movie ID: {movie_id}")
         logger.info(f"Testing invalid movie_id: {movie_id}")
-        movies_api = get_api_instance('movies_api')
 
         with allure.step(f"Send GET request for invalid movie ID {movie_id}"):
             response = movies_api.get_movie_details(movie_id)
@@ -128,11 +126,10 @@ class TestDetails(FieldAssertions):
         with allure.step("Validate HTTP response metadata"):
             self._assert_get_metadata(response, invalid_test, movie_id)
 
-        with allure.step("Validate response structure"):
-            self.assert_str_field(res_body, 'status_message')
-            self.assert_int_field(res_body, 'status_code')
-            self.assert_bool_field(res_body, 'success')
+        with allure.step("Validate error message"):
             assert res_body['status_message'] == invalid_test['expected_message']
 
-        with allure.step("Validate against Pydantic schema"):
+        # GenericResponse (strict, extra="forbid") enforces the error body's
+        # structure and types; only the message value is asserted above.
+        with allure.step("Validate response structure & schema (GenericResponse)"):
             load_schema('generic_schema').model_validate(res_body)

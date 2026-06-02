@@ -24,9 +24,11 @@ class GenericResponse(BaseModel):
     Example response::
         {"status_message": "Resource not found.", "success": false, "status_code": 34}
     """
-    status_message: str
-    success: bool
-    status_code: int
+    model_config = {"extra": "forbid"}  # error body is exactly these three fields
+
+    status_message: StrictStr = Field(min_length=1)
+    success: StrictBool
+    status_code: StrictInt = Field(ge=0)
 
 class RatingResponse(BaseModel):
     """
