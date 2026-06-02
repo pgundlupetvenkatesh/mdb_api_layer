@@ -45,9 +45,9 @@ class RatingResponse(BaseModel):
     """
     model_config = {"extra": "forbid"}  # equivalent to additionalProperties: false
 
-    success: bool
-    status_code: int
-    status_message: str
+    success: StrictBool
+    status_code: StrictInt = Field(ge=0)
+    status_message: StrictStr = Field(min_length=1)
 
 # Nested model for production companies
 class ProductionCompany(BaseModel):
