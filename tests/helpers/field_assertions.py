@@ -1,8 +1,14 @@
 """Field assertion helpers for test validation."""
 class FieldAssertions:
     """Mixin class providing field validation assertion methods."""
+    # REMINDER: the assert_*_field methods below are now DEAD — no test calls
+    # them since response bodies are validated via the strict Pydantic models
+    # (load_schema(...).model_validate(...)). Only `_test_name` is still used.
+    # Safe to remove these methods (and likely the FieldAssertions inheritance)
+    # in a later cleanup.
     _test_name = '' # Defined here but is set by the consuming class
 
+    # DEAD (see class reminder): unused — superseded by Pydantic model validation.
     def assert_bool_field(self, data, field, index=None):
         """
         Assert that a field value is a boolean.
@@ -15,6 +21,7 @@ class FieldAssertions:
         idx = f'{index}' if index is not None else ''
         assert isinstance(data[field], bool), f"{self._test_name}: Index {idx} {field} Response should be boolean"
 
+    # DEAD (see class reminder): unused — superseded by Pydantic model validation.
     def assert_str_field(self, data, field, index=None):
         """
         Assert that a field value is a non-empty string.
@@ -44,6 +51,7 @@ class FieldAssertions:
 
         assert isinstance(data[field], str), f"{self._test_name}: Index {idx} {field} Response should be string"
 
+    # DEAD (see class reminder): unused — superseded by Pydantic model validation.
     def assert_int_field(self, data, field, index=None, id_val=None):
         """
         Assert that a field value is a positive integer.
@@ -64,6 +72,7 @@ class FieldAssertions:
         else:
             assert data[field] >= 0, f"{self._test_name}: Index {idx} {field} should be non-negative"
 
+    # DEAD (see class reminder): unused — superseded by Pydantic model validation.
     def assert_path_field(self, data, field, index=None):
         """
         Assert that a field is a valid image path or null.
@@ -83,6 +92,7 @@ class FieldAssertions:
         assert data[field] is None or data[field].endswith(
             ('.png', '.jpg')), f'{self._test_name}: Index {idx} {field} should be PNG'
 
+    # DEAD (see class reminder): unused — superseded by Pydantic model validation.
     def assert_float_field(self, data, field, index=None):
         """
         Assert that a field value is a positive float.
@@ -102,6 +112,7 @@ class FieldAssertions:
         else:
             assert data[field] >= 0.0, f"{self._test_name}: Index {idx} {field} should be positive"
 
+    # DEAD (see class reminder): unused — superseded by Pydantic model validation.
     def assert_list_field(self, data, field, index=None):
         """
         Assert that a field value is a non-empty list.
