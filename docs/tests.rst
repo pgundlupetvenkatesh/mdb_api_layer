@@ -3,6 +3,11 @@ Tests Module
 
 Contracts
 ---------
+.. automodule:: tests.contracts.conftest
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: tests.contracts.test_movie_details
    :members:
    :undoc-members:
@@ -53,13 +58,9 @@ Movie Lists
 
 Pacts
 -----
-.. literalinclude:: ../tests/pacts/test_movie_details-api_pvd.json
+.. literalinclude:: ../tests/pacts/mdb_api_layer-api_pvd.json
    :language: json
-   :caption: test_movie_details-api_pvd.json
-
-.. literalinclude:: ../tests/pacts/test_popular_movies-api_pvd.json
-   :language: json
-   :caption: test_popular_movies-api_pvd.json
+   :caption: mdb_api_layer-api_pvd.json
 
 Conftest
 --------

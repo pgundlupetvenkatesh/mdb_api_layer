@@ -20,21 +20,46 @@ class TestUpdate(FieldAssertions):
     method, status codes, headers, response time, and body structure.
     """
 
+    @staticmethod
+    def _assert_put_metadata(response, case, url_contains):
+        """
+        Assert standard PUT response metadata from a parametrized test case.
+
+        Builds the expected-values dict from a test case (valid or invalid)
+        and delegates to ``assert_http_response``, keeping the metadata key
+        names in one place.
+
+        :param response: APIResponse returned by the client.
+        :param case: Parametrized test data dict (expects ``status_code``,
+                     ``exp_max_elp_secs``, ``exp_put_req_method``,
+                     ``exp_content_type``, ``reason``).
+        :param url_contains: Substring expected in the response URL.
+        """
+        assert_http_response(response, {
+            'exp_status_code': case['status_code'],
+            'exp_max_elp_seconds': case['exp_max_elp_secs'],
+            'exp_req_method': case['exp_put_req_method'],
+            'exp_content_type': case['exp_content_type'],
+            'exp_url_contains': str(url_contains),
+            'exp_req_reason': case['reason']
+        })
+
     @allure.story("Update List Description")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.parametrize('update_list', TEST_DATA['update_list']['valid'])
-    def test_update_list_description(self, get_api_instance, load_schema, update_list):
+    def test_update_list_description(self, lists_api, load_schema, update_list):
         """
         Test updating a list with valid parameters.
 
-        Validates that the list is updated correctly, including response structure and content.
+        Validates that the list is updated correctly, returning the expected
+        201 success response, correct HTTP metadata, and a body that conforms
+        to the strict GenericResponse schema.
 
-        :param get_api_instance: Generic fixture instance.
-        :param load_schema: Schema loader fixture from conftest.py
-        :param update_list: Parametrized test data containing valid query_param,
-                            expected status_code, and expected_message.
+        :param lists_api: ListsAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param update_list: Parametrized test data containing valid list_id,
+                            payload, expected status_code, and expected_message.
         """
-        lists_api = get_api_instance('lists_api')
         allure.dynamic.title(f"Update Description for list ID {update_list['list_id']}")
         logger.debug(f"Testing update_list for list_id: {update_list['list_id']} with payload: {update_list['payload']}")
 
@@ -44,31 +69,32 @@ class TestUpdate(FieldAssertions):
 
         logger.info(f"{self._test_name} - Actual maximum elapsed seconds: " + str(response.elapsed_seconds))
         with allure.step("Validate HTTP response metadata"):
-            assert_http_response(response, {
-                'exp_status_code': update_list['status_code'],
-                'exp_max_elp_seconds': update_list['exp_max_elp_secs'],
-                'exp_req_method': update_list['exp_put_req_method'],
-                'exp_content_type': update_list['exp_content_type'],
-                'exp_url_contains': f'list/{update_list["list_id"]}',
-                'exp_req_reason': update_list['reason']
-            })
+            self._assert_put_metadata(response, update_list, f'list/{update_list["list_id"]}')
 
-        with allure.step("Validate response structure"):
-            self.assert_bool_field(res_json, 'success')
-            self.assert_int_field(res_json, 'status_code')
-            self.assert_str_field(res_json, 'status_message')
+        with allure.step("Validate list was updated"):
+            assert res_json['status_message'] == update_list['expected_message']
+            assert res_json['success'] is True, "List should be updated successfully. Its false now"
 
-        if 'success' in res_json:
-            assert res_json['success'] is True, "Rating should be added successfully. Its false now"
-
-            with allure.step("Validate against Pydantic schema"):
-                load_schema('generic_schema').model_validate(res_json)
+        # GenericResponse (strict, extra="forbid") enforces the body structure/types.
+        with allure.step("Validate response structure & schema (GenericResponse)"):
+            load_schema('generic_schema').model_validate(res_json)
 
     @allure.story("Update Invalid List Description")
     @allure.severity(allure.severity_level.NORMAL)
     @pytest.mark.parametrize('update_list_invalid', TEST_DATA['update_list']['invalid'])
-    def test_update_list_description_invalid(self, get_api_instance, load_schema, update_list_invalid):
-        lists_api = get_api_instance('lists_api')
+    def test_update_list_description_invalid(self, lists_api, load_schema, update_list_invalid):
+        """
+        Test updating a list with an invalid list ID.
+
+        Validates that the API returns the expected error status code and
+        message, with a body that conforms to the strict GenericResponse schema.
+
+        :param lists_api: ListsAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param update_list_invalid: Parametrized test data containing invalid
+                                    list_id, payload, expected status_code, and
+                                    expected_message.
+        """
         allure.dynamic.title(f"Update Description for invalid list ID {update_list_invalid['list_id']}")
         logger.debug(
             f"Testing update_list for list_id: {update_list_invalid['list_id']} with payload: {update_list_invalid['payload']}")
@@ -79,22 +105,11 @@ class TestUpdate(FieldAssertions):
 
         logger.info(f"{self._test_name} - Actual maximum elapsed seconds: " + str(response.elapsed_seconds))
         with allure.step("Validate HTTP response metadata"):
-            assert_http_response(response, {
-                'exp_status_code': update_list_invalid['status_code'],
-                'exp_max_elp_seconds': update_list_invalid['exp_max_elp_secs'],
-                'exp_req_method': update_list_invalid['exp_put_req_method'],
-                'exp_content_type': update_list_invalid['exp_content_type'],
-                'exp_url_contains': f'list/{update_list_invalid["list_id"]}',
-                'exp_req_reason': update_list_invalid['reason']
-            })
+            self._assert_put_metadata(response, update_list_invalid, f'list/{update_list_invalid["list_id"]}')
 
-        with allure.step("Validate response structure"):
-            self.assert_bool_field(res_json, 'success')
-            self.assert_int_field(res_json, 'status_code')
-            self.assert_str_field(res_json, 'status_message')
+        with allure.step("Validate error message"):
+            assert res_json['status_message'] == update_list_invalid['expected_message']
+            assert res_json['success'] is False, "Update on an invalid list should report success=false"
 
-        if 'success' in res_json:
-            assert res_json['success'] is False, "Rating should not be added successfully. Its true now"
-
-            with allure.step("Validate against Pydantic schema"):
-                load_schema('generic_schema').model_validate(res_json)
+        with allure.step("Validate response structure & schema (GenericResponse)"):
+            load_schema('generic_schema').model_validate(res_json)

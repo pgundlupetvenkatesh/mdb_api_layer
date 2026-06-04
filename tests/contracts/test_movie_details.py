@@ -4,14 +4,9 @@ Contract tests for the Movies Details API. Module demonstrates consumer-driven c
 
 import allure
 import pytest
-from pact import Pact, match
+from pact import match
 
-from api.movies_api import MoviesAPI
-
-# Pact mock server config
-PACT_MOCK_HOST = "localhost"
-PACT_MOCK_PORT = 1234
-PACT_DIR = "tests/pacts"
+from tests.schemas.models import MovieDetails, GenericResponse
 
 @allure.epic("TMDB API")
 @allure.feature("Contracts")
@@ -19,39 +14,15 @@ class TestMovieDetails:
     """
     Contract tests for Movies Details API endpoint. Define what consumer (test client) expects from the provider,
     in our case Devs/PO.
+
+    The ``pact``, ``pact_movies_api`` and ``pact_address`` fixtures (and the
+    shared consumer/provider identities) live in ``tests/contracts/conftest.py``.
     """
-
-    @pytest.fixture
-    def pact(self):
-        """
-        Create a Pact instance for contract testing. Fixture creates a fresh Pact per test because once pact.serve()
-        runs and the context manager exits, the Pact handle is finalized and no new interactions can be added to it.
-        The consumer name identifies client service, and the provider name identifies the API being consumed (TMDB).
-
-        Yields:
-            Pact: Configured Pact instance ready for interaction definition.
-        """
-        pact = Pact("test_movie_details", "api_pvd")
-        yield pact
-
-        # Write/merge the contract file after each test
-        pact.write_file(directory=PACT_DIR)
-
-    @pytest.fixture
-    def pact_movies_api(self):
-        """
-        Create a MoviesAPI instance pointing to the Pact mock server.
-
-        Override base URL to use the Pact mock server instead of the real TMDB API
-        and test against expected responses.
-        """
-        api = MoviesAPI()
-        return api
 
     @allure.story("Get Movie Details Contract")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.contract
-    def test_get_movie_details(self, pact, pact_movies_api):
+    def test_get_movie_details(self, pact, pact_movies_api, pact_address):
         """
         Verify movie details response structure. Defines expectations for the GET /movie/{id} endpoint.
         Using matchers to allows flexible type-based matching rather than exact value comparison.
@@ -109,21 +80,22 @@ class TestMovieDetails:
 
         # Start mock server, make request and verify on exit
         with allure.step("Start Pact mock server and send request to get movie details"):
-            with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as srv:
+            host, port = pact_address
+            with pact.serve(addr=host, port=port) as srv:
                 pact_movies_api.base_url = f"{srv.url}"
                 response = pact_movies_api.get_movie_details(550)
 
-        # Response structure has already been verified on context exit.
-        with allure.step("Validate response content"):
+        # Pact verified the *request* on exit; the response was mocked from our
+        # matchers. Validate that mocked body against the same MovieDetails
+        # contract the integration tests enforce (single source of truth).
+        with allure.step("Validate response structure & schema (MovieDetails)"):
             assert response.status_code == 200
-            assert "id" in response.data
-            assert "title" in response.data
-            assert isinstance(response.data["genres"], list)
+            MovieDetails.model_validate(response.data)
 
     @allure.story("Get Invalid Movie Details Contract")
     @allure.severity(allure.severity_level.NORMAL)
     @pytest.mark.contract
-    def test_get_invalid_movie_details(self, pact, pact_movies_api):
+    def test_get_invalid_movie_details(self, pact, pact_movies_api, pact_address):
         """
         Verify 404 error response for non-existent movie to test the client correctly handles error responses
         when requesting invalid movie ID.
@@ -150,11 +122,12 @@ class TestMovieDetails:
             )
 
         with allure.step("Start Pact mock server and send request to get invalid movie details"):
-            with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as srv:
+            host, port = pact_address
+            with pact.serve(addr=host, port=port) as srv:
                 pact_movies_api.base_url = f"{srv.url}"
                 response = pact_movies_api.get_movie_details(99999999)
 
-        with allure.step("Validate response content"):
+        with allure.step("Validate response structure & schema (GenericResponse)"):
             assert response.status_code == 404
             assert response.data["success"] is False
-            assert "status_message" in response.data
+            GenericResponse.model_validate(response.data)

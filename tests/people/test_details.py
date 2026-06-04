@@ -7,75 +7,90 @@ from tests.data.data_loader import load_test_data
 from tests.helpers import *
 
 TEST_DATA = load_test_data("test_data.yaml")
+"""Module-level test data loaded once at import time for parametrization."""
 
 @allure.epic("TMDB API")
 @allure.feature("People")
 class TestDetails(FieldAssertions):
+    """
+    Test class for People API get_person_details endpoint validation.
+
+    Contains tests for the get_person_details endpoint covering both
+    valid requests and error scenarios. Each test validates HTTP
+    method, status codes, headers, response time, and body structure.
+    """
+
+    @staticmethod
+    def _assert_get_metadata(response, case, url_contains):
+        """
+        Assert standard GET response metadata from a parametrized test case.
+
+        Builds the expected-values dict from a test case (valid or invalid)
+        and delegates to ``assert_http_response``, keeping the metadata key
+        names in one place.
+
+        :param response: APIResponse returned by the client.
+        :param case: Parametrized test data dict (expects ``status_code``,
+                     ``exp_max_elp_secs``, ``exp_get_req_method``,
+                     ``exp_content_type``, ``reason``).
+        :param url_contains: Substring expected in the response URL.
+        """
+        assert_http_response(response, {
+            'exp_status_code': case['status_code'],
+            'exp_max_elp_seconds': case['exp_max_elp_secs'],
+            'exp_req_method': case['exp_get_req_method'],
+            'exp_content_type': case['exp_content_type'],
+            'exp_url_contains': str(url_contains),
+            'exp_req_reason': case['reason']
+        })
+
     @allure.story("Get Person Details")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.parametrize('person_details', TEST_DATA['get_person_details']['valid'])
-    def test_get_person_details(self, get_api_instance, load_schema, person_details):
+    def test_get_person_details(self, people_api, load_schema, person_details):
         """
-        Test fetching person details with valid data.
+        Test fetching person details with a valid person ID.
 
-        Validates that the response contains expected fields and matches the
-        defined JSON schema for person details.
+        Validates that the response returns the expected 200 status, correct
+        HTTP metadata, and a body that conforms to the strict PersonDetails
+        schema.
 
-        :param person_details: Dictionary containing test parameters for a valid case.
+        :param people_api: PeopleAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param person_details: Parametrized test data containing a valid
+                               person_id, expected status_code, and reason.
         """
         logger.info(f"Random person ID picked: {person_details['person_id']}")
         allure.dynamic.title(f"Get details for person ID: {person_details['person_id']}")
-        people_api = get_api_instance('people_api')
 
         with allure.step(f"Send GET request for person ID {person_details['person_id']}"):
             response = people_api.get_person_details(person_details['person_id'])
             res_body = response.data
 
         with allure.step("Validate HTTP response metadata"):
-            assert_http_response(response, {
-                'exp_status_code': person_details['status_code'],
-                'exp_max_elp_seconds': person_details['exp_max_elp_secs'],
-                'exp_req_method': person_details['exp_get_req_method'],
-                'exp_content_type': person_details['exp_content_type'],
-                'exp_url_contains': 'person',
-                'exp_req_reason': person_details['reason']
-            })
+            self._assert_get_metadata(response, person_details, 'person')
 
-        # response structure validation
-        with allure.step("Validate response structure"):
-            self.assert_list_field(res_body, 'also_known_as')
-
-            self.assert_str_field(res_body, 'biography')
-            self.assert_str_field(res_body, 'birthday')
-            self.assert_str_field(res_body, 'imdb_id')
-            self.assert_str_field(res_body, 'known_for_department')
-            self.assert_str_field(res_body, 'name')
-            self.assert_str_field(res_body, 'place_of_birth')
-            self.assert_path_field(res_body, 'profile_path')
-
-            self.assert_bool_field(res_body, 'adult')
-
-            self.assert_int_field(res_body, 'gender')
-            self.assert_int_field(res_body, 'id')
-            self.assert_float_field(res_body, 'popularity')
-
-        # Validate against JSON schema
-        with allure.step("Validate against Pydantic schema"):
+        # PersonDetails (strict) enforces the body structure, types, and field
+        # semantics (strict types, gender range, path pattern, nullability).
+        with allure.step("Validate response structure & schema (PersonDetails)"):
             load_schema('person_details_schema').model_validate(res_body)
 
     @allure.story("Get Invalid Person Details")
     @allure.severity(allure.severity_level.NORMAL)
     @pytest.mark.parametrize('invalid_person_details', TEST_DATA['get_person_details']['invalid'])
-    def test_get_person_details_invalid(self, get_api_instance, load_schema, invalid_person_details):
+    def test_get_person_details_invalid(self, people_api, load_schema, invalid_person_details):
         """
-        Test fetching person details with valid data.
+        Test fetching person details with an invalid person ID.
 
-        Validates that the response contains expected fields and matches the
-        defined JSON schema for person details.
+        Validates that the API returns the expected error status code and
+        message, with a body that conforms to the strict GenericResponse schema.
 
-        :param invalid_person_details: Dictionary containing test parameters for invalid case.
+        :param people_api: PeopleAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_person_details: Parametrized test data containing an
+                                       invalid person_id, expected status_code,
+                                       and expected_message.
         """
-        people_api = get_api_instance('people_api')
         allure.dynamic.title(f"Get details for invalid person ID: {invalid_person_details['person_id']}")
 
         with allure.step(f"Send GET request for person ID {invalid_person_details['person_id']}"):
@@ -83,23 +98,11 @@ class TestDetails(FieldAssertions):
             res_body = response.data
 
         with allure.step("Validate HTTP response metadata"):
-            assert_http_response(response, {
-                'exp_status_code': invalid_person_details['status_code'],
-                'exp_max_elp_seconds': invalid_person_details['exp_max_elp_secs'],
-                'exp_req_method': invalid_person_details['exp_get_req_method'],
-                'exp_content_type': invalid_person_details['exp_content_type'],
-                'exp_url_contains': 'person',
-                'exp_req_reason': invalid_person_details['reason']
-            })
+            self._assert_get_metadata(response, invalid_person_details, 'person')
 
-        # response structure validation
-        with allure.step("Validate response structure"):
-            self.assert_str_field(res_body, 'status_message')
-            self.assert_bool_field(res_body, 'success')
-            self.assert_int_field(res_body, 'status_code')
+        with allure.step("Validate error message"):
+            assert res_body['status_message'] == invalid_person_details['expected_message']
+            assert res_body['success'] is False, "Request for an invalid person ID should report success=false"
 
-        if 'success' in res_body:
-            assert res_body['success'] is False, f"{self._test_name}: Expected 'success' to be False for invalid person ID"
-
-            with allure.step("Validate against Pydantic schema"):
-                load_schema('generic_schema').model_validate(res_body)
+        with allure.step("Validate response structure & schema (GenericResponse)"):
+            load_schema('generic_schema').model_validate(res_body)

@@ -10,7 +10,7 @@ Each model corresponds to a former .json schema in tests/schemas/.
 """
 
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictBool, StrictFloat, StrictInt, StrictStr
 
 class GenericResponse(BaseModel):
     """
@@ -24,9 +24,11 @@ class GenericResponse(BaseModel):
     Example response::
         {"status_message": "Resource not found.", "success": false, "status_code": 34}
     """
-    status_message: str
-    success: bool
-    status_code: int
+    model_config = {"extra": "forbid"}  # error body is exactly these three fields
+
+    status_message: StrictStr = Field(min_length=1)
+    success: StrictBool
+    status_code: StrictInt = Field(ge=0)
 
 class RatingResponse(BaseModel):
     """
@@ -43,9 +45,9 @@ class RatingResponse(BaseModel):
     """
     model_config = {"extra": "forbid"}  # equivalent to additionalProperties: false
 
-    success: bool
-    status_code: int
-    status_message: str
+    success: StrictBool
+    status_code: StrictInt = Field(ge=0)
+    status_message: StrictStr = Field(min_length=1)
 
 # Nested model for production companies
 class ProductionCompany(BaseModel):
@@ -57,9 +59,9 @@ class ProductionCompany(BaseModel):
     :param name: Name of the production company.
     :param origin_country: ISO 3166-1 country code of the company's origin.
     """
-    id: int
-    logo_path: Optional[str] = None
-    name: str
+    id: StrictInt = Field(ge=0)
+    logo_path: Optional[str] = Field(default=None, pattern=r".*\.(png|jpg)$")
+    name: StrictStr = Field(min_length=1)
     origin_country: Optional[str] = None
 
 # Nested model for genres
@@ -70,8 +72,8 @@ class Genre(BaseModel):
     :param id: Unique identifier for the genre.
     :param name: Display name of the genre (e.g., "Action", "Comedy").
     """
-    id: int
-    name: str
+    id: StrictInt = Field(ge=0)
+    name: StrictStr = Field(min_length=1)
 
 class MovieDetails(BaseModel):
     """
@@ -93,15 +95,15 @@ class MovieDetails(BaseModel):
     :param production_companies: List of companies that produced the movie.
     :param genres: List of genres the movie belongs to.
     """
-    adult: bool
-    id: int
-    origin_country: list[str]
-    original_language: str
-    original_title: str
-    title: str
+    adult: StrictBool
+    id: StrictInt = Field(ge=0)
+    origin_country: list[str]                                  # may be empty
+    original_language: StrictStr = Field(min_length=2, max_length=2)  # ISO 639-1
+    original_title: StrictStr = Field(min_length=1)
+    title: StrictStr = Field(min_length=1)
     release_date: Optional[str] = None
-    production_companies: list[ProductionCompany]
-    genres: Optional[list[Genre]] = None
+    production_companies: list[ProductionCompany]             # may be empty
+    genres: list[Genre]                                       # may be empty
 
     model_config = {"extra": "allow"}  # allow fields not defined here (overview, etc.)
 
@@ -128,20 +130,20 @@ class PopularMovieItem(BaseModel):
     :param vote_average: Average user rating (0.0–10.0).
     :param vote_count: Total number of user votes.
     """
-    adult: bool
-    backdrop_path: Optional[str] = None
-    genre_ids: list[int]
-    id: int
-    original_language: str
-    original_title: str
-    overview: str
-    popularity: float
-    poster_path: Optional[str] = None
-    release_date: str
-    title: str
-    video: bool
-    vote_average: float
-    vote_count: int
+    adult: StrictBool
+    backdrop_path: Optional[str] = Field(default=None, pattern=r".*\.(png|jpg)$")
+    genre_ids: list[int]                                       # may be empty
+    id: StrictInt = Field(ge=0)
+    original_language: StrictStr = Field(min_length=2, max_length=2)  # ISO 639-1
+    original_title: StrictStr = Field(min_length=1)
+    overview: str                                              # may be empty
+    popularity: StrictFloat = Field(ge=0)
+    poster_path: Optional[str] = Field(default=None, pattern=r".*\.(png|jpg)$")
+    release_date: str                                          # may be empty
+    title: StrictStr = Field(min_length=1)
+    video: StrictBool
+    vote_average: StrictFloat = Field(ge=0, le=10)
+    vote_count: StrictInt = Field(ge=0)
 
     model_config = {"extra": "allow"}
 
@@ -159,10 +161,10 @@ class PopularMoviesResponse(BaseModel):
     :param total_pages: Total number of available pages.
     :param total_results: Total number of popular movies across all pages.
     """
-    page: int
-    results: list[PopularMovieItem]
-    total_pages: int
-    total_results: int
+    page: StrictInt = Field(ge=0)
+    results: list[PopularMovieItem] = Field(min_length=1)
+    total_pages: StrictInt = Field(ge=0)
+    total_results: StrictInt = Field(ge=0)
 
 class PersonDetails(BaseModel):
     """
@@ -189,19 +191,19 @@ class PersonDetails(BaseModel):
     :param popularity: TMDB popularity score.
     :param profile_path: Path to the profile image, or None.
     """
-    adult: bool
-    also_known_as: Optional[list[str]] = None
-    biography: str
-    birthday: str
+    adult: StrictBool
+    also_known_as: list[str]                                   # always present, may be empty
+    biography: StrictStr                                       # may be empty
+    birthday: Optional[str] = None                             # null for some people
     deathday: Optional[str] = None
-    gender: int
+    gender: StrictInt = Field(ge=0, le=3)                      # 0=n/a, 1=F, 2=M, 3=non-binary
     homepage: Optional[str] = None
-    id: int
-    imdb_id: str
-    known_for_department: str
-    name: str
+    id: StrictInt = Field(ge=0)
+    imdb_id: Optional[str] = None                              # null for some people
+    known_for_department: StrictStr = Field(min_length=1)
+    name: StrictStr = Field(min_length=1)
     place_of_birth: Optional[str] = None
-    popularity: float
-    profile_path: Optional[str] = None
+    popularity: StrictFloat = Field(ge=0)
+    profile_path: Optional[str] = Field(default=None, pattern=r".*\.(png|jpg)$")
 
     model_config = {"extra": "allow"}

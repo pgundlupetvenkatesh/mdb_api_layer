@@ -80,6 +80,7 @@ def pytest_configure(config):
     os.environ["LOG_TO_FILE"] = str(config.getoption("--log-to-file"))
     from config.config import configure_logging
     configure_logging()
+    logger.info(f"Log level set to {os.environ['LOG_LEVEL']}, log to file: {os.environ['LOG_TO_FILE']}")
 
     # For on demand local Poetry run pytest and user can opt-in per run locally without modifying .env
     # AI_ANALYSIS_ENABLED=true from .env is used by Docker compose CI
@@ -87,10 +88,10 @@ def pytest_configure(config):
         os.environ["AI_ANALYSIS_ENABLED"] = "true"
         analyzer.enabled = True # Update instance
         analyzer.api_key = os.getenv("GROQ_API_KEY")    # re-read in case .env loads later
+        logger.info(f"AI analysis is enabled. AI_ANALYSIS_ENABLED = {os.environ["AI_ANALYSIS_ENABLED"]}")
 
 from tests.data.data_loader import load_test_data
 from api.movies_api import MoviesAPI
-from api.account_api import AccountAPI
 from api.people_api import PeopleAPI
 from api.lists_api import ListsAPI
 
@@ -109,7 +110,7 @@ def _store_test_name(request):
 
     Example:
         class TestMovies(FieldAssertions):
-            def test_get_movie(self, get_api_instance):
+            def test_get_movie(self, movies_api):
                 # self._test_name is automatically set to "test_get_movie"
                 ...
     """
@@ -117,32 +118,43 @@ def _store_test_name(request):
         request.instance._test_name = request.node.name
 
 @pytest.fixture
-def get_api_instance():
+def movies_api() -> MoviesAPI:
     """
-    Fixture that provides a generic API client instance for each test.
+    Provide a fresh ``MoviesAPI`` client for a test.
 
-    Creates a fresh API client before each test and yields it for use. This
-    fixture can be used when the specific API type is not important for the
-    test, allowing for more flexible test design.
+    Dedicated, type-annotated alternative to ``get_api_instance('movies_api')``
+    — the dependency is declared in the test signature, typo-checked at
+    collection time, and gives editor autocomplete for movie endpoints.
 
-    :yields: Configured BaseAPI instance.
+    :return: A configured ``MoviesAPI`` instance.
     """
-    class_map = {
-        'movies_api': MoviesAPI,
-        'account_api': AccountAPI,
-        'people_api': PeopleAPI,
-        'lists_api': ListsAPI
-    }
+    return MoviesAPI()
 
-    def _create(api_class: str):
-        cls = class_map.get(api_class)
+@pytest.fixture
+def lists_api() -> ListsAPI:
+    """
+    Provide a fresh ``ListsAPI`` client for a test.
 
-        if cls is None:
-            raise ValueError(f"Unsupported API class: {api_class}")
+    Dedicated, type-annotated alternative to ``get_api_instance('lists_api')``
+    — the dependency is declared in the test signature, typo-checked at
+    collection time, and gives editor autocomplete for list endpoints.
 
-        return cls()    # instantiate class only when requested
+    :return: A configured ``ListsAPI`` instance.
+    """
+    return ListsAPI()
 
-    yield _create
+@pytest.fixture
+def people_api() -> PeopleAPI:
+    """
+    Provide a fresh ``PeopleAPI`` client for a test.
+
+    Dedicated, type-annotated alternative to ``get_api_instance('people_api')``
+    — the dependency is declared in the test signature, typo-checked at
+    collection time, and gives editor autocomplete for people endpoints.
+
+    :return: A configured ``PeopleAPI`` instance.
+    """
+    return PeopleAPI()
 
 from tests.schemas.models import (
     GenericResponse, RatingResponse, MovieDetails,
