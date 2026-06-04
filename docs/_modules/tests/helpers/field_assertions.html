@@ -35,8 +35,14 @@
 <a class="viewcode-back" href="../../../helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FieldAssertions</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin class providing field validation assertion methods.&quot;&quot;&quot;</span>
+    <span class="c1"># REMINDER: the assert_*_field methods below are now DEAD — no test calls</span>
+    <span class="c1"># them since response bodies are validated via the strict Pydantic models</span>
+    <span class="c1"># (load_schema(...).model_validate(...)). Only `_test_name` is still used.</span>
+    <span class="c1"># Safe to remove these methods (and likely the FieldAssertions inheritance)</span>
+    <span class="c1"># in a later cleanup.</span>
     <span class="n">_test_name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="c1"># Defined here but is set by the consuming class</span>
 
+    <span class="c1"># DEAD (see class reminder): unused — superseded by Pydantic model validation.</span>
 <div class="viewcode-block" id="FieldAssertions.assert_bool_field">
 <a class="viewcode-back" href="../../../helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions.assert_bool_field">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">assert_bool_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -52,6 +58,7 @@
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">],</span> <span class="nb">bool</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_name</span><span class="si">}</span><span class="s2">: Index </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> Response should be boolean&quot;</span></div>
 
 
+    <span class="c1"># DEAD (see class reminder): unused — superseded by Pydantic model validation.</span>
 <div class="viewcode-block" id="FieldAssertions.assert_str_field">
 <a class="viewcode-back" href="../../../helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions.assert_str_field">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">assert_str_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -84,6 +91,7 @@
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">],</span> <span class="nb">str</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_name</span><span class="si">}</span><span class="s2">: Index </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> Response should be string&quot;</span></div>
 
 
+    <span class="c1"># DEAD (see class reminder): unused — superseded by Pydantic model validation.</span>
 <div class="viewcode-block" id="FieldAssertions.assert_int_field">
 <a class="viewcode-back" href="../../../helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions.assert_int_field">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">assert_int_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">id_val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -107,6 +115,7 @@
             <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_name</span><span class="si">}</span><span class="s2">: Index </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> should be non-negative&quot;</span></div>
 
 
+    <span class="c1"># DEAD (see class reminder): unused — superseded by Pydantic model validation.</span>
 <div class="viewcode-block" id="FieldAssertions.assert_path_field">
 <a class="viewcode-back" href="../../../helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions.assert_path_field">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">assert_path_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -129,6 +138,7 @@
             <span class="p">(</span><span class="s1">&#39;.png&#39;</span><span class="p">,</span> <span class="s1">&#39;.jpg&#39;</span><span class="p">)),</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_name</span><span class="si">}</span><span class="s1">: Index </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s1"> should be PNG&#39;</span></div>
 
 
+    <span class="c1"># DEAD (see class reminder): unused — superseded by Pydantic model validation.</span>
 <div class="viewcode-block" id="FieldAssertions.assert_float_field">
 <a class="viewcode-back" href="../../../helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions.assert_float_field">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">assert_float_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -151,6 +161,7 @@
             <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_name</span><span class="si">}</span><span class="s2">: Index </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> should be positive&quot;</span></div>
 
 
+    <span class="c1"># DEAD (see class reminder): unused — superseded by Pydantic model validation.</span>
 <div class="viewcode-block" id="FieldAssertions.assert_list_field">
 <a class="viewcode-back" href="../../../helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions.assert_list_field">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">assert_list_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -167,7 +178,7 @@
         <span class="k">assert</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">data</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_name</span><span class="si">}</span><span class="s2">: Index </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> should contain </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> field&quot;</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">],</span> <span class="nb">list</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_name</span><span class="si">}</span><span class="s2">: Index </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> Response should be a list&quot;</span>
 
-        <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;genres&#39;</span><span class="p">,</span> <span class="s1">&#39;production_companies&#39;</span><span class="p">,</span> <span class="s1">&#39;also_known_as&#39;</span><span class="p">,</span> <span class="s1">&#39;genre_ids&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;also_known_as&#39;</span><span class="p">,</span> <span class="s1">&#39;genre_ids&#39;</span><span class="p">]:</span>
             <span class="c1"># These fields can be empty lists, so only validate it&#39;s a list (done above)</span>
             <span class="k">return</span>
 

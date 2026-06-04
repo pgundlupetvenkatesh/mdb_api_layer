@@ -117,18 +117,19 @@
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;LOG_TO_FILE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--log-to-file&quot;</span><span class="p">))</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">config.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_logging</span>
     <span class="n">configure_logging</span><span class="p">()</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Log level set to </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;LOG_LEVEL&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, log to file: </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;LOG_TO_FILE&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="c1"># For on demand local Poetry run pytest and user can opt-in per run locally without modifying .env</span>
     <span class="c1"># AI_ANALYSIS_ENABLED=true from .env is used by Docker compose CI</span>
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s1">&#39;--failure-analysis&#39;</span><span class="p">):</span>
         <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AI_ANALYSIS_ENABLED&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;true&quot;</span>
         <span class="n">analyzer</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># Update instance</span>
-        <span class="n">analyzer</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">)</span>    <span class="c1"># re-read in case .env loads later</span></div>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">)</span>    <span class="c1"># re-read in case .env loads later</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AI analysis is enabled. AI_ANALYSIS_ENABLED = </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AI_ANALYSIS_ENABLED&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">tests.data.data_loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_test_data</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">api.movies_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">MoviesAPI</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">api.account_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">AccountAPI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">api.people_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">PeopleAPI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">api.lists_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListsAPI</span>
 
@@ -147,42 +148,59 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        class TestMovies(FieldAssertions):</span>
-<span class="sd">            def test_get_movie(self, get_api_instance):</span>
+<span class="sd">            def test_get_movie(self, movies_api):</span>
 <span class="sd">                # self._test_name is automatically set to &quot;test_get_movie&quot;</span>
 <span class="sd">                ...</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">instance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">request</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_test_name</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">name</span>
 
-<div class="viewcode-block" id="get_api_instance">
-<a class="viewcode-back" href="../../tests.html#tests.conftest.get_api_instance">[docs]</a>
+<div class="viewcode-block" id="movies_api">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.movies_api">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_api_instance</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">movies_api</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">MoviesAPI</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Fixture that provides a generic API client instance for each test.</span>
+<span class="sd">    Provide a fresh ``MoviesAPI`` client for a test.</span>
 
-<span class="sd">    Creates a fresh API client before each test and yields it for use. This</span>
-<span class="sd">    fixture can be used when the specific API type is not important for the</span>
-<span class="sd">    test, allowing for more flexible test design.</span>
+<span class="sd">    Dedicated, type-annotated alternative to ``get_api_instance(&#39;movies_api&#39;)``</span>
+<span class="sd">    — the dependency is declared in the test signature, typo-checked at</span>
+<span class="sd">    collection time, and gives editor autocomplete for movie endpoints.</span>
 
-<span class="sd">    :yields: Configured BaseAPI instance.</span>
+<span class="sd">    :return: A configured ``MoviesAPI`` instance.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">class_map</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;movies_api&#39;</span><span class="p">:</span> <span class="n">MoviesAPI</span><span class="p">,</span>
-        <span class="s1">&#39;account_api&#39;</span><span class="p">:</span> <span class="n">AccountAPI</span><span class="p">,</span>
-        <span class="s1">&#39;people_api&#39;</span><span class="p">:</span> <span class="n">PeopleAPI</span><span class="p">,</span>
-        <span class="s1">&#39;lists_api&#39;</span><span class="p">:</span> <span class="n">ListsAPI</span>
-    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">MoviesAPI</span><span class="p">()</span></div>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_create</span><span class="p">(</span><span class="n">api_class</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="bp">cls</span> <span class="o">=</span> <span class="n">class_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">api_class</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported API class: </span><span class="si">{</span><span class="n">api_class</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="lists_api">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.lists_api">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">lists_api</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ListsAPI</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Provide a fresh ``ListsAPI`` client for a test.</span>
 
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">()</span>    <span class="c1"># instantiate class only when requested</span>
+<span class="sd">    Dedicated, type-annotated alternative to ``get_api_instance(&#39;lists_api&#39;)``</span>
+<span class="sd">    — the dependency is declared in the test signature, typo-checked at</span>
+<span class="sd">    collection time, and gives editor autocomplete for list endpoints.</span>
 
-    <span class="k">yield</span> <span class="n">_create</span></div>
+<span class="sd">    :return: A configured ``ListsAPI`` instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ListsAPI</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="people_api">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.people_api">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">people_api</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">PeopleAPI</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Provide a fresh ``PeopleAPI`` client for a test.</span>
+
+<span class="sd">    Dedicated, type-annotated alternative to ``get_api_instance(&#39;people_api&#39;)``</span>
+<span class="sd">    — the dependency is declared in the test signature, typo-checked at</span>
+<span class="sd">    collection time, and gives editor autocomplete for people endpoints.</span>
+
+<span class="sd">    :return: A configured ``PeopleAPI`` instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">PeopleAPI</span><span class="p">()</span></div>
 
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">tests.schemas.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>

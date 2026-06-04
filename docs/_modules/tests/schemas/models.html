@@ -42,7 +42,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">StrictBool</span><span class="p">,</span> <span class="n">StrictFloat</span><span class="p">,</span> <span class="n">StrictInt</span><span class="p">,</span> <span class="n">StrictStr</span>
 
 <div class="viewcode-block" id="GenericResponse">
 <a class="viewcode-back" href="../../../tests.html#tests.schemas.models.GenericResponse">[docs]</a>
@@ -58,9 +58,11 @@
 <span class="sd">    Example response::</span>
 <span class="sd">        {&quot;status_message&quot;: &quot;Resource not found.&quot;, &quot;success&quot;: false, &quot;status_code&quot;: 34}</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">status_message</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span></div>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;forbid&quot;</span><span class="p">}</span>  <span class="c1"># error body is exactly these three fields</span>
+
+    <span class="n">status_message</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">success</span><span class="p">:</span> <span class="n">StrictBool</span>
+    <span class="n">status_code</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="RatingResponse">
@@ -80,9 +82,9 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;forbid&quot;</span><span class="p">}</span>  <span class="c1"># equivalent to additionalProperties: false</span>
 
-    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">status_message</span><span class="p">:</span> <span class="nb">str</span></div>
+    <span class="n">success</span><span class="p">:</span> <span class="n">StrictBool</span>
+    <span class="n">status_code</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">status_message</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
 
 
 <span class="c1"># Nested model for production companies</span>
@@ -97,9 +99,9 @@
 <span class="sd">    :param name: Name of the production company.</span>
 <span class="sd">    :param origin_country: ISO 3166-1 country code of the company&#39;s origin.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">logo_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">logo_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;.*\.(png|jpg)$&quot;</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">origin_country</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
@@ -113,8 +115,8 @@
 <span class="sd">    :param id: Unique identifier for the genre.</span>
 <span class="sd">    :param name: Display name of the genre (e.g., &quot;Action&quot;, &quot;Comedy&quot;).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span></div>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="MovieDetails">
@@ -139,15 +141,15 @@
 <span class="sd">    :param production_companies: List of companies that produced the movie.</span>
 <span class="sd">    :param genres: List of genres the movie belongs to.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">adult</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">origin_country</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">original_language</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">original_title</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">adult</span><span class="p">:</span> <span class="n">StrictBool</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">origin_country</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>                                  <span class="c1"># may be empty</span>
+    <span class="n">original_language</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># ISO 639-1</span>
+    <span class="n">original_title</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">release_date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">production_companies</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProductionCompany</span><span class="p">]</span>
-    <span class="n">genres</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Genre</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">production_companies</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProductionCompany</span><span class="p">]</span>             <span class="c1"># may be empty</span>
+    <span class="n">genres</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genre</span><span class="p">]</span>                                       <span class="c1"># may be empty</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">}</span>  <span class="c1"># allow fields not defined here (overview, etc.)</span></div>
 
@@ -177,20 +179,20 @@
 <span class="sd">    :param vote_average: Average user rating (0.0–10.0).</span>
 <span class="sd">    :param vote_count: Total number of user votes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">adult</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">backdrop_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">genre_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
-    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">original_language</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">original_title</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">overview</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">popularity</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">poster_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">release_date</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">video</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">vote_average</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">vote_count</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">adult</span><span class="p">:</span> <span class="n">StrictBool</span>
+    <span class="n">backdrop_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;.*\.(png|jpg)$&quot;</span><span class="p">)</span>
+    <span class="n">genre_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>                                       <span class="c1"># may be empty</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">original_language</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># ISO 639-1</span>
+    <span class="n">original_title</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">overview</span><span class="p">:</span> <span class="nb">str</span>                                              <span class="c1"># may be empty</span>
+    <span class="n">popularity</span><span class="p">:</span> <span class="n">StrictFloat</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">poster_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;.*\.(png|jpg)$&quot;</span><span class="p">)</span>
+    <span class="n">release_date</span><span class="p">:</span> <span class="nb">str</span>                                          <span class="c1"># may be empty</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">video</span><span class="p">:</span> <span class="n">StrictBool</span>
+    <span class="n">vote_average</span><span class="p">:</span> <span class="n">StrictFloat</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">vote_count</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">}</span></div>
 
@@ -211,10 +213,10 @@
 <span class="sd">    :param total_pages: Total number of available pages.</span>
 <span class="sd">    :param total_results: Total number of popular movies across all pages.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">page</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PopularMovieItem</span><span class="p">]</span>
-    <span class="n">total_pages</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">total_results</span><span class="p">:</span> <span class="nb">int</span></div>
+    <span class="n">page</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PopularMovieItem</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">total_pages</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">total_results</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PersonDetails">
@@ -244,20 +246,20 @@
 <span class="sd">    :param popularity: TMDB popularity score.</span>
 <span class="sd">    :param profile_path: Path to the profile image, or None.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">adult</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">also_known_as</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">biography</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">birthday</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">adult</span><span class="p">:</span> <span class="n">StrictBool</span>
+    <span class="n">also_known_as</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>                                   <span class="c1"># always present, may be empty</span>
+    <span class="n">biography</span><span class="p">:</span> <span class="n">StrictStr</span>                                       <span class="c1"># may be empty</span>
+    <span class="n">birthday</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>                             <span class="c1"># null for some people</span>
     <span class="n">deathday</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">gender</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">gender</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>                      <span class="c1"># 0=n/a, 1=F, 2=M, 3=non-binary</span>
     <span class="n">homepage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">imdb_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">known_for_department</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">imdb_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>                              <span class="c1"># null for some people</span>
+    <span class="n">known_for_department</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">place_of_birth</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">popularity</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">profile_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">popularity</span><span class="p">:</span> <span class="n">StrictFloat</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">profile_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;.*\.(png|jpg)$&quot;</span><span class="p">)</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">}</span></div>
 
