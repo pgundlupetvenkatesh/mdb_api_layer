@@ -85,11 +85,12 @@ def _apply_defaults(data: dict) -> None:
 
             for test_case in test_cases:
                 if isinstance(test_case, dict):
-                    # Apply global defaults first
-                    for k, v in global_defaults.items():
-                        test_case.setdefault(k, v)
-                    # Apply category-specific defaults (can override global if same key)
+                    # Apply category-specific defaults first so they win over
+                    # global ones for shared keys (setdefault won't overwrite),
+                    # then let global defaults fill any remaining gaps.
                     for k, v in category_defaults.items():
+                        test_case.setdefault(k, v)
+                    for k, v in global_defaults.items():
                         test_case.setdefault(k, v)
 
 
