@@ -14,7 +14,7 @@ from api.movies_api import MoviesAPI
 
 # Pact mock server config
 PACT_MOCK_HOST = "localhost"
-PACT_MOCK_PORT = 1234
+PACT_MOCK_PORT = 0  # 0 = let the OS pick a free port (avoids collisions under parallel runs); tests read srv.url
 PACT_DIR = "tests/pacts"
 
 # Shared consumer/provider identities. Both are constant across every contract
