@@ -4,54 +4,26 @@ Contract tests for popular Movies API using Pact.
 
 import allure
 import pytest
-from pact import Pact, match
+from pact import match
 
-from api.movies_api import MoviesAPI
-
-# Pact mock server config
-PACT_MOCK_HOST = "localhost"
-PACT_MOCK_PORT = 1234
-PACT_DIR = "tests/pacts"
+from tests.schemas.models import PopularMoviesResponse, GenericResponse
 
 @allure.epic("TMDB API")
 @allure.feature("Contracts")
 class TestPopularMovies:
     """
     Contract tests for Popular Movies API endpoints.
+
+    The ``pact``, ``pact_movies_api`` and ``pact_address`` fixtures live in
+    ``tests/contracts/conftest.py``; ``consumer_name`` names this consumer.
     """
 
-    @pytest.fixture
-    def pact(self):
-        """
-        Create a Pact instance for contract testing.
-
-        This fixture:
-        - Sets up a mock server that simulates the TMDB API
-        - Captures request/response expectations
-        - Generates contract files in PACT_DIR
-
-        The consumer name identifies client service, and the provider name
-        identifies the API being consumed (TMDB).
-        """
-        pact = Pact('test_popular_movies', 'api_pvd')
-        yield pact
-        pact.write_file(directory=PACT_DIR)
-
-    @pytest.fixture
-    def pact_movies_api(self):
-        """
-        Create a MoviesAPI instance pointing to the Pact mock server.
-
-        Override base URL to use the Pact mock server instead of the real TMDB API
-        and test against expected responses.
-        """
-        api = MoviesAPI()
-        return api
+    consumer_name = "test_popular_movies"
 
     @allure.story("Get Popular Movies Contract")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.contract
-    def test_get_popular_movies(self, pact, pact_movies_api):
+    def test_get_popular_movies(self, pact, pact_movies_api, pact_address):
         """
         Verify popular movies list response structure.
 
@@ -67,7 +39,7 @@ class TestPopularMovies:
                 "results": match.each_like({
                     "adult": match.like(False),
                     "backdrop_path": match.like("/path.jpg"),
-                    "genre_ids": match.int(28),
+                    "genre_ids": match.each_like(28),
                     "id": match.int(123),
                     "original_language": match.like("en"),
                     "original_title": match.like("Movie Title"),
@@ -99,20 +71,22 @@ class TestPopularMovies:
             )
 
         with allure.step("Start Pact mock server and send request to get popular movies"):
-            with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as svr:
+            host, port = pact_address
+            with pact.serve(addr=host, port=port) as svr:
                  pact_movies_api.base_url = f"{svr.url}"
                  response = pact_movies_api.get_popular_movies({"page": 1})
 
-        with allure.step("Validate response content"):
+        # Pact verified the *request* on exit; the response was mocked from our
+        # matchers. Validate that mocked body against the same
+        # PopularMoviesResponse contract the integration tests enforce.
+        with allure.step("Validate response structure & schema (PopularMoviesResponse)"):
             assert response.status_code == 200
-            assert "results" in response.data
-            assert isinstance(response.data["results"], list)
-            assert "page" in response.data
+            PopularMoviesResponse.model_validate(response.data)
 
     @allure.story("Get Popular Invalid Movies Contract")
     @allure.severity(allure.severity_level.NORMAL)
     @pytest.mark.contract
-    def test_get_popular_movies_invalid_page(self, pact, pact_movies_api):
+    def test_get_popular_movies_invalid_page(self, pact, pact_movies_api, pact_address):
         """
         Verify error response for invalid page parameter.
 
@@ -141,11 +115,12 @@ class TestPopularMovies:
             )
 
         with allure.step("Start Pact mock server and send request to get popular movies for invalid page"):
-            with pact.serve(addr=PACT_MOCK_HOST, port=PACT_MOCK_PORT) as svr:
+            host, port = pact_address
+            with pact.serve(addr=host, port=port) as svr:
                 pact_movies_api.base_url = f"{svr.url}"
                 response = pact_movies_api.get_popular_movies({"page": -1})
 
-        with allure.step("Validate response content"):
+        with allure.step("Validate response structure & schema (GenericResponse)"):
             assert response.status_code == 400
-            assert "status_code" in response.data
-            assert "status_message" in response.data
+            assert response.data["success"] is False
+            GenericResponse.model_validate(response.data)
