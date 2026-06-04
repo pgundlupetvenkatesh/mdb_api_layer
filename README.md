@@ -26,12 +26,12 @@ Contract tests, and comprehensive response assertions.
 ## Features
 
 - RESTful API client with session management (GET, POST, PUT, DELETE)
-- Multiple API clients: Movies, People, Lists, Account, Search
-- JSON schema validation for response structure
+- Multiple API clients: Movies, People, Lists, Account
+- Strict Pydantic model validation for response structure (single source of truth)
 - Consumer-driven contract testing with Pact
 - Data-driven testing with YAML test data and dynamic generators
-- Reusable field assertion helpers (bool, str, int, float, date)
-- Factory-pattern pytest fixtures for flexible API instance creation
+- Reusable HTTP response assertion helpers (status, method, content-type, response time)
+- Dedicated per-client pytest fixtures (`movies_api`, `people_api`, `lists_api`)
 - Structured logging with [Loguru](https://github.com/Delgan/loguru) (configurable level & file output)
 - Configurable environment-based settings via `.env`
 - AI-powered test failure analysis using open-source LLMs via [Groq](https://groq.com/) (opt-in)
@@ -218,7 +218,7 @@ mdb_api_layer/
 │   ├── people_api.py           # People endpoint implementation
 │   ├── lists_api.py            # Lists endpoint implementation (v4 API)
 │   ├── account_api.py          # Account endpoint implementation
-│   └── search_api.py           # Search endpoint implementation
+│   └── search_api.py           # Search endpoint (stub — not yet implemented)
 ├── config/
 │   └── config.py               # Environment configuration & Loguru logging setup
 ├── tests/
@@ -228,6 +228,7 @@ mdb_api_layer/
 │   │   └── failure_analysis.json
 │   ├── conftest.py             # Pytest fixtures, hooks & logging CLI options
 │   ├── contracts/
+│   │   ├── conftest.py             # Shared Pact fixtures (pact, pact_movies_api, pact_address)
 │   │   ├── test_movie_details.py   # Movie details contract tests (Pact CDC)
 │   │   └── test_popular_movies.py  # Popular movies contract tests (Pact CDC)
 │   ├── data/
@@ -236,7 +237,7 @@ mdb_api_layer/
 │   │   └── movie_ids.txt       # Movie IDs for random test data generation
 │   ├── helpers/
 │   │   ├── failure_analyzer.py     # LLM failure analysis client
-│   │   ├── field_assertions.py     # Reusable field validation assertion mixin
+│   │   ├── field_assertions.py     # Legacy field-check mixin (now unused; superseded by Pydantic models)
 │   │   ├── response_assertions.py  # HTTP response assertion helpers
 │   │   └── test_data_generators.py # Dynamic test data generators
 │   ├── movies/
@@ -252,11 +253,7 @@ mdb_api_layer/
 │   ├── pacts/
 │   │   └── *.json              # Generated Pact contract files
 │   └── schemas/
-│       ├── movie_schema.json           # Movie details JSON schema
-│       ├── popular_movies_schema.json  # Popular movies JSON schema
-│       ├── person_details_schema.json  # Person details JSON schema
-│       ├── add_delete_rating_schema.json # Rating response JSON schema
-│       └── generic_schema.json         # Generic/error response JSON schema
+│       └── models.py             # Pydantic response models (source of truth for validation)
 ├── docs/
 │   ├── conf.py                 # Sphinx configuration
 │   ├── index.rst               # Documentation index
@@ -443,12 +440,12 @@ poetry run pytest tests/ --html=report/tmdb_full_report.html --self-contained-ht
 
 ### Generated Pact Files
 
-Contract tests generate JSON pact files in `tests/pacts/`:
+Contract tests generate a single merged JSON pact file in `tests/pacts/` (all
+interactions share one consumer→provider pair):
 
 ```
 tests/pacts/
-├── test_movie_details-api_pvd.json   # Movie details contract
-└── test_popular_movies-api_pvd.json  # Popular movies contract
+└── mdb_api_layer-api_pvd.json   # Consumer (mdb_api_layer) → provider (api_pvd) contract
 ```
 
 Pact files document the expected request/response structure and can be:
