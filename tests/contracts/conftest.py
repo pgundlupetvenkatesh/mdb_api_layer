@@ -17,29 +17,26 @@ PACT_MOCK_HOST = "localhost"
 PACT_MOCK_PORT = 1234
 PACT_DIR = "tests/pacts"
 
-# Shared provider name so every contract file's interactions merge under a
-# single provider contract.
+# Shared consumer/provider identities. Both are constant across every contract
+# module so all interactions merge into a single consumer->provider contract
+# (``mdb_api_layer-api_pvd.json``) rather than one fictional consumer per file.
+PACT_CONSUMER = "mdb_api_layer"
 PACT_PROVIDER = "api_pvd"
 
 
 @pytest.fixture
-def pact(request):
+def pact():
     """
     Provide a fresh Pact instance per test and write the contract on teardown.
 
     A new Pact is created per test because once ``pact.serve()`` runs and its
     context manager exits the handle is finalized, so no further interactions
-    can be added. The consumer name is read from the test class's
-    ``consumer_name`` attribute; the provider is the API under contract.
+    can be added. Consumer and provider are the shared identities above; each
+    test's interactions merge into the same contract file on write.
 
     :yields: Configured Pact instance ready for interaction definition.
     """
-    consumer = getattr(request.cls, "consumer_name", None)
-    if not consumer:
-        raise AttributeError(
-            f"{request.cls.__name__} must set a 'consumer_name' class attribute"
-        )
-    pact = Pact(consumer, PACT_PROVIDER)
+    pact = Pact(PACT_CONSUMER, PACT_PROVIDER)
     yield pact
 
     # Write/merge the contract file after each test

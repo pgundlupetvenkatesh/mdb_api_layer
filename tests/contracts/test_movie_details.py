@@ -15,11 +15,9 @@ class TestMovieDetails:
     Contract tests for Movies Details API endpoint. Define what consumer (test client) expects from the provider,
     in our case Devs/PO.
 
-    The ``pact``, ``pact_movies_api`` and ``pact_address`` fixtures live in
-    ``tests/contracts/conftest.py``; ``consumer_name`` names this consumer.
+    The ``pact``, ``pact_movies_api`` and ``pact_address`` fixtures (and the
+    shared consumer/provider identities) live in ``tests/contracts/conftest.py``.
     """
-
-    consumer_name = "test_movie_details"
 
     @allure.story("Get Movie Details Contract")
     @allure.severity(allure.severity_level.CRITICAL)

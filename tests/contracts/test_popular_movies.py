@@ -14,11 +14,9 @@ class TestPopularMovies:
     """
     Contract tests for Popular Movies API endpoints.
 
-    The ``pact``, ``pact_movies_api`` and ``pact_address`` fixtures live in
-    ``tests/contracts/conftest.py``; ``consumer_name`` names this consumer.
+    The ``pact``, ``pact_movies_api`` and ``pact_address`` fixtures (and the
+    shared consumer/provider identities) live in ``tests/contracts/conftest.py``.
     """
-
-    consumer_name = "test_popular_movies"
 
     @allure.story("Get Popular Movies Contract")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -97,8 +95,10 @@ class TestPopularMovies:
         with allure.step("Define expected response structure with matchers"):
             exp_error_res = {
                 "success": match.like(False),
-                "status_code": match.int(34),
-                "status_message": match.like("The resource you requested could not be found.")
+                "status_code": match.int(22),  # TMDB code 22 = invalid page (pairs with HTTP 400)
+                "status_message": match.like(
+                    "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
+                )
             }
 
         with allure.step("Define expected Pact interaction of getting popular movies for invalid page"):
