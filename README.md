@@ -29,7 +29,8 @@ Contract tests, and comprehensive response assertions.
 - Multiple API clients: Movies, People, Lists, Account
 - Strict Pydantic model validation for response structure (single source of truth)
 - Consumer-driven contract testing with Pact
-- Data-driven testing with YAML test data and dynamic generators
+- Data-driven testing with per-section YAML test data and cached dynamic generators
+- Automatic retries for flaky live-API latency via pytest-rerunfailures
 - Reusable HTTP response assertion helpers (status, method, content-type, response time)
 - Dedicated per-client pytest fixtures (`movies_api`, `people_api`, `lists_api`)
 - Structured logging with [Loguru](https://github.com/Delgan/loguru) (configurable level & file output)
@@ -232,9 +233,9 @@ mdb_api_layer/
 │   │   ├── test_movie_details.py   # Movie details contract tests (Pact CDC)
 │   │   └── test_popular_movies.py  # Popular movies contract tests (Pact CDC)
 │   ├── data/
-│   │   ├── data_loader.py      # YAML test data loader with dynamic generators
+│   │   ├── data_loader.py      # Per-section YAML test data loader + dynamic generators
 │   │   ├── test_data.yaml      # Parametrized test data for data-driven tests
-│   │   └── movie_ids.txt       # Movie IDs for random test data generation
+│   │   └── movie_ids.txt       # Movie IDs for random test data generation (cached on first read)
 │   ├── helpers/
 │   │   ├── failure_analyzer.py     # LLM failure analysis client
 │   │   ├── field_assertions.py     # Legacy field-check mixin (now unused; superseded by Pydantic models)
@@ -590,6 +591,7 @@ attached to the Allure report deployed to GitHub Pages.
 - allure-pytest — Allure reporting
 - sphinx — Documentation generation
 - pytest-order — Test execution ordering
+- pytest-rerunfailures — Retries flaky tests (absorbs live-API latency spikes)
 - pact-python — Consumer-driven contract testing
 
 ```bash
