@@ -26,7 +26,7 @@ from config.config import Config
 from tests.data.data_loader import load_test_data
 from tests.helpers import *
 
-TEST_DATA = load_test_data("test_data.yaml")
+TEST_DATA = load_test_data("test_data.yaml", "get_movie_details")
 """Module-level test data loaded once at import time for parametrization."""
 
 @allure.epic("TMDB API")

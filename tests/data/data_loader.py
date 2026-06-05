@@ -14,7 +14,7 @@ GENERATORS = {
     '$current_timestamp': lambda: int(time.time())
 }
 
-def load_test_data(file_name: str) -> dict:
+def load_test_data(file_name: str, section: str | None = None) -> dict:
     """
         Load test data from a YAML file and apply default values.
 
@@ -22,14 +22,31 @@ def load_test_data(file_name: str) -> dict:
         any defined defaults to test case entries. Also processes dynamic
         placeholders like '$random_rating' by calling the mapped generator functions.
 
+        When ``section`` is given, only that top-level section is kept (plus the
+        global ``defaults``) before defaults and generators are applied, so the
+        generators of unrelated sections (e.g. the disk-reading
+        ``$random_movie_id``) are never executed. The return shape is unchanged —
+        ``data[section]`` still works — so callers only add the section name.
+
         :param file_name: Name of the YAML file containing test data.
-        :return: Parsed data from the YAML file with defaults applied.
+        :param section: Optional top-level section to load exclusively (e.g.
+            ``'get_movie_details'``). If ``None``, the whole file is loaded.
+        :return: Parsed data with defaults applied (scoped to ``section`` if given).
         :raises FileNotFoundError: If the specified file does not exist.
+        :raises KeyError: If ``section`` is given but not present in the file.
         :raises yaml.YAMLError: If the file contains invalid YAML.
         """
     data_path = Path(__file__).parent / file_name
     with open(data_path, 'r') as file:
         data = yaml.safe_load(file)
+
+        if section is not None:
+            if section not in data:
+                available = sorted(k for k in data if k != 'defaults')
+                raise KeyError(f"Section '{section}' not found in {file_name}. Available: {available}")
+            # Keep only global defaults + the requested section so defaults are
+            # still applied but generators elsewhere are never called.
+            data = {'defaults': data.get('defaults', {}) or {}, section: data[section]}
 
         _apply_defaults(data)
         _process_generators(data)
