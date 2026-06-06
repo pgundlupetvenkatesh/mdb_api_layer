@@ -1,5 +1,5 @@
 defaults:
-  exp_max_elp_secs: 10 # Applied to ALL valid AND invalid test cases
+  exp_max_elp_secs: 5 # Applied to ALL valid AND invalid test cases
   exp_content_type: 'application/json'
   exp_get_req_method: 'GET'
   exp_post_req_method: 'POST'
@@ -102,6 +102,7 @@ get_person_details:
 update_list:
   defaults:
     valid:
+      exp_max_elp_secs: 15  # Overrides the default 5 seconds
       status_code: 201
       reason: 'Created'
     invalid:

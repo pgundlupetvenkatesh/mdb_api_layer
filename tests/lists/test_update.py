@@ -6,7 +6,7 @@ from config.config import Config
 from tests.data.data_loader import load_test_data
 from tests.helpers import *
 
-TEST_DATA = load_test_data("test_data.yaml")
+TEST_DATA = load_test_data("test_data.yaml", "update_list")
 """Module-level test data loaded once at import time for parametrization."""
 
 @allure.epic("TMDB API")
@@ -46,6 +46,10 @@ class TestUpdate(FieldAssertions):
 
     @allure.story("Update List Description")
     @allure.severity(allure.severity_level.CRITICAL)
+    # TMDB's v4 list-write endpoint is intermittently very slow (occasional 19s+
+    # responses and 30s ReadTimeouts), so retry transient latency/timeout flakes
+    # before failing. Only the valid write is slow; invalid cases reject fast.
+    @pytest.mark.flaky(reruns=2, reruns_delay=3)
     @pytest.mark.parametrize('update_list', TEST_DATA['update_list']['valid'])
     def test_update_list_description(self, lists_api, load_schema, update_list):
         """

@@ -2,6 +2,8 @@
 Test data generators for dynamic test values.
 """
 import random
+from functools import lru_cache
+from pathlib import Path
 
 def random_rating(min_val: float = 0.5, max_val: float = 10.0) -> float:
     """
@@ -25,30 +27,41 @@ def random_invalid_rating() -> float:
         return round(random.uniform(-10.0, 0.4), 1)  # Too low
     return round(random.uniform(10.1, 20.0), 1)  # Too high
 
+@lru_cache(maxsize=1)
+def _load_movie_ids() -> tuple:
+    """
+    Read and cache movie IDs from tests/data/movie_ids.txt (one integer per line).
+
+    The file (~50k lines) is read and parsed once per process; subsequent calls
+    return the cached tuple, so repeated ``pick_random_movie_id`` calls don't
+    re-read the file.
+
+    :return: Tuple of movie IDs.
+    :raises FileNotFoundError: If movie_ids.txt doesn't exist.
+    :raises ValueError: If the file is empty or contains no valid numbers.
+    """
+    file_path = Path(__file__).parent.parent / "data" / "movie_ids.txt"
+
+    with open(file_path, 'r') as file:
+        numbers = tuple(int(line.strip()) for line in file if line.strip())
+
+    if not numbers:
+        raise ValueError("movie_ids.txt is empty or contains no valid numbers.")
+
+    return numbers
+
 def pick_random_movie_id() -> int:
     """
-    Reads numbers from a tests/data/movie_ids.txt file and returns a random one.
-    Assumes one number per line.
+    Return a random movie ID from the cached movie_ids.txt list.
+
+    The file is read once via :func:`_load_movie_ids`; each call only performs an
+    in-memory random choice.
 
     :return: Random movie ID
     :raises FileNotFoundError: If movie_ids.txt doesn't exist
     :raises ValueError: If file is empty or contains invalid data
     """
-    from pathlib import Path
-
-    file_path = Path(__file__).parent.parent / "data" / "movie_ids.txt"
-
-    # Open the file and read all lines into a list
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
-
-    # Strip whitespace (like newline characters) and convert to integers
-    numbers = [int(line.strip()) for line in lines if line.strip()]
-
-    if not numbers:
-        raise ValueError("movie_ids.txt is empty or contains no valid numbers.")
-
-    return random.choice(numbers)
+    return random.choice(_load_movie_ids())
 
 def pick_random_rated_movie_id(acc_id, session_id) -> int:
     """
