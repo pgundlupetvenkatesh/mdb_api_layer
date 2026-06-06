@@ -48,7 +48,7 @@
 
 <div class="viewcode-block" id="load_test_data">
 <a class="viewcode-back" href="../../../tests.html#tests.data.data_loader.load_test_data">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">load_test_data</span><span class="p">(</span><span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_test_data</span><span class="p">(</span><span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">section</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load test data from a YAML file and apply default values.</span>
 
@@ -56,14 +56,31 @@
 <span class="sd">        any defined defaults to test case entries. Also processes dynamic</span>
 <span class="sd">        placeholders like &#39;$random_rating&#39; by calling the mapped generator functions.</span>
 
+<span class="sd">        When ``section`` is given, only that top-level section is kept (plus the</span>
+<span class="sd">        global ``defaults``) before defaults and generators are applied, so the</span>
+<span class="sd">        generators of unrelated sections (e.g. the disk-reading</span>
+<span class="sd">        ``$random_movie_id``) are never executed. The return shape is unchanged —</span>
+<span class="sd">        ``data[section]`` still works — so callers only add the section name.</span>
+
 <span class="sd">        :param file_name: Name of the YAML file containing test data.</span>
-<span class="sd">        :return: Parsed data from the YAML file with defaults applied.</span>
+<span class="sd">        :param section: Optional top-level section to load exclusively (e.g.</span>
+<span class="sd">            ``&#39;get_movie_details&#39;``). If ``None``, the whole file is loaded.</span>
+<span class="sd">        :return: Parsed data with defaults applied (scoped to ``section`` if given).</span>
 <span class="sd">        :raises FileNotFoundError: If the specified file does not exist.</span>
+<span class="sd">        :raises KeyError: If ``section`` is given but not present in the file.</span>
 <span class="sd">        :raises yaml.YAMLError: If the file contains invalid YAML.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
     <span class="n">data_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">file_name</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">section</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">section</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                <span class="n">available</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">data</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s1">&#39;defaults&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Section &#39;</span><span class="si">{</span><span class="n">section</span><span class="si">}</span><span class="s2">&#39; not found in </span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">. Available: </span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># Keep only global defaults + the requested section so defaults are</span>
+            <span class="c1"># still applied but generators elsewhere are never called.</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;defaults&#39;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;defaults&#39;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{},</span> <span class="n">section</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">section</span><span class="p">]}</span>
 
         <span class="n">_apply_defaults</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="n">_process_generators</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -120,11 +137,12 @@
 
             <span class="k">for</span> <span class="n">test_case</span> <span class="ow">in</span> <span class="n">test_cases</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">test_case</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                    <span class="c1"># Apply global defaults first</span>
-                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">global_defaults</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                        <span class="n">test_case</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
-                    <span class="c1"># Apply category-specific defaults (can override global if same key)</span>
+                    <span class="c1"># Apply category-specific defaults first so they win over</span>
+                    <span class="c1"># global ones for shared keys (setdefault won&#39;t overwrite),</span>
+                    <span class="c1"># then let global defaults fill any remaining gaps.</span>
                     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">category_defaults</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="n">test_case</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">global_defaults</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                         <span class="n">test_case</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
 
 

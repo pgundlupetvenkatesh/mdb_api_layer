@@ -34,6 +34,8 @@
 <span class="sd">Test data generators for dynamic test values.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <div class="viewcode-block" id="random_rating">
 <a class="viewcode-back" href="../../../helpers_test_data_generators.html#tests.helpers.test_data_generators.random_rating">[docs]</a>
@@ -63,32 +65,43 @@
     <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">10.1</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Too high</span></div>
 
 
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_movie_ids</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read and cache movie IDs from tests/data/movie_ids.txt (one integer per line).</span>
+
+<span class="sd">    The file (~50k lines) is read and parsed once per process; subsequent calls</span>
+<span class="sd">    return the cached tuple, so repeated ``pick_random_movie_id`` calls don&#39;t</span>
+<span class="sd">    re-read the file.</span>
+
+<span class="sd">    :return: Tuple of movie IDs.</span>
+<span class="sd">    :raises FileNotFoundError: If movie_ids.txt doesn&#39;t exist.</span>
+<span class="sd">    :raises ValueError: If the file is empty or contains no valid numbers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span> <span class="o">/</span> <span class="s2">&quot;movie_ids.txt&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="n">numbers</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">numbers</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;movie_ids.txt is empty or contains no valid numbers.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">numbers</span>
+
 <div class="viewcode-block" id="pick_random_movie_id">
 <a class="viewcode-back" href="../../../helpers_test_data_generators.html#tests.helpers.test_data_generators.pick_random_movie_id">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">pick_random_movie_id</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Reads numbers from a tests/data/movie_ids.txt file and returns a random one.</span>
-<span class="sd">    Assumes one number per line.</span>
+<span class="sd">    Return a random movie ID from the cached movie_ids.txt list.</span>
+
+<span class="sd">    The file is read once via :func:`_load_movie_ids`; each call only performs an</span>
+<span class="sd">    in-memory random choice.</span>
 
 <span class="sd">    :return: Random movie ID</span>
 <span class="sd">    :raises FileNotFoundError: If movie_ids.txt doesn&#39;t exist</span>
 <span class="sd">    :raises ValueError: If file is empty or contains invalid data</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-
-    <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;data&quot;</span> <span class="o">/</span> <span class="s2">&quot;movie_ids.txt&quot;</span>
-
-    <span class="c1"># Open the file and read all lines into a list</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
-        <span class="n">lines</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
-
-    <span class="c1"># Strip whitespace (like newline characters) and convert to integers</span>
-    <span class="n">numbers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">numbers</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;movie_ids.txt is empty or contains no valid numbers.&quot;</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">numbers</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">_load_movie_ids</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="pick_random_rated_movie_id">
