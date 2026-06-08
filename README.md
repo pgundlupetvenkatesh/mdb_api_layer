@@ -23,6 +23,30 @@ Contract tests, and comprehensive response assertions.
 
 ###### View live code documentation & latest test report [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/)
 
+## Quick Start
+
+New here? Get from clone to a passing test in four steps:
+
+```bash
+# 1. Clone & install
+git clone https://github.com/pgundlupetvenkatesh/mdb_api_layer.git
+cd mdb_api_layer
+poetry install
+
+# 2. Add your TMDB credentials to a .env file (see Configuration below)
+echo "TMDB_API_KEY=your_api_key_here"        >> .env
+echo "TMDB_AUTH_TOKEN=your_read_access_token" >> .env
+
+# 3. Run a single test to verify the setup
+poetry run pytest tests/movie_lists/test_popular.py -v -s
+
+# 4. Run the full suite
+poetry run pytest tests/ -v -m "not contract"
+```
+
+Each step is expanded in [Prerequisites](#prerequisites), [Installation](#installation),
+[Configuration](#configuration), and [Running Tests](#running-tests) below.
+
 ## Features
 
 - RESTful API client with session management (GET, POST, PUT, DELETE)
@@ -73,15 +97,15 @@ cd mdb_api_layer
 # Install dependencies
 poetry install
 
-# Add new Python package dependencies
+# (optional) add a new Python package dependency later
 poetry add <package_name>
-
-## Testing
-poetry run pytest tests/movie_lists/test_popular.py -v -s
 ```
+
 ### Sanity Checks
 
-```
+Verify the virtual environment was created and dependencies resolved:
+
+```bash
 poetry env info
 poetry show
 ```
@@ -124,28 +148,6 @@ export TMDB_API_KEY="your_api_key_here"
 export TMDB_AUTH_TOKEN="your_read_access_token_here"
 ```
 
-### 🚀 GitHub Pages(GHP) Setup
-The project uses multi-deployment strategy to host both Sphinx doc and Pytest HTML reports on the same GitHub Pages site.
-I am using [peaceiris/actions-gh-pages](https://github.com/peaceiris/actions-gh-pages) action across two separate workflows:
-* API Tests: Generate and deploys test reports to /report.
-* Docs: Build and deploys docs to /docs.
-
-#### Configs
-1. **Settings > Pages:** - To support both docs and reports, the repository is configured to deploy from a specific branch 
-rather the default "GitHub Actions" method.<br>
-**Source:** Deploy from a branch<br>
-**Branch:** gh-pages<br>
-**Folder:** / (root)<br>
-2. **Environment & Protection Rules** - Modified the default `github-pages` environment to allow the automated 
-workflows to push updates.<br>
-**Settings > Environments > github-pages:**<br>
-**Deployment branches:** Change from `Selected branches` to `All branches` or `No Restriction`. This allows the 
-peaceiris/actions-gh-pages action to push the gh-pages branch without being blocked by 
-"Main-only" protection rules GitHub Docs: Deployment Branches.<br>
-3. **Settings > Actions > General:**<br>
-**Workflow permissions:** Set to Read and write permissions. This grants the GITHUB_TOKEN the authority to create and 
-update the gh-pages branch GitHub Docs: Token Permissions.<br>
-
 ### Environment Variables Reference
 
 | Variable                  | Description                               | Required   | Default                    |
@@ -161,53 +163,58 @@ update the gh-pages branch GitHub Docs: Token Permissions.<br>
 | `TMDB_REQ_TOKEN`          | Request token for authentication          | No         | -                          |
 | `TMDB_MOVIE_ID`           | Default movie ID for tests                | No         | `346698`                   |
 
-## Logging
+> **Note:** Keep your API credentials secure. Never commit `.env` files or expose tokens in public repositories.
 
-The framework uses [Loguru](https://github.com/Delgan/loguru) for structured logging with colored output and option to
-save logs to files. You can control the log level to filter messages based on severity.
+## Running Tests
 
-### Log Levels
-
-| Level    | Description                          |
-|----------|--------------------------------------|
-| DEBUG    | Detailed diagnostic information      |
-| INFO     | General operational messages         |
-| WARNING  | Potential issues                     |
-| ERROR    | Error events                         |
-| CRITICAL | Serious failures                     |
-
-### Log level hierarchy
-| Level Set | Logs Shown                            |
-|-----------|---------------------------------------|
-| DEBUG     | DEBUG, INFO, WARNING, ERROR, CRITICAL |
-| INFO      | INFO, WARNING, ERROR, CRITICAL        |
-| WARNING   | WARNING, ERROR, CRITICAL              |
-| ERROR     | ERROR, CRITICAL                       |
-| CRITICAL  | CRITICAL only                         |
-
-### Controlling Log Level
-
-* Default (INFO) - `poetry run pytest tests/*`
-* Debug logging - `poetry run pytest tests/* --loguru-log-level=DEBUG`
-* Only errors - `poetry run pytest tests/* --loguru-log-level=ERROR`
-
-### Log Output
-By default, logs are printed to the console with color coding. You can also add `--log-to-file` option to write logs
-to a `logs/test_run.log` for persistent storage and later analysis.
-
-`poetry run pytest tests/* --log-to-file`
-
-### Running Tests After Setup
+First, confirm your setup works by running a single test:
 
 ```bash
 # Verify your setup
 poetry install
 
-# Run tests
+# Run one test
 poetry run pytest tests/movie_lists/test_popular.py -v -s
 ```
 
-> **Note:** Keep your API credentials secure. Never commit `.env` files or expose tokens in public repositories.
+Once that passes, use the commands below for everyday runs:
+
+```commandline
+# Run all tests (integration + contract)
+poetry run pytest tests/ -v
+
+# Run all tests except contract tests
+poetry run pytest tests/ -v -m "not contract"
+
+# Run tests by module
+poetry run pytest tests/movies/ -v -s
+poetry run pytest tests/people/ -v -s
+poetry run pytest tests/lists/ -v -s
+poetry run pytest tests/movie_lists/ -v -s
+
+# Run a specific test function
+poetry run pytest tests/movie_lists/test_popular.py::TestClassName::test_func_name -v -s
+
+# Run with debug logging
+poetry run pytest tests/ -v -s --loguru-log-level=DEBUG
+
+# Run with log file output
+poetry run pytest tests/ -v -s --log-to-file
+
+# Run with HTML report
+poetry run pytest tests/ --html=report/tmdb_report.html --self-contained-html -v -s
+
+# Clean run with Allure reporting
+rm -rf allure-results && poetry run pytest tests/ --alluredir=allure-results -v && allure serve allure-results
+# View report (requires Allure CLI installed locally: brew install allure)
+allure serve allure-results
+
+# Generate static HTML from results. allure-report/ contains a full static site
+allure generate allure-results -o allure-report --clean
+
+# Keep history between local runs
+cp -r allure-report/history allure-results/ 2>/dev/null || true
+```
 
 ## Project Structure
 
@@ -285,44 +292,41 @@ mdb_api_layer/
 └── README.md
 ```
 
-## Running Tests
+## Logging
 
-```commandline
-# Run all tests (integration + contract)
-poetry run pytest tests/ -v
+The framework uses [Loguru](https://github.com/Delgan/loguru) for structured logging with colored output and option to
+save logs to files. You can control the log level to filter messages based on severity.
 
-# Run all tests except contract tests
-poetry run pytest tests/ -v -m "not contract"
+### Log Levels
 
-# Run tests by module
-poetry run pytest tests/movies/ -v -s
-poetry run pytest tests/people/ -v -s
-poetry run pytest tests/lists/ -v -s
-poetry run pytest tests/movie_lists/ -v -s
+| Level    | Description                          |
+|----------|--------------------------------------|
+| DEBUG    | Detailed diagnostic information      |
+| INFO     | General operational messages         |
+| WARNING  | Potential issues                     |
+| ERROR    | Error events                         |
+| CRITICAL | Serious failures                     |
 
-# Run a specific test function
-poetry run pytest tests/movie_lists/test_popular.py::TestClassName::test_func_name -v -s
+### Log level hierarchy
+| Level Set | Logs Shown                            |
+|-----------|---------------------------------------|
+| DEBUG     | DEBUG, INFO, WARNING, ERROR, CRITICAL |
+| INFO      | INFO, WARNING, ERROR, CRITICAL        |
+| WARNING   | WARNING, ERROR, CRITICAL              |
+| ERROR     | ERROR, CRITICAL                       |
+| CRITICAL  | CRITICAL only                         |
 
-# Run with debug logging
-poetry run pytest tests/ -v -s --loguru-log-level=DEBUG
+### Controlling Log Level
 
-# Run with log file output
-poetry run pytest tests/ -v -s --log-to-file
+* Default (INFO) - `poetry run pytest tests/*`
+* Debug logging - `poetry run pytest tests/* --loguru-log-level=DEBUG`
+* Only errors - `poetry run pytest tests/* --loguru-log-level=ERROR`
 
-# Run with HTML report
-poetry run pytest tests/ --html=report/tmdb_report.html --self-contained-html -v -s
+### Log Output
+By default, logs are printed to the console with color coding. You can also add `--log-to-file` option to write logs
+to a `logs/test_run.log` for persistent storage and later analysis.
 
-# Clean run with Allure reporting
-rm -rf allure-results && poetry run pytest tests/ --alluredir=allure-results -v && allure serve allure-results
-# View report (requires Allure CLI installed locally: brew install allure)
-allure serve allure-results
-
-# Generate static HTML from results. allure-report/ contains a full static site
-allure generate allure-results -o allure-report --clean
-
-# Keep history between local runs
-cp -r allure-report/history allure-results/ 2>/dev/null || true
-```
+`poetry run pytest tests/* --log-to-file`
 
 ## Running Tests in Docker
 
@@ -573,46 +577,6 @@ attached to the Allure report deployed to GitHub Pages.
 > **Note:** Groq free tier has rate limits. For large test suites with many failures, analysis may be throttled.
 > The analyzer gracefully handles errors — if an LLM call fails, the test result is unaffected.
 
-## Dependencies
-
-### Runtime
-- requests — HTTP client
-- python-dotenv — `.env` file loading
-- pydantic — Model validation
-- pyyaml — YAML test data parsing
-- loguru — Structured logging
-- groq — LLM client for AI failure analysis
-- mcp — Model Context Protocol server SDK (MCP integration)
-
-### Development
-- pytest — Test framework
-- pytest-html — HTML report generation
-- pytest-html-report-merger — Merges multiple HTML reports into one
-- allure-pytest — Allure reporting
-- sphinx — Documentation generation
-- pytest-order — Test execution ordering
-- pytest-rerunfailures — Retries flaky tests (absorbs live-API latency spikes)
-- pact-python — Consumer-driven contract testing
-
-```bash
-# Update dependencies
-poetry update
-```
-
-## Documentation
-
-```commandline
-cd docs
-make html
-```
-To clean previous builds and rebuild run - `make clean && make html`
-
-### View documentation
-Open `docs/_build/html/index.html` in your web browser.
-![doc_sample](doc_sample.png)
-
-Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/docs/index.html) to See the current live documentation
-
 ## Reports
 
 ### Pytest HTML Report
@@ -643,6 +607,46 @@ When running via `docker compose`, two separate reports are generated and then m
 | `merged_tmdb_full_report.html`  | Combined (CI only) |
 
 Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/report/merged_tmdb_full_report.html) to see the latest merged report
+
+## Documentation
+
+```commandline
+cd docs
+make html
+```
+To clean previous builds and rebuild run - `make clean && make html`
+
+### View documentation
+Open `docs/_build/html/index.html` in your web browser.
+![doc_sample](doc_sample.png)
+
+Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/docs/index.html) to See the current live documentation
+
+## Dependencies
+
+### Runtime
+- requests — HTTP client
+- python-dotenv — `.env` file loading
+- pydantic — Model validation
+- pyyaml — YAML test data parsing
+- loguru — Structured logging
+- groq — LLM client for AI failure analysis
+- mcp — Model Context Protocol server SDK (MCP integration)
+
+### Development
+- pytest — Test framework
+- pytest-html — HTML report generation
+- pytest-html-report-merger — Merges multiple HTML reports into one
+- allure-pytest — Allure reporting
+- sphinx — Documentation generation
+- pytest-order — Test execution ordering
+- pytest-rerunfailures — Retries flaky tests (absorbs live-API latency spikes)
+- pact-python — Consumer-driven contract testing
+
+```bash
+# Update dependencies
+poetry update
+```
 
 ## Running Tests in Kubernetes(Optional)
 
@@ -847,6 +851,31 @@ Add to `~/.cursor/mcp.json` (Cursor) or Claude Desktop's settings:
 
 Once connected, your AI client can call `analyze_failure` directly by passing a failure context dict — 
 no changes to any test file needed.
+
+## GitHub Pages Deployment (Maintainers)
+
+> This section is for maintainers deploying reports/docs to GitHub Pages — it is **not** required to run the tests locally.
+
+The project uses multi-deployment strategy to host both Sphinx doc and Pytest HTML reports on the same GitHub Pages site.
+I am using [peaceiris/actions-gh-pages](https://github.com/peaceiris/actions-gh-pages) action across two separate workflows:
+* API Tests: Generate and deploys test reports to /report.
+* Docs: Build and deploys docs to /docs.
+
+### Configs
+1. **Settings > Pages:** - To support both docs and reports, the repository is configured to deploy from a specific branch 
+rather the default "GitHub Actions" method.<br>
+**Source:** Deploy from a branch<br>
+**Branch:** gh-pages<br>
+**Folder:** / (root)<br>
+2. **Environment & Protection Rules** - Modified the default `github-pages` environment to allow the automated 
+workflows to push updates.<br>
+**Settings > Environments > github-pages:**<br>
+**Deployment branches:** Change from `Selected branches` to `All branches` or `No Restriction`. This allows the 
+peaceiris/actions-gh-pages action to push the gh-pages branch without being blocked by 
+"Main-only" protection rules GitHub Docs: Deployment Branches.<br>
+3. **Settings > Actions > General:**<br>
+**Workflow permissions:** Set to Read and write permissions. This grants the GITHUB_TOKEN the authority to create and 
+update the gh-pages branch GitHub Docs: Token Permissions.<br>
 
 ## Future Improvements
 
