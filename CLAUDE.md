@@ -1,4 +1,4 @@
-# CLAUDE.md
+# mdb_api_layer Project Guidelines
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -65,3 +65,16 @@ Layered, with a strict separation between the API client and the tests:
 - The v4 list-write endpoint (`update_list`) is intermittently very slow (occasional 19s+ responses, sometimes a 30s `ReadTimeout`). `test_update_list_description` carries `@pytest.mark.flaky(reruns=2, reruns_delay=3)` (pytest-rerunfailures) to absorb these transient latency/timeout flakes, and `update_list.defaults.valid.exp_max_elp_secs` is raised to 15. These are TMDB-side, not code regressions.
 - When adding a new Pydantic schema, register it in **both** `tests/schemas/models.py` and the `load_schema` map in `conftest.py`.
 - New parametrized test data must go through `load_test_data` at module scope, not inside a fixture. Pass the module's top-level YAML section name as the second arg (`load_test_data("test_data.yaml", "<section>")`); a wrong/missing section raises `KeyError` listing the valid ones.
+
+## Working style
+- State assumptions; if multiple interpretations exist, ask rather than pick silently.
+- Minimum code that solves the problem - no speculative abstractions or config.
+- Surgical edits: match existing style, touch only what the request requires, clean up only the orphans your change creates.
+- Define a verifiable success check before coding; for test work that usually means a failing test that your change makes pass.
+- If you notice unrelated dead code, mention it - don't delete it unless asked.
+- For multistep tasks, state a brief plan:
+    ```
+    1. [Step] → verify: [check]
+    2. [Step] → verify: [check]
+    3. [Step] → verify: [check]
+    ```
