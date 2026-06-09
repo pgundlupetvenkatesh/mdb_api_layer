@@ -874,26 +874,24 @@ Claude Code behaves when working in the repo.
 
 ### Skills
 
-Each skill is a `SKILL.md` with a `description` that tells Claude when to use
-it. Invoke one explicitly with `/<name>`, or let Claude pick it up from the
-trigger described below.
+Invoke explicitly with `/<name>`, or let Claude trigger one automatically.
+The table is a summary; each `SKILL.md` is authoritative.
 
-| Skill              | Triggers when…                                                                 | What it does                                                                                                                              |
-|--------------------|--------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `commit-rules`     | about to `git commit`, or you ask to "commit" / "save changes"                 | Enforces atomic, single-purpose commits; imperative subject + why-focused body; refuses to stage secrets/artifacts; adds required trailer |
-| `update-claude-md` | after adding/renaming a client, endpoint, fixture, schema, helper, flag, or env var, or you ask to "update CLAUDE.md" | Reconciles the matching CLAUDE.md section against the actual code (verifies before writing); skips trivial diffs                          |
-| `review-tests`     | after editing an API client, test, fixture, schema, or test-data YAML, before opening a PR | Project-convention review pass — schema dual-registration, module-scope test data, no HTTP in tests, Pydantic+`assert_http_response` split, flaky-endpoint guard, contract-test sync. Complements the generic `/code-review` |
+| Skill              | What it does                                                                 |
+|--------------------|-----------------------------------------------------------------------------|
+| `commit-rules`     | Enforces atomic commits, message style, secret/artifact exclusion, required trailer |
+| `update-claude-md` | Reconciles CLAUDE.md against the code after a structural change              |
+| `review-tests`     | Reviews a diff against this repo's test conventions (complements `/code-review`) |
 
 ### Hooks
 
-Hooks are configured in `.claude/settings.json` and run automatically — no
-prompt needed. Both are **fail-open** (any error path exits 0) so they never
-wedge legitimate work, and both feed their message back to Claude on block.
+Configured in `.claude/settings.json`, run automatically, and fail-open
+(never wedge legitimate work).
 
-| Hook                   | Event              | Behavior                                                                                                                                                              |
-|------------------------|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `guard-commit.sh`      | `PreToolUse(Bash)` | On any command running `git commit`, blocks (exit 2) if a `.env` file is staged or the staged diff contains a high-confidence credential signature (private key, AWS/GitHub/Slack token, JWT). Narrowly scoped so README placeholders like `your_api_key_here` don't trip it. |
-| `claude-md-reminder.sh`| `Stop`             | When `api/` or `config/` changed this session but `CLAUDE.md` was left untouched, blocks the stop (exit 2) and nudges Claude to run `update-claude-md`. Loop-safe via `stop_hook_active`. |
+| Hook                   | Event              | Behavior                                                                 |
+|------------------------|--------------------|--------------------------------------------------------------------------|
+| `guard-commit.sh`      | `PreToolUse(Bash)` | Blocks a `git commit` that stages a `.env` or a credential-like token    |
+| `claude-md-reminder.sh`| `Stop`             | Nudges to run `update-claude-md` when `api/`/`config/` changed but CLAUDE.md didn't |
 
 > Skills and hooks are version-controlled, so every contributor using Claude
 > Code in this repo gets the same commit hygiene, doc-sync reminders, and
