@@ -852,6 +852,53 @@ Add to `~/.cursor/mcp.json` (Cursor) or Claude Desktop's settings:
 Once connected, your AI client can call `analyze_failure` directly by passing a failure context dict — 
 no changes to any test file needed.
 
+## Claude Code Integration
+
+This repo is set up for [Claude Code](https://claude.com/claude-code). It ships
+project-scoped **skills** (reusable instructions Claude loads on demand) and
+**hooks** (scripts the harness runs automatically around tool calls) under
+`.claude/`. None of this is required to run the tests — it only shapes how
+Claude Code behaves when working in the repo.
+
+```
+.claude/
+├── settings.json               # wires the hooks (PreToolUse + Stop)
+├── skills/
+│   ├── commit-rules/           # how to scope, stage & word a commit
+│   ├── update-claude-md/       # keep CLAUDE.md in sync after a change
+│   └── review-tests/           # review a diff against this repo's conventions
+└── hooks/
+    ├── guard-commit.sh         # block commits that stage secrets
+    └── claude-md-reminder.sh   # nudge to reconcile CLAUDE.md after code changes
+```
+
+### Skills
+
+Each skill is a `SKILL.md` with a `description` that tells Claude when to use
+it. Invoke one explicitly with `/<name>`, or let Claude pick it up from the
+trigger described below.
+
+| Skill              | Triggers when…                                                                 | What it does                                                                                                                              |
+|--------------------|--------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `commit-rules`     | about to `git commit`, or you ask to "commit" / "save changes"                 | Enforces atomic, single-purpose commits; imperative subject + why-focused body; refuses to stage secrets/artifacts; adds required trailer |
+| `update-claude-md` | after adding/renaming a client, endpoint, fixture, schema, helper, flag, or env var, or you ask to "update CLAUDE.md" | Reconciles the matching CLAUDE.md section against the actual code (verifies before writing); skips trivial diffs                          |
+| `review-tests`     | after editing an API client, test, fixture, schema, or test-data YAML, before opening a PR | Project-convention review pass — schema dual-registration, module-scope test data, no HTTP in tests, Pydantic+`assert_http_response` split, flaky-endpoint guard, contract-test sync. Complements the generic `/code-review` |
+
+### Hooks
+
+Hooks are configured in `.claude/settings.json` and run automatically — no
+prompt needed. Both are **fail-open** (any error path exits 0) so they never
+wedge legitimate work, and both feed their message back to Claude on block.
+
+| Hook                   | Event              | Behavior                                                                                                                                                              |
+|------------------------|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `guard-commit.sh`      | `PreToolUse(Bash)` | On any command running `git commit`, blocks (exit 2) if a `.env` file is staged or the staged diff contains a high-confidence credential signature (private key, AWS/GitHub/Slack token, JWT). Narrowly scoped so README placeholders like `your_api_key_here` don't trip it. |
+| `claude-md-reminder.sh`| `Stop`             | When `api/` or `config/` changed this session but `CLAUDE.md` was left untouched, blocks the stop (exit 2) and nudges Claude to run `update-claude-md`. Loop-safe via `stop_hook_active`. |
+
+> Skills and hooks are version-controlled, so every contributor using Claude
+> Code in this repo gets the same commit hygiene, doc-sync reminders, and
+> convention checks automatically.
+
 ## GitHub Pages Deployment (Maintainers)
 
 > This section is for maintainers deploying reports/docs to GitHub Pages — it is **not** required to run the tests locally.
