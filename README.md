@@ -852,6 +852,51 @@ Add to `~/.cursor/mcp.json` (Cursor) or Claude Desktop's settings:
 Once connected, your AI client can call `analyze_failure` directly by passing a failure context dict — 
 no changes to any test file needed.
 
+## Claude Code Integration
+
+This repo is set up for [Claude Code](https://claude.com/claude-code). It ships
+project-scoped **skills** (reusable instructions Claude loads on demand) and
+**hooks** (scripts the harness runs automatically around tool calls) under
+`.claude/`. None of this is required to run the tests — it only shapes how
+Claude Code behaves when working in the repo.
+
+```
+.claude/
+├── settings.json               # wires the hooks (PreToolUse + Stop)
+├── skills/
+│   ├── commit-rules/           # how to scope, stage & word a commit
+│   ├── update-claude-md/       # keep CLAUDE.md in sync after a change
+│   └── review-tests/           # review a diff against this repo's conventions
+└── hooks/
+    ├── guard-commit.sh         # block commits that stage secrets
+    └── claude-md-reminder.sh   # nudge to reconcile CLAUDE.md after code changes
+```
+
+### Skills
+
+Invoke explicitly with `/<name>`, or let Claude trigger one automatically.
+The table is a summary; each `SKILL.md` is authoritative.
+
+| Skill              | What it does                                                                 |
+|--------------------|-----------------------------------------------------------------------------|
+| `commit-rules`     | Enforces atomic commits, message style, secret/artifact exclusion, required trailer |
+| `update-claude-md` | Reconciles CLAUDE.md against the code after a structural change              |
+| `review-tests`     | Reviews a diff against this repo's test conventions (complements `/code-review`) |
+
+### Hooks
+
+Configured in `.claude/settings.json`, run automatically, and fail-open
+(never wedge legitimate work).
+
+| Hook                   | Event              | Behavior                                                                 |
+|------------------------|--------------------|--------------------------------------------------------------------------|
+| `guard-commit.sh`      | `PreToolUse(Bash)` | Blocks a `git commit` that stages a `.env` or a credential-like token    |
+| `claude-md-reminder.sh`| `Stop`             | Nudges to run `update-claude-md` when `api/`/`config/` changed but CLAUDE.md didn't |
+
+> Skills and hooks are version-controlled, so every contributor using Claude
+> Code in this repo gets the same commit hygiene, doc-sync reminders, and
+> convention checks automatically.
+
 ## GitHub Pages Deployment (Maintainers)
 
 > This section is for maintainers deploying reports/docs to GitHub Pages — it is **not** required to run the tests locally.
