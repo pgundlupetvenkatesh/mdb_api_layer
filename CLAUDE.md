@@ -43,12 +43,12 @@ All runtime config comes from environment variables loaded from `.env` (gitignor
 
 Layered, with a strict separation between the API client and the tests:
 
-**`api/`** — `BaseAPI` (`base_api.py`) owns the `requests.Session`, auth header (Bearer token from `Config`), URL construction (`{base_url}/{api_version}/{endpoint}`), and the four HTTP verbs. Every verb returns a standardized `APIResponse` dataclass (`.data`, `.status_code`, `.url`, `.elapsed_seconds`, etc.) — tests assert against this object, never a raw `requests.Response`. Endpoint classes (`MoviesAPI`, `PeopleAPI`, `ListsAPI`, `AccountAPI`) subclass `BaseAPI`, set a `_sub_path` class attr, and add thin domain methods that call `self.get/post/put/delete`. To add an endpoint: add a method to the relevant class (or a new subclass) — do not put HTTP logic in tests.
+**`api/`** — `BaseAPI` (`base_api.py`) owns the `requests.Session`, auth header (Bearer token from `Config`), URL construction (`{base_url}/{api_version}/{endpoint}`), and the four HTTP verbs. Every verb returns a standardized `APIResponse` dataclass (`.data`, `.status_code`, `.url`, `.elapsed_seconds`, etc.) — tests assert against this object, never a raw `requests.Response`. Endpoint classes (`MoviesAPI`, `PeopleAPI`, `ListsAPI`, `AccountAPI`, `SearchAPI`) subclass `BaseAPI`, set a `_sub_path` class attr, and add thin domain methods that call `self.get/post/put/delete`. To add an endpoint: add a method to the relevant class (or a new subclass) — do not put HTTP logic in tests.
 
 **`config/config.py`** — loads `.env`, exposes the `Config` class, and configures Loguru. `configure_logging()` is re-invoked from `pytest_configure` so the CLI log-level flag takes effect before test modules import.
 
 **`tests/conftest.py`** — the wiring hub. Provides:
-- Dedicated per-client fixtures — `movies_api`, `people_api`, `lists_api` — each returns a fresh, type-annotated endpoint client (e.g. `MoviesAPI()`); a test declares the one it needs in its signature. (`AccountAPI` has no fixture; it's used directly in `tests/helpers/test_data_generators.py`.)
+- Dedicated per-client fixtures — `movies_api`, `people_api`, `lists_api`, `search_api` — each returns a fresh, type-annotated endpoint client (e.g. `MoviesAPI()`); a test declares the one it needs in its signature. (`AccountAPI` has no fixture; it's used directly in `tests/helpers/test_data_generators.py`.)
 - `load_schema` fixture: maps a schema name → a **Pydantic model** in `tests/schemas/models.py` (despite the JSON files in `tests/schemas/`, validation is done with `model.model_validate(response.data)`).
 - `_store_test_name` (autouse): injects `self._test_name` into class-based tests for assertion messages.
 - Hooks for AI failure analysis (`pytest_runtest_makereport`) and Allure/HTML report customization and `environment.properties` writing (`pytest_sessionfinish`).

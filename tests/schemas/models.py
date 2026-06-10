@@ -166,6 +166,26 @@ class PopularMoviesResponse(BaseModel):
     total_pages: StrictInt = Field(ge=0)
     total_results: StrictInt = Field(ge=0)
 
+class SearchMoviesResponse(BaseModel):
+    """
+    Schema for movie search response from ``GET /3/search/movie``.
+
+    Validates the paginated response structure containing the movies that
+    matched a search query. Result items share the structure of the popular
+    movies list, so ``PopularMovieItem`` is reused. ``results`` requires at
+    least one item — searches expected to return no matches are asserted
+    directly in the test instead of via this schema.
+
+    :param page: Current page number in the paginated results.
+    :param results: List of matching movie items for this page.
+    :param total_pages: Total number of available pages.
+    :param total_results: Total number of matches across all pages.
+    """
+    page: StrictInt = Field(ge=1)
+    results: list[PopularMovieItem] = Field(min_length=1)
+    total_pages: StrictInt = Field(ge=1)
+    total_results: StrictInt = Field(ge=1)
+
 class PersonDetails(BaseModel):
     """
     Schema for person details response from ``GET /3/person/{person_id}``.

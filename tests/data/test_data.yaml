@@ -41,6 +41,37 @@ popular_movies:
     - query_param: { "page": -1 }
       expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
 
+search_movies:
+  defaults:
+    valid:
+      status_code: 200
+      reason: 'OK'
+    empty: # Missing/empty/no-match query returns 200 with empty results, not an error
+      status_code: 200
+      reason: 'OK'
+    invalid:
+      status_code: 400
+      reason: 'Bad Request'
+  valid: # One case per supported query param + all combined; page defaults to 1 in the client
+    - query_param: { "query": "Batman" }
+    - query_param: { "query": "Batman", "page": 2 }
+    - query_param: { "query": "Batman", "language": "en-US" }
+    - query_param: { "query": "Batman", "include_adult": true }
+    - query_param: { "query": "Batman", "region": "US" }
+    - query_param: { "query": "Batman", "year": "1989" }
+    - query_param: { "query": "Batman", "primary_release_year": "1989" }
+    - query_param: { "query": "Batman", "language": "en-US", "include_adult": true, "region": "US",
+                     "year": "1989", "primary_release_year": "1989", "page": 1 }
+  empty:
+    - query_param: {} # no query at all
+    - query_param: { "query": "" }
+    - query_param: { "query": "zzzqqqxyzzy123" } # matches nothing
+  invalid:
+    - query_param: { "query": "Batman", "page": -1 }
+      expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
+    - query_param: { "query": "Batman", "page": 501 }
+      expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
+
 add_rating:
   defaults:
     valid:

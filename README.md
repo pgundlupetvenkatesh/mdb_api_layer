@@ -56,7 +56,7 @@ Each step is expanded in [Prerequisites](#prerequisites), [Installation](#instal
 - Data-driven testing with per-section YAML test data and cached dynamic generators
 - Automatic retries for flaky live-API latency via pytest-rerunfailures
 - Reusable HTTP response assertion helpers (status, method, content-type, response time)
-- Dedicated per-client pytest fixtures (`movies_api`, `people_api`, `lists_api`)
+- Dedicated per-client pytest fixtures (`movies_api`, `people_api`, `lists_api`, `search_api`)
 - Structured logging with [Loguru](https://github.com/Delgan/loguru) (configurable level & file output)
 - Configurable environment-based settings via `.env`
 - AI-powered test failure analysis using open-source LLMs via [Groq](https://groq.com/) (opt-in)
@@ -191,6 +191,7 @@ poetry run pytest tests/movies/ -v -s
 poetry run pytest tests/people/ -v -s
 poetry run pytest tests/lists/ -v -s
 poetry run pytest tests/movie_lists/ -v -s
+poetry run pytest tests/search/ -v -s
 
 # Run a specific test function
 poetry run pytest tests/movie_lists/test_popular.py::TestClassName::test_func_name -v -s
@@ -226,7 +227,7 @@ mdb_api_layer/
 │   ├── people_api.py           # People endpoint implementation
 │   ├── lists_api.py            # Lists endpoint implementation (v4 API)
 │   ├── account_api.py          # Account endpoint implementation
-│   └── search_api.py           # Search endpoint (stub — not yet implemented)
+│   └── search_api.py           # Search endpoint implementation
 ├── config/
 │   └── config.py               # Environment configuration & Loguru logging setup
 ├── tests/
@@ -258,6 +259,8 @@ mdb_api_layer/
 │   │   └── test_details.py     # People details integration tests
 │   ├── lists/
 │   │   └── test_update.py      # Lists update tests (v4 API)
+│   ├── search/
+│   │   └── test_movie.py       # Movie search integration tests
 │   ├── pacts/
 │   │   └── *.json              # Generated Pact contract files
 │   └── schemas/
