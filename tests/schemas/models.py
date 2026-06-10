@@ -107,13 +107,13 @@ class MovieDetails(BaseModel):
 
     model_config = {"extra": "allow"}  # allow fields not defined here (overview, etc.)
 
-# Nested model for popular movie items
-class PopularMovieItem(BaseModel):
+# Nested model for movie list items
+class MovieListItem(BaseModel):
     """
-    Nested model for a single movie in the popular movies list.
+    Nested model for a single movie in a paginated movie list.
 
-    Represents one item in the ``results`` array returned by
-    ``GET /3/movie/popular``.
+    Represents one item in the ``results`` array shared by TMDB's list-style
+    endpoints (e.g. ``GET /3/movie/popular``, ``GET /3/search/movie``).
 
     :param adult: Whether the movie is classified as adult content.
     :param backdrop_path: Path to the backdrop image, or None.
@@ -162,9 +162,29 @@ class PopularMoviesResponse(BaseModel):
     :param total_results: Total number of popular movies across all pages.
     """
     page: StrictInt = Field(ge=0)
-    results: list[PopularMovieItem] = Field(min_length=1)
+    results: list[MovieListItem] = Field(min_length=1)
     total_pages: StrictInt = Field(ge=0)
     total_results: StrictInt = Field(ge=0)
+
+class SearchMoviesResponse(BaseModel):
+    """
+    Schema for movie search response from ``GET /3/search/movie``.
+
+    Validates the paginated response structure containing the movies that
+    matched a search query. Result items use the shared ``MovieListItem``
+    model. ``results`` requires at least one item — searches expected to
+    return no matches are asserted directly in the test instead of via
+    this schema.
+
+    :param page: Current page number in the paginated results.
+    :param results: List of matching movie items for this page.
+    :param total_pages: Total number of available pages.
+    :param total_results: Total number of matches across all pages.
+    """
+    page: StrictInt = Field(ge=1)
+    results: list[MovieListItem] = Field(min_length=1)
+    total_pages: StrictInt = Field(ge=1)
+    total_results: StrictInt = Field(ge=1)
 
 class PersonDetails(BaseModel):
     """

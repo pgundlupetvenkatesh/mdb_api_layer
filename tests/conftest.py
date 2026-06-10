@@ -94,6 +94,7 @@ from tests.data.data_loader import load_test_data
 from api.movies_api import MoviesAPI
 from api.people_api import PeopleAPI
 from api.lists_api import ListsAPI
+from api.search_api import SearchAPI
 
 @pytest.fixture(autouse=True)
 def _store_test_name(request):
@@ -156,9 +157,22 @@ def people_api() -> PeopleAPI:
     """
     return PeopleAPI()
 
+@pytest.fixture
+def search_api() -> SearchAPI:
+    """
+    Provide a fresh ``SearchAPI`` client for a test.
+
+    Dedicated, type-annotated alternative to ``get_api_instance('search_api')``
+    — the dependency is declared in the test signature, typo-checked at
+    collection time, and gives editor autocomplete for search endpoints.
+
+    :return: A configured ``SearchAPI`` instance.
+    """
+    return SearchAPI()
+
 from tests.schemas.models import (
     GenericResponse, RatingResponse, MovieDetails,
-    PopularMoviesResponse, PersonDetails
+    PopularMoviesResponse, PersonDetails, SearchMoviesResponse
 )
 
 @pytest.fixture
@@ -174,6 +188,7 @@ def load_schema():
         'movie_schema': MovieDetails,
         'popular_movies_schema': PopularMoviesResponse,
         'person_details_schema': PersonDetails,
+        'search_movies_schema': SearchMoviesResponse,
     }
 
     def _load(name):

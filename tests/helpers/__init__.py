@@ -1,3 +1,3 @@
-from .response_assertions import assert_http_response
+from .response_assertions import *
 from .field_assertions import FieldAssertions
 from .test_data_generators import *

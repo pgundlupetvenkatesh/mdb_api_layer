@@ -31,14 +31,49 @@ popular_movies:
     valid:
       status_code: 200
       reason: 'OK'
+      exp_page: 1 # client defaults page to 1; cases that send a page override this
     invalid:
       status_code: 400
       reason: 'Bad Request'
   valid:
     - query_param: { "language": "en-US" }
     - query_param: { "page": 2 }
+      exp_page: 2
   invalid:
     - query_param: { "page": -1 }
+      expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
+
+search_movies:
+  defaults:
+    valid:
+      status_code: 200
+      reason: 'OK'
+      exp_page: 1 # client defaults page to 1; cases that send a page override this
+    empty: # Missing/empty/no-match query returns 200 with empty results, not an error
+      status_code: 200
+      reason: 'OK'
+    invalid:
+      status_code: 400
+      reason: 'Bad Request'
+  valid: # One case per supported query param + all combined; page defaults to 1 in the client
+    - query_param: { "query": "Batman" }
+    - query_param: { "query": "Batman", "page": 2 }
+      exp_page: 2
+    - query_param: { "query": "Batman", "language": "en-US" }
+    - query_param: { "query": "Batman", "include_adult": "true" }
+    - query_param: { "query": "Batman", "region": "US" }
+    - query_param: { "query": "Batman", "year": "1989" }
+    - query_param: { "query": "Batman", "primary_release_year": "1989" }
+    - query_param: { "query": "Batman", "language": "en-US", "include_adult": "true", "region": "US",
+                     "year": "1989", "primary_release_year": "1989", "page": 1 }
+  empty:
+    - query_param: {} # no query at all
+    - query_param: { "query": "" }
+    - query_param: { "query": "zzzqqqxyzzy123" } # matches nothing
+  invalid:
+    - query_param: { "query": "Batman", "page": -1 }
+      expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
+    - query_param: { "query": "Batman", "page": 501 }
       expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
 
 add_rating:
@@ -117,8 +152,8 @@ update_list:
         expected_message: "The item/record was updated successfully."
   invalid:
       - list_id: 9999999999
-        payload: { "name": 'Indian', "description": "$current_timestamp", "public": false }
+        payload: { "name": 'Indian', "description": "$current_timestamp", "public": False }
         expected_message: "The resource you requested could not be found."
       - list_id: 0
-        payload: { "name": 'Hollywood', "description": "Some random Description", "public": true }
+        payload: { "name": 'Hollywood', "description": "Some random Description", "public": True }
         expected_message: "Invalid id: The pre-requisite id is invalid or not found."
