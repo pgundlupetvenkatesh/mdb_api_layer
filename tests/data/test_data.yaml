@@ -31,12 +31,14 @@ popular_movies:
     valid:
       status_code: 200
       reason: 'OK'
+      exp_page: 1 # client defaults page to 1; cases that send a page override this
     invalid:
       status_code: 400
       reason: 'Bad Request'
   valid:
     - query_param: { "language": "en-US" }
     - query_param: { "page": 2 }
+      exp_page: 2
   invalid:
     - query_param: { "page": -1 }
       expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
@@ -46,6 +48,7 @@ search_movies:
     valid:
       status_code: 200
       reason: 'OK'
+      exp_page: 1 # client defaults page to 1; cases that send a page override this
     empty: # Missing/empty/no-match query returns 200 with empty results, not an error
       status_code: 200
       reason: 'OK'
@@ -55,6 +58,7 @@ search_movies:
   valid: # One case per supported query param + all combined; page defaults to 1 in the client
     - query_param: { "query": "Batman" }
     - query_param: { "query": "Batman", "page": 2 }
+      exp_page: 2
     - query_param: { "query": "Batman", "language": "en-US" }
     - query_param: { "query": "Batman", "include_adult": "true" }
     - query_param: { "query": "Batman", "region": "US" }

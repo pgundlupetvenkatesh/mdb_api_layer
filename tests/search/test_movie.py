@@ -66,6 +66,9 @@ class TestSearchMovies(FieldAssertions):
         with allure.step("Validate HTTP response metadata"):
             assert_get_metadata(response, search_case, 'search/movie')
 
+        with allure.step("Validate requested page is echoed in the response"):
+            assert res_body['page'] == search_case['exp_page']
+
         # SearchMoviesResponse (strict) enforces pagination fields plus every
         # item's structure, types, and field semantics (non-empty results,
         # strict types, ISO/path/range rules).

@@ -62,6 +62,9 @@ class TestMoviesAPI(FieldAssertions):
         with allure.step("Validate HTTP response metadata"):
             assert_get_metadata(response, pop_movies, 'popular')
 
+        with allure.step("Validate requested page is echoed in the response"):
+            assert res_body['page'] == pop_movies['exp_page']
+
         # PopularMoviesResponse (strict) enforces pagination fields plus every
         # item's structure, types, and field semantics (non-empty results,
         # strict types, ISO/path/range rules).
