@@ -93,6 +93,13 @@ People
    :undoc-members:
    :show-inheritance:
 
+Search
+------
+.. automodule:: tests.search.test_movie
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Schema
 ~~~~~~
 .. automodule:: tests.schemas.models

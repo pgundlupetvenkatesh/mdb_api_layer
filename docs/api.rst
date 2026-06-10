@@ -40,3 +40,11 @@ People API
    :members:
    :undoc-members:
    :show-inheritance:
+
+Search API
+----------
+.. automodule:: api.search_api
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
