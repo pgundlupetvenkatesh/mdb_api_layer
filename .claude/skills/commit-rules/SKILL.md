@@ -57,10 +57,11 @@ for trivial, self-evident changes.>
 
 ## Required trailer
 
-End every commit message with this trailer (blank line before it):
+End every commit message with a Co-Authored-By trailer naming the Claude
+model in use (blank line before it), e.g.:
 
 ```
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Co-Authored-By: Claude <model name> <noreply@anthropic.com>
 ```
 
 ## Before finalizing

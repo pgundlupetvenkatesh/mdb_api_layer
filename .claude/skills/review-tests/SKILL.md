@@ -62,9 +62,10 @@ raw `requests.Response`.
   truth. Flag duplicated per-field manual body assertions; they belong in the
   model.
 - **Metadata** (status, method, content-type, elapsed time, URL) is checked
-  with `assert_http_response` (`tests/helpers/response_assertions.py`), usually
-  via a per-class `_assert_*_metadata` helper. Confirm new tests use it rather
-  than ad-hoc status/header asserts.
+  with the shared `assert_get_metadata` helper
+  (`tests/helpers/response_assertions.py`), which wraps `assert_http_response`.
+  Confirm new tests use it rather than ad-hoc status/header asserts or a
+  re-introduced per-class `_assert_*_metadata` copy.
 - `FieldAssertions.assert_*_field` typed-check methods are legacy — a new test
   calling them is a smell; prefer schema validation.
 

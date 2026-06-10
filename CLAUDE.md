@@ -64,6 +64,7 @@ Layered, with a strict separation between the API client and the tests:
 - The framework hits the live TMDB API; tests can fail due to stale data (deleted movies, expired tokens) rather than code bugs — that's what the AI failure analysis classifies.
 - The v4 list-write endpoint (`update_list`) is intermittently very slow (occasional 19s+ responses, sometimes a 30s `ReadTimeout`). `test_update_list_description` carries `@pytest.mark.flaky(reruns=2, reruns_delay=3)` (pytest-rerunfailures) to absorb these transient latency/timeout flakes, and `update_list.defaults.valid.exp_max_elp_secs` is raised to 15. These are TMDB-side, not code regressions.
 - When adding a new Pydantic schema, register it in **both** `tests/schemas/models.py` and the `load_schema` map in `conftest.py`.
+- Boolean **query params** in `test_data.yaml` must be quoted strings (`"include_adult": "true"`), not YAML booleans — `requests` serializes Python bools as `True`/`False` in the URL, which TMDB only tolerates undocumented. JSON **body** payloads (e.g. `update_list`'s `public`) correctly use real booleans.
 - New parametrized test data must go through `load_test_data` at module scope, not inside a fixture. Pass the module's top-level YAML section name as the second arg (`load_test_data("test_data.yaml", "<section>")`); a wrong/missing section raises `KeyError` listing the valid ones.
 
 ## Working style
