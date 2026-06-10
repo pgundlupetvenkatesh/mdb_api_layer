@@ -41,30 +41,6 @@ class TestSearchMovies(FieldAssertions):
     headers, response time, and body structure.
     """
 
-    @staticmethod
-    def _assert_get_metadata(response, case, url_contains):
-        """
-        Assert standard GET response metadata from a parametrized test case.
-
-        Builds the expected-values dict from a test case (valid or invalid)
-        and delegates to ``assert_http_response``, keeping the metadata key
-        names in one place.
-
-        :param response: APIResponse returned by the client.
-        :param case: Parametrized test data dict (expects ``status_code``,
-                     ``exp_max_elp_secs``, ``exp_get_req_method``,
-                     ``exp_content_type``, ``reason``).
-        :param url_contains: Substring expected in the response URL.
-        """
-        assert_http_response(response, {
-            'exp_status_code': case['status_code'],
-            'exp_max_elp_seconds': case['exp_max_elp_secs'],
-            'exp_req_method': case['exp_get_req_method'],
-            'exp_content_type': case['exp_content_type'],
-            'exp_url_contains': str(url_contains),
-            'exp_req_reason': case['reason']
-        })
-
     @allure.story("Search Movies")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.parametrize('search_case', TEST_DATA['search_movies']['valid'])
@@ -88,7 +64,7 @@ class TestSearchMovies(FieldAssertions):
             res_body = response.data
 
         with allure.step("Validate HTTP response metadata"):
-            self._assert_get_metadata(response, search_case, 'search/movie')
+            assert_get_metadata(response, search_case, 'search/movie')
 
         # SearchMoviesResponse (strict) enforces pagination fields plus every
         # item's structure, types, and field semantics (non-empty results,
@@ -119,7 +95,7 @@ class TestSearchMovies(FieldAssertions):
             res_body = response.data
 
         with allure.step("Validate HTTP response metadata"):
-            self._assert_get_metadata(response, empty_case, 'search/movie')
+            assert_get_metadata(response, empty_case, 'search/movie')
 
         with allure.step("Validate empty paginated results"):
             assert res_body['results'] == []
@@ -147,7 +123,7 @@ class TestSearchMovies(FieldAssertions):
             res_body = response.data
 
         with allure.step("Validate HTTP response metadata"):
-            self._assert_get_metadata(response, invalid_test, 'search/movie')
+            assert_get_metadata(response, invalid_test, 'search/movie')
 
         with allure.step("Validate error message"):
             assert res_body['status_message'] == invalid_test['expected_message']

@@ -22,7 +22,6 @@ import allure
 import pytest
 from loguru import logger
 
-from config.config import Config
 from tests.data.data_loader import load_test_data
 from tests.helpers import *
 
@@ -39,30 +38,6 @@ class TestDetails(FieldAssertions):
     valid requests and error scenarios. Each test validates HTTP
     method, status codes, headers, response time, and body structure.
     """
-
-    @staticmethod
-    def _assert_get_metadata(response, case, url_contains):
-        """
-        Assert standard GET response metadata from a parametrized test case.
-
-        Builds the expected-values dict from a test case (valid or invalid)
-        and delegates to ``assert_http_response``, keeping the metadata key
-        names in one place.
-
-        :param response: APIResponse returned by the client.
-        :param case: Parametrized test data dict (expects ``status_code``,
-                     ``exp_max_elp_secs``, ``exp_get_req_method``,
-                     ``exp_content_type``, ``reason``).
-        :param url_contains: Substring expected in the response URL.
-        """
-        assert_http_response(response, {
-            'exp_status_code': case['status_code'],
-            'exp_max_elp_seconds': case['exp_max_elp_secs'],
-            'exp_req_method': case['exp_get_req_method'],
-            'exp_content_type': case['exp_content_type'],
-            'exp_url_contains': str(url_contains),
-            'exp_req_reason': case['reason']
-        })
 
     @allure.story("Get Movie Details")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -90,7 +65,7 @@ class TestDetails(FieldAssertions):
 
         # Basic response validations
         with allure.step("Validate HTTP response metadata"):
-            self._assert_get_metadata(response, movie_details, movie_id)
+            assert_get_metadata(response, movie_details, movie_id)
 
         # Structure, types, and field semantics (presence, strict types,
         # non-empty/ISO/path rules, nested genres & production_companies, and
@@ -124,7 +99,7 @@ class TestDetails(FieldAssertions):
             res_body = response.data
 
         with allure.step("Validate HTTP response metadata"):
-            self._assert_get_metadata(response, invalid_test, movie_id)
+            assert_get_metadata(response, invalid_test, movie_id)
 
         with allure.step("Validate error message"):
             assert res_body['status_message'] == invalid_test['expected_message']

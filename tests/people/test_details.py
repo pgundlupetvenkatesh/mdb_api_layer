@@ -20,30 +20,6 @@ class TestDetails(FieldAssertions):
     method, status codes, headers, response time, and body structure.
     """
 
-    @staticmethod
-    def _assert_get_metadata(response, case, url_contains):
-        """
-        Assert standard GET response metadata from a parametrized test case.
-
-        Builds the expected-values dict from a test case (valid or invalid)
-        and delegates to ``assert_http_response``, keeping the metadata key
-        names in one place.
-
-        :param response: APIResponse returned by the client.
-        :param case: Parametrized test data dict (expects ``status_code``,
-                     ``exp_max_elp_secs``, ``exp_get_req_method``,
-                     ``exp_content_type``, ``reason``).
-        :param url_contains: Substring expected in the response URL.
-        """
-        assert_http_response(response, {
-            'exp_status_code': case['status_code'],
-            'exp_max_elp_seconds': case['exp_max_elp_secs'],
-            'exp_req_method': case['exp_get_req_method'],
-            'exp_content_type': case['exp_content_type'],
-            'exp_url_contains': str(url_contains),
-            'exp_req_reason': case['reason']
-        })
-
     @allure.story("Get Person Details")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.parametrize('person_details', TEST_DATA['get_person_details']['valid'])
@@ -68,7 +44,7 @@ class TestDetails(FieldAssertions):
             res_body = response.data
 
         with allure.step("Validate HTTP response metadata"):
-            self._assert_get_metadata(response, person_details, 'person')
+            assert_get_metadata(response, person_details, 'person')
 
         # PersonDetails (strict) enforces the body structure, types, and field
         # semantics (strict types, gender range, path pattern, nullability).
@@ -98,7 +74,7 @@ class TestDetails(FieldAssertions):
             res_body = response.data
 
         with allure.step("Validate HTTP response metadata"):
-            self._assert_get_metadata(response, invalid_person_details, 'person')
+            assert_get_metadata(response, invalid_person_details, 'person')
 
         with allure.step("Validate error message"):
             assert res_body['status_message'] == invalid_person_details['expected_message']

@@ -39,30 +39,6 @@ class TestMoviesAPI(FieldAssertions):
     method, status codes, headers, response time, and body structure.
     """
 
-    @staticmethod
-    def _assert_get_metadata(response, case, url_contains):
-        """
-        Assert standard GET response metadata from a parametrized test case.
-
-        Builds the expected-values dict from a test case (valid or invalid)
-        and delegates to ``assert_http_response``, keeping the metadata key
-        names in one place.
-
-        :param response: APIResponse returned by the client.
-        :param case: Parametrized test data dict (expects ``status_code``,
-                     ``exp_max_elp_secs``, ``exp_get_req_method``,
-                     ``exp_content_type``, ``reason``).
-        :param url_contains: Substring expected in the response URL.
-        """
-        assert_http_response(response, {
-            'exp_status_code': case['status_code'],
-            'exp_max_elp_seconds': case['exp_max_elp_secs'],
-            'exp_req_method': case['exp_get_req_method'],
-            'exp_content_type': case['exp_content_type'],
-            'exp_url_contains': str(url_contains),
-            'exp_req_reason': case['reason']
-        })
-
     @allure.story("Get Popular Movies")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.parametrize('pop_movies', TEST_DATA['popular_movies']['valid'])
@@ -84,7 +60,7 @@ class TestMoviesAPI(FieldAssertions):
             res_body = response.data
 
         with allure.step("Validate HTTP response metadata"):
-            self._assert_get_metadata(response, pop_movies, 'popular')
+            assert_get_metadata(response, pop_movies, 'popular')
 
         # PopularMoviesResponse (strict) enforces pagination fields plus every
         # item's structure, types, and field semantics (non-empty results,
@@ -113,7 +89,7 @@ class TestMoviesAPI(FieldAssertions):
             res_body = response.data
 
         with allure.step("Validate HTTP response metadata"):
-            self._assert_get_metadata(response, invalid_test, 'popular')
+            assert_get_metadata(response, invalid_test, 'popular')
 
         with allure.step("Validate error message"):
             assert res_body['status_message'] == invalid_test['expected_message']
