@@ -71,9 +71,9 @@
       <li><a href="tests.html#tests.schemas.models.MovieDetails.adult">adult (tests.schemas.models.MovieDetails attribute)</a>
 
       <ul>
-        <li><a href="tests.html#tests.schemas.models.PersonDetails.adult">(tests.schemas.models.PersonDetails attribute)</a>
+        <li><a href="tests.html#tests.schemas.models.MovieListItem.adult">(tests.schemas.models.MovieListItem attribute)</a>
 </li>
-        <li><a href="tests.html#tests.schemas.models.PopularMovieItem.adult">(tests.schemas.models.PopularMovieItem attribute)</a>
+        <li><a href="tests.html#tests.schemas.models.PersonDetails.adult">(tests.schemas.models.PersonDetails attribute)</a>
 </li>
       </ul></li>
       <li><a href="tests.html#tests.schemas.models.PersonDetails.also_known_as">also_known_as (tests.schemas.models.PersonDetails attribute)</a>
@@ -84,13 +84,15 @@
 </li>
       <li><a href="config.html#config.config.Config.API_VERSION">API_VERSION (config.config.Config attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="failure_mcp.html#failure_mcp.server.app">app (in module failure_mcp.server)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions.assert_bool_field">assert_bool_field() (tests.helpers.field_assertions.FieldAssertions method)</a>
 </li>
       <li><a href="helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions.assert_float_field">assert_float_field() (tests.helpers.field_assertions.FieldAssertions method)</a>
+</li>
+      <li><a href="helpers_response_assertions.html#tests.helpers.response_assertions.assert_get_metadata">assert_get_metadata() (in module tests.helpers.response_assertions)</a>
 </li>
       <li><a href="helpers_response_assertions.html#tests.helpers.response_assertions.assert_http_response">assert_http_response() (in module tests.helpers.response_assertions)</a>
 </li>
@@ -110,7 +112,7 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="tests.html#tests.schemas.models.PopularMovieItem.backdrop_path">backdrop_path (tests.schemas.models.PopularMovieItem attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.MovieListItem.backdrop_path">backdrop_path (tests.schemas.models.MovieListItem attribute)</a>
 </li>
       <li><a href="config.html#config.config.Config.BASE_URL">BASE_URL (config.config.Config attribute)</a>
 </li>
@@ -191,7 +193,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="tests.html#tests.schemas.models.Genre">Genre (class in tests.schemas.models)</a>
 </li>
-      <li><a href="tests.html#tests.schemas.models.PopularMovieItem.genre_ids">genre_ids (tests.schemas.models.PopularMovieItem attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.MovieListItem.genre_ids">genre_ids (tests.schemas.models.MovieListItem attribute)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.MovieDetails.genres">genres (tests.schemas.models.MovieDetails attribute)</a>
 </li>
@@ -218,9 +220,9 @@
       <ul>
         <li><a href="tests.html#tests.schemas.models.MovieDetails.id">(tests.schemas.models.MovieDetails attribute)</a>
 </li>
-        <li><a href="tests.html#tests.schemas.models.PersonDetails.id">(tests.schemas.models.PersonDetails attribute)</a>
+        <li><a href="tests.html#tests.schemas.models.MovieListItem.id">(tests.schemas.models.MovieListItem attribute)</a>
 </li>
-        <li><a href="tests.html#tests.schemas.models.PopularMovieItem.id">(tests.schemas.models.PopularMovieItem attribute)</a>
+        <li><a href="tests.html#tests.schemas.models.PersonDetails.id">(tests.schemas.models.PersonDetails attribute)</a>
 </li>
         <li><a href="tests.html#tests.schemas.models.ProductionCompany.id">(tests.schemas.models.ProductionCompany attribute)</a>
 </li>
@@ -268,15 +270,17 @@
 </li>
         <li><a href="tests.html#tests.schemas.models.MovieDetails.model_config">(tests.schemas.models.MovieDetails attribute)</a>
 </li>
-        <li><a href="tests.html#tests.schemas.models.PersonDetails.model_config">(tests.schemas.models.PersonDetails attribute)</a>
+        <li><a href="tests.html#tests.schemas.models.MovieListItem.model_config">(tests.schemas.models.MovieListItem attribute)</a>
 </li>
-        <li><a href="tests.html#tests.schemas.models.PopularMovieItem.model_config">(tests.schemas.models.PopularMovieItem attribute)</a>
+        <li><a href="tests.html#tests.schemas.models.PersonDetails.model_config">(tests.schemas.models.PersonDetails attribute)</a>
 </li>
         <li><a href="tests.html#tests.schemas.models.PopularMoviesResponse.model_config">(tests.schemas.models.PopularMoviesResponse attribute)</a>
 </li>
         <li><a href="tests.html#tests.schemas.models.ProductionCompany.model_config">(tests.schemas.models.ProductionCompany attribute)</a>
 </li>
         <li><a href="tests.html#tests.schemas.models.RatingResponse.model_config">(tests.schemas.models.RatingResponse attribute)</a>
+</li>
+        <li><a href="tests.html#tests.schemas.models.SearchMoviesResponse.model_config">(tests.schemas.models.SearchMoviesResponse attribute)</a>
 </li>
       </ul></li>
       <li>
@@ -321,12 +325,16 @@
 </li>
         <li><a href="tests.html#module-tests.schemas.models">tests.schemas.models</a>
 </li>
+        <li><a href="tests.html#module-tests.search.test_movie">tests.search.test_movie</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="config.html#config.config.Config.MOVIE_ID">MOVIE_ID (config.config.Config attribute)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.MovieDetails">MovieDetails (class in tests.schemas.models)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.MovieListItem">MovieListItem (class in tests.schemas.models)</a>
 </li>
       <li><a href="tests.html#tests.conftest.movies_api">movies_api() (in module tests.conftest)</a>
 </li>
@@ -361,7 +369,7 @@
       <li><a href="tests.html#tests.schemas.models.MovieDetails.original_language">original_language (tests.schemas.models.MovieDetails attribute)</a>
 
       <ul>
-        <li><a href="tests.html#tests.schemas.models.PopularMovieItem.original_language">(tests.schemas.models.PopularMovieItem attribute)</a>
+        <li><a href="tests.html#tests.schemas.models.MovieListItem.original_language">(tests.schemas.models.MovieListItem attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -369,10 +377,10 @@
       <li><a href="tests.html#tests.schemas.models.MovieDetails.original_title">original_title (tests.schemas.models.MovieDetails attribute)</a>
 
       <ul>
-        <li><a href="tests.html#tests.schemas.models.PopularMovieItem.original_title">(tests.schemas.models.PopularMovieItem attribute)</a>
+        <li><a href="tests.html#tests.schemas.models.MovieListItem.original_title">(tests.schemas.models.MovieListItem attribute)</a>
 </li>
       </ul></li>
-      <li><a href="tests.html#tests.schemas.models.PopularMovieItem.overview">overview (tests.schemas.models.PopularMovieItem attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.MovieListItem.overview">overview (tests.schemas.models.MovieListItem attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -387,7 +395,11 @@
       <li><a href="tests.html#tests.contracts.conftest.pact_movies_api">pact_movies_api() (in module tests.contracts.conftest)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.PopularMoviesResponse.page">page (tests.schemas.models.PopularMoviesResponse attribute)</a>
+
+      <ul>
+        <li><a href="tests.html#tests.schemas.models.SearchMoviesResponse.page">(tests.schemas.models.SearchMoviesResponse attribute)</a>
 </li>
+      </ul></li>
       <li><a href="tests.html#tests.conftest.people_api">people_api() (in module tests.conftest)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.PersonDetails">PersonDetails (class in tests.schemas.models)</a>
@@ -398,19 +410,17 @@
 </li>
       <li><a href="tests.html#tests.schemas.models.PersonDetails.place_of_birth">place_of_birth (tests.schemas.models.PersonDetails attribute)</a>
 </li>
-      <li><a href="tests.html#tests.schemas.models.PersonDetails.popularity">popularity (tests.schemas.models.PersonDetails attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.MovieListItem.popularity">popularity (tests.schemas.models.MovieListItem attribute)</a>
 
       <ul>
-        <li><a href="tests.html#tests.schemas.models.PopularMovieItem.popularity">(tests.schemas.models.PopularMovieItem attribute)</a>
+        <li><a href="tests.html#tests.schemas.models.PersonDetails.popularity">(tests.schemas.models.PersonDetails attribute)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="tests.html#tests.schemas.models.PopularMovieItem">PopularMovieItem (class in tests.schemas.models)</a>
-</li>
       <li><a href="tests.html#tests.schemas.models.PopularMoviesResponse">PopularMoviesResponse (class in tests.schemas.models)</a>
 </li>
-      <li><a href="tests.html#tests.schemas.models.PopularMovieItem.poster_path">poster_path (tests.schemas.models.PopularMovieItem attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.MovieListItem.poster_path">poster_path (tests.schemas.models.MovieListItem attribute)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.MovieDetails.production_companies">production_companies (tests.schemas.models.MovieDetails attribute)</a>
 </li>
@@ -442,18 +452,22 @@
 </li>
       <li><a href="tests.html#tests.schemas.models.RatingResponse">RatingResponse (class in tests.schemas.models)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="tests.html#tests.schemas.models.MovieDetails.release_date">release_date (tests.schemas.models.MovieDetails attribute)</a>
 
       <ul>
-        <li><a href="tests.html#tests.schemas.models.PopularMovieItem.release_date">(tests.schemas.models.PopularMovieItem attribute)</a>
+        <li><a href="tests.html#tests.schemas.models.MovieListItem.release_date">(tests.schemas.models.MovieListItem attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="config.html#config.config.Config.REQUEST_TOKEN">REQUEST_TOKEN (config.config.Config attribute)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.PopularMoviesResponse.results">results (tests.schemas.models.PopularMoviesResponse attribute)</a>
+
+      <ul>
+        <li><a href="tests.html#tests.schemas.models.SearchMoviesResponse.results">(tests.schemas.models.SearchMoviesResponse attribute)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -461,6 +475,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="helpers_failure_analyzer.html#tests.helpers.failure_analyzer.FailureAnalyzer.save_results">save_results() (tests.helpers.failure_analyzer.FailureAnalyzer method)</a>
+</li>
+      <li><a href="tests.html#tests.conftest.search_api">search_api() (in module tests.conftest)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.SearchMoviesResponse">SearchMoviesResponse (class in tests.schemas.models)</a>
 </li>
       <li><a href="config.html#config.config.Config.SESSION_ID">SESSION_ID (config.config.Config attribute)</a>
 </li>
@@ -502,6 +520,8 @@
         <li><a href="tests.html#tests.movies.test_details.TEST_DATA">(in module tests.movies.test_details)</a>
 </li>
         <li><a href="tests.html#tests.people.test_details.TEST_DATA">(in module tests.people.test_details)</a>
+</li>
+        <li><a href="tests.html#tests.search.test_movie.TEST_DATA">(in module tests.search.test_movie)</a>
 </li>
       </ul></li>
       <li>
@@ -560,8 +580,6 @@
         <li><a href="helpers_response_assertions.html#module-tests.helpers.response_assertions">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     tests.helpers.test_data_generators
 
@@ -569,6 +587,8 @@
         <li><a href="helpers_test_data_generators.html#module-tests.helpers.test_data_generators">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     tests.lists.test_update
 
@@ -618,20 +638,35 @@
         <li><a href="tests.html#module-tests.schemas.models">module</a>
 </li>
       </ul></li>
+      <li>
+    tests.search.test_movie
+
+      <ul>
+        <li><a href="tests.html#module-tests.search.test_movie">module</a>
+</li>
+      </ul></li>
       <li><a href="config.html#config.config.Config.TIMEOUT">TIMEOUT (config.config.Config attribute)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.MovieDetails.title">title (tests.schemas.models.MovieDetails attribute)</a>
 
       <ul>
-        <li><a href="tests.html#tests.schemas.models.PopularMovieItem.title">(tests.schemas.models.PopularMovieItem attribute)</a>
+        <li><a href="tests.html#tests.schemas.models.MovieListItem.title">(tests.schemas.models.MovieListItem attribute)</a>
 </li>
       </ul></li>
       <li><a href="failure_mcp.html#failure_mcp.tools.analyze_test_failure.TOOLS">TOOLS (in module failure_mcp.tools.analyze_test_failure)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.PopularMoviesResponse.total_pages">total_pages (tests.schemas.models.PopularMoviesResponse attribute)</a>
+
+      <ul>
+        <li><a href="tests.html#tests.schemas.models.SearchMoviesResponse.total_pages">(tests.schemas.models.SearchMoviesResponse attribute)</a>
 </li>
+      </ul></li>
       <li><a href="tests.html#tests.schemas.models.PopularMoviesResponse.total_results">total_results (tests.schemas.models.PopularMoviesResponse attribute)</a>
+
+      <ul>
+        <li><a href="tests.html#tests.schemas.models.SearchMoviesResponse.total_results">(tests.schemas.models.SearchMoviesResponse attribute)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -648,13 +683,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="config.html#config.config.Config.validate">validate() (config.config.Config class method)</a>
 </li>
-      <li><a href="tests.html#tests.schemas.models.PopularMovieItem.video">video (tests.schemas.models.PopularMovieItem attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.MovieListItem.video">video (tests.schemas.models.MovieListItem attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="tests.html#tests.schemas.models.PopularMovieItem.vote_average">vote_average (tests.schemas.models.PopularMovieItem attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.MovieListItem.vote_average">vote_average (tests.schemas.models.MovieListItem attribute)</a>
 </li>
-      <li><a href="tests.html#tests.schemas.models.PopularMovieItem.vote_count">vote_count (tests.schemas.models.PopularMovieItem attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.MovieListItem.vote_count">vote_count (tests.schemas.models.MovieListItem attribute)</a>
 </li>
   </ul></td>
 </tr></table>

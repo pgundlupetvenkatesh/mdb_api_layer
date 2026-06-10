@@ -35,6 +35,26 @@
   <section id="module-tests.helpers.response_assertions">
 <span id="response-assertions"></span><h1>Response Assertions<a class="headerlink" href="#module-tests.helpers.response_assertions" title="Link to this heading">¶</a></h1>
 <dl class="py function">
+<dt class="sig sig-object py" id="tests.helpers.response_assertions.assert_get_metadata">
+<span class="sig-prename descclassname"><span class="pre">tests.helpers.response_assertions.</span></span><span class="sig-name descname"><span class="pre">assert_get_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url_contains</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/helpers/response_assertions.html#assert_get_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.helpers.response_assertions.assert_get_metadata" title="Link to this definition">¶</a></dt>
+<dd><p>Assert standard GET response metadata from a parametrized test case.</p>
+<p>Builds the expected-values dict from a test case (valid or invalid)
+and delegates to <code class="docutils literal notranslate"><span class="pre">assert_http_response</span></code>, keeping the metadata key
+names in one place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>response</strong> – APIResponse returned by the client.</p></li>
+<li><p><strong>case</strong> – Parametrized test data dict (expects <code class="docutils literal notranslate"><span class="pre">status_code</span></code>,
+<code class="docutils literal notranslate"><span class="pre">exp_max_elp_secs</span></code>, <code class="docutils literal notranslate"><span class="pre">exp_get_req_method</span></code>,
+<code class="docutils literal notranslate"><span class="pre">exp_content_type</span></code>, <code class="docutils literal notranslate"><span class="pre">reason</span></code>).</p></li>
+<li><p><strong>url_contains</strong> – Substring expected in the response URL.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="tests.helpers.response_assertions.assert_http_response">
 <span class="sig-prename descclassname"><span class="pre">tests.helpers.response_assertions.</span></span><span class="sig-name descname"><span class="pre">assert_http_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_val</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/helpers/response_assertions.html#assert_http_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.helpers.response_assertions.assert_http_response" title="Link to this definition">¶</a></dt>
 <dd><p>Assert common HTTP response properties.</p>
@@ -95,6 +115,7 @@
 <li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.conftest">Conftest</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.movies.test_add_rating">Movies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.people.test_details">People</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.search.test_movie">Search</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="k8s.html">Kubernetes Jobs</a></li>

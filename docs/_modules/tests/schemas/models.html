@@ -154,15 +154,15 @@
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">}</span>  <span class="c1"># allow fields not defined here (overview, etc.)</span></div>
 
 
-<span class="c1"># Nested model for popular movie items</span>
-<div class="viewcode-block" id="PopularMovieItem">
-<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.PopularMovieItem">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">PopularMovieItem</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="c1"># Nested model for movie list items</span>
+<div class="viewcode-block" id="MovieListItem">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.MovieListItem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MovieListItem</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Nested model for a single movie in the popular movies list.</span>
+<span class="sd">    Nested model for a single movie in a paginated movie list.</span>
 
-<span class="sd">    Represents one item in the ``results`` array returned by</span>
-<span class="sd">    ``GET /3/movie/popular``.</span>
+<span class="sd">    Represents one item in the ``results`` array shared by TMDB&#39;s list-style</span>
+<span class="sd">    endpoints (e.g. ``GET /3/movie/popular``, ``GET /3/search/movie``).</span>
 
 <span class="sd">    :param adult: Whether the movie is classified as adult content.</span>
 <span class="sd">    :param backdrop_path: Path to the backdrop image, or None.</span>
@@ -214,9 +214,32 @@
 <span class="sd">    :param total_results: Total number of popular movies across all pages.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">page</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PopularMovieItem</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MovieListItem</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">total_pages</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">total_results</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SearchMoviesResponse">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.SearchMoviesResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SearchMoviesResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schema for movie search response from ``GET /3/search/movie``.</span>
+
+<span class="sd">    Validates the paginated response structure containing the movies that</span>
+<span class="sd">    matched a search query. Result items use the shared ``MovieListItem``</span>
+<span class="sd">    model. ``results`` requires at least one item — searches expected to</span>
+<span class="sd">    return no matches are asserted directly in the test instead of via</span>
+<span class="sd">    this schema.</span>
+
+<span class="sd">    :param page: Current page number in the paginated results.</span>
+<span class="sd">    :param results: List of matching movie items for this page.</span>
+<span class="sd">    :param total_pages: Total number of available pages.</span>
+<span class="sd">    :param total_results: Total number of matches across all pages.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">page</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MovieListItem</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">total_pages</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">total_results</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PersonDetails">

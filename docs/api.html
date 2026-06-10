@@ -417,6 +417,53 @@ biography, known for movies, and birth info.</p>
 </dd></dl>
 
 </section>
+<section id="search-api">
+<h2>Search API<a class="headerlink" href="#search-api" title="Link to this heading">¶</a></h2>
+<p>Search API client for The Movie Database (TMDB) endpoints.</p>
+<p>This module provides a high-level interface for interacting with search-related
+TMDB API endpoints. It extends BaseAPI to inherit authentication, request
+handling, and response parsing functionality.</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>api = SearchAPI()
+response = api.search_movies({‘query’: ‘Batman’})
+logger.info(response.data[‘total_results’])</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">api.search_api.</span></span><span class="sig-name descname"><span class="pre">SearchAPI</span></span><a class="reference internal" href="_modules/api/search_api.html#SearchAPI"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAPI</span></code></p>
+<p>Client for TMDB Search API endpoints.</p>
+<p>Provides methods for searching movies by their original, translated
+and alternative titles. All methods return a response object containing
+status code, headers, and parsed data.</p>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>_sub_path (str): Base path segment for search endpoints.</p>
+</dd>
+<dt>Example:</dt><dd><p>api = SearchAPI()
+results = api.search_movies({‘query’: ‘Batman’, ‘year’: ‘1989’})</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">search_movies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/search_api.html#SearchAPI.search_movies"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Search for movies by title with optional filters.</p>
+<p>Supported query parameters: query, include_adult, language,
+primary_release_year, page, region, year.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>query_params</strong> – Optional dict of query parameters.
+Defaults to page 1 if not specified.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Response object with paginated list of matching movies.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 </section>
 
 
@@ -447,6 +494,7 @@ biography, known for movies, and birth info.</p>
 <li class="toctree-l2"><a class="reference internal" href="#lists-api">Lists API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#movies-api">Movies API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#people-api">People API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#search-api">Search API</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="config.html">Config Module</a></li>

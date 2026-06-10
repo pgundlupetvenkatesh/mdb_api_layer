@@ -55,6 +55,32 @@
     <span class="k">assert</span> <span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_url_contains&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Response url should contain movie ID &#39;</span><span class="si">{</span><span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_url_contains&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
     <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">reason</span> <span class="o">==</span> <span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_req_reason&#39;</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;Response reason should be &#39;</span><span class="si">{</span><span class="n">exp_val</span><span class="p">[</span><span class="s1">&#39;exp_req_reason&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; but it&#39;s &#39;</span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">&#39;&quot;</span></div>
 
+
+<div class="viewcode-block" id="assert_get_metadata">
+<a class="viewcode-back" href="../../../helpers_response_assertions.html#tests.helpers.response_assertions.assert_get_metadata">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">assert_get_metadata</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">case</span><span class="p">,</span> <span class="n">url_contains</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assert standard GET response metadata from a parametrized test case.</span>
+
+<span class="sd">    Builds the expected-values dict from a test case (valid or invalid)</span>
+<span class="sd">    and delegates to ``assert_http_response``, keeping the metadata key</span>
+<span class="sd">    names in one place.</span>
+
+<span class="sd">    :param response: APIResponse returned by the client.</span>
+<span class="sd">    :param case: Parametrized test data dict (expects ``status_code``,</span>
+<span class="sd">                 ``exp_max_elp_secs``, ``exp_get_req_method``,</span>
+<span class="sd">                 ``exp_content_type``, ``reason``).</span>
+<span class="sd">    :param url_contains: Substring expected in the response URL.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">assert_http_response</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s1">&#39;exp_status_code&#39;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s1">&#39;status_code&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;exp_max_elp_seconds&#39;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s1">&#39;exp_max_elp_secs&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;exp_req_method&#39;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s1">&#39;exp_get_req_method&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;exp_content_type&#39;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s1">&#39;exp_content_type&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;exp_url_contains&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">url_contains</span><span class="p">),</span>
+        <span class="s1">&#39;exp_req_reason&#39;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s1">&#39;reason&#39;</span><span class="p">]</span>
+    <span class="p">})</span></div>
+
 </pre></div>
 
           </div>
