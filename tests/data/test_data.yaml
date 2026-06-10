@@ -56,11 +56,11 @@ search_movies:
     - query_param: { "query": "Batman" }
     - query_param: { "query": "Batman", "page": 2 }
     - query_param: { "query": "Batman", "language": "en-US" }
-    - query_param: { "query": "Batman", "include_adult": true }
+    - query_param: { "query": "Batman", "include_adult": True }
     - query_param: { "query": "Batman", "region": "US" }
     - query_param: { "query": "Batman", "year": "1989" }
     - query_param: { "query": "Batman", "primary_release_year": "1989" }
-    - query_param: { "query": "Batman", "language": "en-US", "include_adult": true, "region": "US",
+    - query_param: { "query": "Batman", "language": "en-US", "include_adult": True, "region": "US",
                      "year": "1989", "primary_release_year": "1989", "page": 1 }
   empty:
     - query_param: {} # no query at all
@@ -141,15 +141,15 @@ update_list:
       reason: 'Not Found'
   valid:
       - list_id: 8637178
-        payload: { "name": 'French', "description": "$current_timestamp", "public": true }
+        payload: { "name": 'French', "description": "$current_timestamp", "public": True }
         expected_message: "The item/record was updated successfully."
       - list_id: 8637178
-        payload: { "name": 'Hollywood', "description": "$current_timestamp", "public": true }
+        payload: { "name": 'Hollywood', "description": "$current_timestamp", "public": True }
         expected_message: "The item/record was updated successfully."
   invalid:
       - list_id: 9999999999
-        payload: { "name": 'Indian', "description": "$current_timestamp", "public": false }
+        payload: { "name": 'Indian', "description": "$current_timestamp", "public": False }
         expected_message: "The resource you requested could not be found."
       - list_id: 0
-        payload: { "name": 'Hollywood', "description": "Some random Description", "public": true }
+        payload: { "name": 'Hollywood', "description": "Some random Description", "public": True }
         expected_message: "Invalid id: The pre-requisite id is invalid or not found."
