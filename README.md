@@ -4,7 +4,6 @@
 [![Docs](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml)</br>
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=yellow)
 ![pytest](https://img.shields.io/badge/Pytest-9.0%2B-orange?logo=pytest&logoColor=blue)
-![Allure](https://img.shields.io/badge/Allure-2.0%2B-purple?logo=allure&logoColor=white)
 ![Loguru](https://img.shields.io/badge/Loguru-0.7%2B-green?logo=loguru&logoColor=white)
 ![Pact](https://img.shields.io/badge/Pact-3.0%2B-red?logo=pact&logoColor=white)
 ![pydantic](https://img.shields.io/badge/Pydantic-2.12%2B-cyan?logo=pydantic&logoColor=red)
@@ -13,6 +12,7 @@
 ![Kubernetes](https://img.shields.io/badge/Kubernetes(K8s)-1.34%2B-blue?logo=kubernetes&logoColor=white)
 ![Groq](https://img.shields.io/badge/Groq-LLM%20Analysis-orange?logo=groq&logoColor=white)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude-Code-D97757?logo=claude&logoColor=Orange)
 
 API Testing Framework for The Movie Database ([TMDB](https://themoviedb.org)) with Python
 
