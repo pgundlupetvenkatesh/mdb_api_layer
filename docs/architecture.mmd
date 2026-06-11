@@ -32,6 +32,7 @@ graph TB
         LISTS["ListsAPI<br/>v4 API"] --> BASE
         ACCOUNT["AccountAPI"] --> BASE
         SEARCH["SearchAPI"] --> BASE
+        DISCOVER["DiscoverAPI"] --> BASE
     end
     classDef Title font-size:30px;
     class API Title;
@@ -50,7 +51,7 @@ graph TB
         subgraph DATA["Test Data"]
             YAML["test_data.yaml"]
             LOADER["data_loader.py<br/>YAML parser · defaults · generators"]
-            SCHEMAS["JSON Schemas<br/>movie · people · rating · generic"]
+            SCHEMAS["Pydantic models<br/>models.py · strict response validation"]
             YAML --> LOADER
         end
         classDef DataTitle font-size:30px;
@@ -61,6 +62,8 @@ graph TB
             T_LISTS_POP["movie_lists/<br/>popular"]
             T_PEOPLE["people/<br/>details"]
             T_LISTS_V4["lists/<br/>update"]
+            T_SEARCH["search/<br/>movie"]
+            T_DISCOVER["discover/<br/>movie"]
             T_CONTRACTS["contracts/<br/>Pact CDC tests"]
             T_PACTS["pacts/<br/>Generated .json contracts"]
             T_CONTRACTS --> T_PACTS
@@ -94,7 +97,6 @@ graph TB
     style CONFIG stroke:#ef6c00
     style API stroke:#c62828
     style TESTS fill:#000,stroke:#6a1b9a
-    style SPACER fill:none,stroke:none,color:#000
     style DOCS stroke:#00838f
     style TMDB stroke:#f9a825
 

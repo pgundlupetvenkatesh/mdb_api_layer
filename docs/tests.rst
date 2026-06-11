@@ -100,6 +100,13 @@ Search
    :undoc-members:
    :show-inheritance:
 
+Discover
+--------
+.. automodule:: tests.discover.test_movie
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Schema
 ~~~~~~
 .. automodule:: tests.schemas.models
