@@ -47,7 +47,8 @@ access stays scoped to that section (`TEST_DATA["<section>"][...]`).
 ### 3. No HTTP logic in tests
 Tests must not call `requests`, build URLs, or set headers directly. HTTP
 belongs in `api/` — a thin domain method on the relevant endpoint class
-(`MoviesAPI`, `PeopleAPI`, `ListsAPI`, `AccountAPI`) that calls
+(`MoviesAPI`, `PeopleAPI`, `ListsAPI`, `AccountAPI`, `SearchAPI`,
+`DiscoverAPI`) that calls
 `self.get/post/put/delete` and returns an `APIResponse`. A new endpoint =
 a new method on the class (set `_sub_path`), not inline HTTP in a test.
 
