@@ -95,6 +95,7 @@ from api.movies_api import MoviesAPI
 from api.people_api import PeopleAPI
 from api.lists_api import ListsAPI
 from api.search_api import SearchAPI
+from api.discover_api import DiscoverAPI
 
 @pytest.fixture(autouse=True)
 def _store_test_name(request):
@@ -170,9 +171,23 @@ def search_api() -> SearchAPI:
     """
     return SearchAPI()
 
+@pytest.fixture
+def discover_api() -> DiscoverAPI:
+    """
+    Provide a fresh ``DiscoverAPI`` client for a test.
+
+    Dedicated, type-annotated alternative to ``get_api_instance('discover_api')``
+    — the dependency is declared in the test signature, typo-checked at
+    collection time, and gives editor autocomplete for discover endpoints.
+
+    :return: A configured ``DiscoverAPI`` instance.
+    """
+    return DiscoverAPI()
+
 from tests.schemas.models import (
     GenericResponse, RatingResponse, MovieDetails,
-    PopularMoviesResponse, PersonDetails, SearchMoviesResponse
+    PopularMoviesResponse, PersonDetails, SearchMoviesResponse,
+    DiscoverMoviesResponse
 )
 
 @pytest.fixture
@@ -189,6 +204,7 @@ def load_schema():
         'popular_movies_schema': PopularMoviesResponse,
         'person_details_schema': PersonDetails,
         'search_movies_schema': SearchMoviesResponse,
+        'discover_movies_schema': DiscoverMoviesResponse,
     }
 
     def _load(name):

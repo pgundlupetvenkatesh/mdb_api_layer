@@ -76,6 +76,44 @@ search_movies:
     - query_param: { "query": "Batman", "page": 501 }
       expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
 
+discover_movies:
+  defaults:
+    valid:
+      status_code: 200
+      reason: 'OK'
+      exp_page: 1 # client defaults page to 1; cases that send a page override this
+    empty: # Filter combos that match nothing return 200 with empty results, not an error
+      status_code: 200
+      reason: 'OK'
+    invalid:
+      status_code: 400
+      reason: 'Bad Request'
+  valid: # One case per representative filter param + all combined; page defaults to 1 in the client
+    - query_param: {} # no filters; discover returns results by default
+    - query_param: { "page": 2 }
+      exp_page: 2
+    - query_param: { "language": "en-US" }
+    - query_param: { "include_adult": "true" }
+    - query_param: { "include_video": "true" }
+    - query_param: { "sort_by": "popularity.desc" }
+    - query_param: { "primary_release_year": "1989" }
+    - query_param: { "year": "1989" }
+    - query_param: { "region": "US" }
+    - query_param: { "with_genres": "28" }
+    - query_param: { "with_original_language": "en" }
+    - query_param: { "vote_average.gte": "7" }
+    - query_param: { "language": "en-US", "include_adult": "true", "include_video": "true",
+                     "sort_by": "popularity.desc", "primary_release_year": "1989", "region": "US",
+                     "with_genres": "28", "with_original_language": "en", "vote_average.gte": "7", "page": 1 }
+  empty:
+    - query_param: { "vote_count.gte": "100000000" } # no movie has that many votes
+    - query_param: { "with_genres": "28", "without_genres": "28" } # self-contradictory filter
+  invalid:
+    - query_param: { "page": -1 }
+      expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
+    - query_param: { "page": 501 }
+      expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
+
 add_rating:
   defaults:
     valid:
