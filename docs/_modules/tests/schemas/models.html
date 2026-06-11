@@ -242,6 +242,29 @@
     <span class="n">total_results</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="DiscoverMoviesResponse">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.DiscoverMoviesResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscoverMoviesResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schema for movie discovery response from ``GET /3/discover/movie``.</span>
+
+<span class="sd">    Validates the paginated response structure containing the movies that</span>
+<span class="sd">    matched the discover filter/sort criteria. Result items use the shared</span>
+<span class="sd">    ``MovieListItem`` model. ``results`` requires at least one item —</span>
+<span class="sd">    filter combinations expected to match nothing are asserted directly</span>
+<span class="sd">    in the test instead of via this schema.</span>
+
+<span class="sd">    :param page: Current page number in the paginated results.</span>
+<span class="sd">    :param results: List of matching movie items for this page.</span>
+<span class="sd">    :param total_pages: Total number of available pages.</span>
+<span class="sd">    :param total_results: Total number of matches across all pages.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">page</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MovieListItem</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">total_pages</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">total_results</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="PersonDetails">
 <a class="viewcode-back" href="../../../tests.html#tests.schemas.models.PersonDetails">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PersonDetails</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>

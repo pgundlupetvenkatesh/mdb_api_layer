@@ -133,6 +133,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">api.people_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">PeopleAPI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">api.lists_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListsAPI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">api.search_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchAPI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">api.discover_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscoverAPI</span>
 
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">autouse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_store_test_name</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
@@ -220,9 +221,26 @@
     <span class="k">return</span> <span class="n">SearchAPI</span><span class="p">()</span></div>
 
 
+<div class="viewcode-block" id="discover_api">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.discover_api">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">discover_api</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">DiscoverAPI</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Provide a fresh ``DiscoverAPI`` client for a test.</span>
+
+<span class="sd">    Dedicated, type-annotated alternative to ``get_api_instance(&#39;discover_api&#39;)``</span>
+<span class="sd">    — the dependency is declared in the test signature, typo-checked at</span>
+<span class="sd">    collection time, and gives editor autocomplete for discover endpoints.</span>
+
+<span class="sd">    :return: A configured ``DiscoverAPI`` instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">DiscoverAPI</span><span class="p">()</span></div>
+
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">tests.schemas.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">GenericResponse</span><span class="p">,</span> <span class="n">RatingResponse</span><span class="p">,</span> <span class="n">MovieDetails</span><span class="p">,</span>
-    <span class="n">PopularMoviesResponse</span><span class="p">,</span> <span class="n">PersonDetails</span><span class="p">,</span> <span class="n">SearchMoviesResponse</span>
+    <span class="n">PopularMoviesResponse</span><span class="p">,</span> <span class="n">PersonDetails</span><span class="p">,</span> <span class="n">SearchMoviesResponse</span><span class="p">,</span>
+    <span class="n">DiscoverMoviesResponse</span>
 <span class="p">)</span>
 
 <div class="viewcode-block" id="load_schema">
@@ -241,6 +259,7 @@
         <span class="s1">&#39;popular_movies_schema&#39;</span><span class="p">:</span> <span class="n">PopularMoviesResponse</span><span class="p">,</span>
         <span class="s1">&#39;person_details_schema&#39;</span><span class="p">:</span> <span class="n">PersonDetails</span><span class="p">,</span>
         <span class="s1">&#39;search_movies_schema&#39;</span><span class="p">:</span> <span class="n">SearchMoviesResponse</span><span class="p">,</span>
+        <span class="s1">&#39;discover_movies_schema&#39;</span><span class="p">:</span> <span class="n">DiscoverMoviesResponse</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_load</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>api.discover_api &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for api.discover_api</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Discover API client for The Movie Database (TMDB) endpoints.</span>
+
+<span class="sd">This module provides a high-level interface for interacting with discover-related</span>
+<span class="sd">TMDB API endpoints. It extends BaseAPI to inherit authentication, request</span>
+<span class="sd">handling, and response parsing functionality.</span>
+
+<span class="sd">Usage:</span>
+<span class="sd">    api = DiscoverAPI()</span>
+<span class="sd">    response = api.discover_movies({&#39;with_genres&#39;: &#39;28&#39;})</span>
+<span class="sd">    logger.info(response.data[&#39;total_results&#39;])</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">api.base_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseAPI</span>
+
+<div class="viewcode-block" id="DiscoverAPI">
+<a class="viewcode-back" href="../../api.html#api.discover_api.DiscoverAPI">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscoverAPI</span><span class="p">(</span><span class="n">BaseAPI</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Client for TMDB Discover API endpoints.</span>
+
+<span class="sd">    Provides methods for discovering movies by filtering and sorting across</span>
+<span class="sd">    a wide range of attributes (genres, release dates, ratings, language,</span>
+<span class="sd">    etc.). All methods return a response object containing status code,</span>
+<span class="sd">    headers, and parsed data.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        _sub_path (str): Base path segment for discover endpoints.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        api = DiscoverAPI()</span>
+<span class="sd">        results = api.discover_movies({&#39;with_genres&#39;: &#39;28&#39;, &#39;sort_by&#39;: &#39;popularity.desc&#39;})</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_sub_path</span> <span class="o">=</span> <span class="s2">&quot;discover&quot;</span>
+
+<div class="viewcode-block" id="DiscoverAPI.discover_movies">
+<a class="viewcode-back" href="../../api.html#api.discover_api.DiscoverAPI.discover_movies">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">discover_movies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Discover movies by filter and sort criteria.</span>
+
+<span class="sd">        Supported query parameters include: sort_by, include_adult,</span>
+<span class="sd">        include_video, language, page, region, year, primary_release_year,</span>
+<span class="sd">        with_genres, with_original_language, vote_average.gte and</span>
+<span class="sd">        vote_count.gte (among others documented by TMDB).</span>
+
+<span class="sd">        :param query_params: Optional dict of query parameters.</span>
+<span class="sd">                             Defaults to page 1 if not specified.</span>
+<span class="sd">        :return: Response object with paginated list of matching movies.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query_params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;page&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">query_params</span> <span class="ow">or</span> <span class="p">{})}</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;query_params: </span><span class="si">{</span><span class="n">query_params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/movie&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

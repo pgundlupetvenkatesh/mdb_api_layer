@@ -229,6 +229,56 @@ for interacting with the Movie Database API.</p>
 </dd></dl>
 
 </section>
+<section id="discover-api">
+<h2>Discover API<a class="headerlink" href="#discover-api" title="Link to this heading">¶</a></h2>
+<p>Discover API client for The Movie Database (TMDB) endpoints.</p>
+<p>This module provides a high-level interface for interacting with discover-related
+TMDB API endpoints. It extends BaseAPI to inherit authentication, request
+handling, and response parsing functionality.</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>api = DiscoverAPI()
+response = api.discover_movies({‘with_genres’: ‘28’})
+logger.info(response.data[‘total_results’])</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">api.discover_api.</span></span><span class="sig-name descname"><span class="pre">DiscoverAPI</span></span><a class="reference internal" href="_modules/api/discover_api.html#DiscoverAPI"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAPI</span></code></p>
+<p>Client for TMDB Discover API endpoints.</p>
+<p>Provides methods for discovering movies by filtering and sorting across
+a wide range of attributes (genres, release dates, ratings, language,
+etc.). All methods return a response object containing status code,
+headers, and parsed data.</p>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>_sub_path (str): Base path segment for discover endpoints.</p>
+</dd>
+<dt>Example:</dt><dd><p>api = DiscoverAPI()
+results = api.discover_movies({‘with_genres’: ‘28’, ‘sort_by’: ‘popularity.desc’})</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">discover_movies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/discover_api.html#DiscoverAPI.discover_movies"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Discover movies by filter and sort criteria.</p>
+<p>Supported query parameters include: sort_by, include_adult,
+include_video, language, page, region, year, primary_release_year,
+with_genres, with_original_language, vote_average.gte and
+vote_count.gte (among others documented by TMDB).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>query_params</strong> – Optional dict of query parameters.
+Defaults to page 1 if not specified.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Response object with paginated list of matching movies.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 <section id="lists-api">
 <h2>Lists API<a class="headerlink" href="#lists-api" title="Link to this heading">¶</a></h2>
 <dl class="py class">
@@ -491,6 +541,7 @@ Defaults to page 1 if not specified.</p>
 <li class="toctree-l3"><a class="reference internal" href="#base-api-module">Base API Module</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#discover-api">Discover API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#lists-api">Lists API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#movies-api">Movies API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#people-api">People API</a></li>

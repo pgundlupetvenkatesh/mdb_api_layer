@@ -17,6 +17,14 @@ Base API
    :undoc-members:
    :show-inheritance:
 
+Discover API
+------------
+.. automodule:: api.discover_api
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Lists API
 ---------
 .. automodule:: api.lists_api
