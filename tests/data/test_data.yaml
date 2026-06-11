@@ -126,12 +126,12 @@ add_rating:
     - rating_payload: { "value": "$random_rating" }
     - rating_payload: { "value": "$random_rating" }
   invalid:
-    - movie_id: 550
+    - movie_id: "$random_movie_id"
       rating_payload: { "value": "$random_invalid_rating" }
       expected_message: ['Value too high: Value must be less than, or equal to 10.0.',
                          'Value too low: Value must be greater than 0.0.',
                          'Value invalid: Value must be a multiple of 0.50.']
-    - movie_id: 680
+    - movie_id: "$random_movie_id"
       rating_payload: { "value": "$random_invalid_rating" }
       expected_message: ['Value too high: Value must be less than, or equal to 10.0.',
                          'Value too low: Value must be greater than 0.0.',
