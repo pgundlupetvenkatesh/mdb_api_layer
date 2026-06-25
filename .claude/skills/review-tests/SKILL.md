@@ -101,7 +101,29 @@ autodoc renders it. A one-line summary is fine for a trivial closure. Flag any
 callable in the diff with no docstring. Quick sweep: `grep -n "def "` the
 changed files and confirm each `def` is followed by a docstring.
 
-### 9. CLAUDE.md drift
+### 9. Secrets never logged, printed, or echoed
+A credential must never be interpolated into a log line, `print`, exception
+message, assertion message, or report attachment. This repo handles real
+secrets — `GROQ_API_KEY`, `TMDB_API_KEY`, `TMDB_AUTH_TOKEN` (Bearer),
+`TMDB_USER_ACCESS_TOKEN` — and a leak is high-impact: Loguru output goes to the
+console, to `logs/test_run.log` under `--log-to-file`, and into CI logs and
+Allure/HTML reports, any of which may be retained or shared. INFO is the default
+level, so an `logger.info(... {api_key})` leaks on every run.
+
+Flag any line that emits a secret's **value**. Logging whether one is *set* is
+fine — log presence, not the secret:
+- bad: `logger.info(f"GROQ_API_KEY {self.api_key}")`
+- good: `logger.info(f"GROQ_API_KEY {'set' if self.api_key else 'missing'}")`
+
+Also watch for indirect leaks: logging a whole config/`os.environ` dump, an
+auth header dict, or a `requests` object that carries the Bearer token. Quick
+sweep: grep the changed files for `logger`/`print` lines that mention
+`key`, `token`, `secret`, `auth`, `password`, or `Bearer`, and confirm none
+interpolate the value. If a secret already reached a shared/CI log, masking
+the line forward doesn't unleak it — call out that the credential should be
+**rotated**.
+
+### 10. CLAUDE.md drift
 If the change adds/removes/renames a client, endpoint, fixture, schema,
 helper, command, flag, env var, convention, or gotcha, CLAUDE.md likely needs
 updating. Note it and hand off to the `update-claude-md` skill — don't edit
