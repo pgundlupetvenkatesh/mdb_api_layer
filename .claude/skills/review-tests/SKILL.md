@@ -86,7 +86,22 @@ the Pact mock (not the live API), validate the mocked body against the **same**
 `PACT_CONSUMER`/`PACT_PROVIDER` contract. Flag a contract test that hits the
 live API or skips schema validation.
 
-### 8. CLAUDE.md drift
+### 8. Sphinx docstrings on everything callable
+Every new or edited callable must carry a Sphinx-style docstring — and it is
+easy to miss the small ones. Check **all** of these, not just public functions:
+- module-level functions and class methods,
+- private/underscore helpers (`_build_payload`, `_summarize`, …),
+- **nested/inner functions and closures** (e.g. a `verdict()` or `fraction()`
+  defined inside another function) — these are the most-often-skipped,
+- pytest fixtures and hooks.
+
+A docstring should state what the callable does and document params/returns
+with `:param:` / `:returns:` (and `:raises:` where it throws) so Sphinx
+autodoc renders it. A one-line summary is fine for a trivial closure. Flag any
+callable in the diff with no docstring. Quick sweep: `grep -n "def "` the
+changed files and confirm each `def` is followed by a docstring.
+
+### 9. CLAUDE.md drift
 If the change adds/removes/renames a client, endpoint, fixture, schema,
 helper, command, flag, env var, convention, or gotcha, CLAUDE.md likely needs
 updating. Note it and hand off to the `update-claude-md` skill — don't edit

@@ -578,10 +578,62 @@ attached to the Allure report deployed to GitHub Pages.
 |------------------------|-------------------------------------------|------------|----------------------------------------------|
 | `AI_ANALYSIS_ENABLED`  | Enable AI failure analysis                | No         | `false`                                      |
 | `GROQ_API_KEY`         | Groq API key for LLM access               | If enabled | -                                            |
-| `AI_MODEL`             | LLM model identifier on Groq              | No         | `meta-llama/llama-4-scout-17b-16e-instruct`  |
+| `AI_MODEL`             | Analyzer (diagnosis) model on Groq        | No         | `meta-llama/llama-4-scout-17b-16e-instruct`  |
+| `AI_JUDGE_MODEL`       | Judge model on Groq for live judging      | No         | `openai/gpt-oss-120b`                        |
 
 > **Note:** Groq free tier has rate limits. For large test suites with many failures, analysis may be throttled.
 > The analyzer gracefully handles errors — if an LLM call fails, the test result is unaffected.
+
+#### Live diagnosis judging
+
+Add `--judge-diagnosis` (on top of `--failure-analysis`) to also score each
+diagnosis with an LLM judge (`AI_JUDGE_MODEL`) for **groundedness** (no
+hallucinated facts), **completeness** (covers the decisive signals), and
+**actionability** (the suggested fix is concrete) — correctness is *not* judged
+live because a real failure has no reference answer. The verdict is logged
+(`⚖️ Diagnosis quality [pass] …`) and attached to the Allure report
+("⚖️ Diagnosis Quality (LLM judge)"). Judging is opt-in because it adds one judge
+call per failed test — leave it off for normal triage runs and turn it on when
+you're evaluating the analyzer itself. To measure correctness too, run the
+offline eval below.
+
+| Dimension     | Failure mode it catches                                                |
+|---------------|------------------------------------------------------------------------|
+| Correctness   | The diagnosis is wrong — names the wrong cause                          |
+| Groundedness  | The diagnosis is made up — cites facts not in failure_context          |
+| Completeness  | The diagnosis is thin — ignores a decisive signal or leaves a field empty |
+| Actionability | The suggested fix is vague — a direction, not a concrete next step      |
+
+```bash
+poetry run pytest tests/ --failure-analysis --judge-diagnosis -v
+poetry run pytest tests/ --failure-analysis --judge-diagnosis --alluredir=allure-results -v -s
+```
+
+![grade_diag](grade_diagnosis.png)
+
+### Evaluating the AI Analyzer
+
+The `evals/` package measures how good the analyzer's diagnoses actually are, using
+an **LLM-as-a-judge**. It runs the analyzer (Llama Scout) live on a curated golden
+dataset of realistic TMDB failures (`evals/golden_dataset.yaml`, one+ case per
+category), then has a judge model (`openai/gpt-oss-120b` on Groq) score each
+diagnosis on four dimensions:
+
+- **correctness** — right category (vs. the case's `expected` reference) and a root cause consistent with the expected gist
+- **groundedness** — every claim/evidence item is supported by the failure context (no hallucinated status codes, fields, or values)
+- **completeness** — covers the decisive signals and all required fields are populated
+- **actionability** — the `suggested_fix` is a concrete, specific next step, not vague boilerplate
+
+Only `GROQ_API_KEY` is needed (both the analyzer and the judge run on Groq).
+
+```bash
+poetry run python -m evals                                  # run on the golden dataset
+poetry run python -m evals --judge-model openai/gpt-oss-120b   # override the judge model
+```
+
+It prints a per-case table plus aggregate metrics (category accuracy, per-dimension
+pass rates) and writes a full report to `evals/results/eval_results.json` (gitignored).
+Exit code is non-zero if any case fails, so it can gate CI.
 
 ## Reports
 
@@ -930,6 +982,5 @@ update the gh-pages branch GitHub Docs: Token Permissions.<br>
 
 ## Future Improvements
 
-* AI-based test generation
 * Load perf testing with Locust
 * Send test results to Grafana

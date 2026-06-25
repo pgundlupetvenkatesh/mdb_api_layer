@@ -3,7 +3,7 @@ Pytest configuration and shared fixtures for the TMDB API test suite.
 
 This module is automatically loaded by pytest before test collection. It provides:
 
-- **CLI options**: ``--loguru-log-level``, ``--log-to-file``, ``--failure-analysis``
+- **CLI options**: ``--loguru-log-level``, ``--log-to-file``, ``--failure-analysis``, ``--judge-diagnosis``
 - **Hooks**: Logging setup, AI failure analysis, Allure/HTML report customization
 - **Fixtures**: API client factory, Pydantic schema loader, test data loader
 
@@ -58,6 +58,14 @@ def pytest_addoption(parser):
         action="store_true",
         default=False,
         help="Enable AI-powered test failure analysis (requires GROQ_API_KEY)"
+    )
+    parser.addoption(
+        "--judge-diagnosis",
+        action="store_true",
+        default=False,
+        help="Also judge each diagnosis's quality (groundedness + completeness) "
+             "with the LLM judge. Requires --failure-analysis and GROQ_API_KEY; "
+             "adds one judge LLM call per failed test."
     )
 
 # Set LOG_LEVEL to environment variable before any test modules are imported, ensuring loguru is configured correctly
@@ -285,8 +293,11 @@ def pytest_runtest_makereport(item, call):
 
     Runs after each test phase (setup/call/teardown). On failure during
     the 'call' phase, extracts context from the test and API response,
-    then sends it to the LLM for diagnosis. The analysis is attached
-    to the Allure report as a text attachment.
+    then sends it to the LLM for diagnosis. When --judge-diagnosis is also set,
+    the diagnosis is scored by an LLM judge for groundedness, completeness, and
+    actionability (correctness is not scored live — a failure has no reference).
+    The diagnosis (and, when judged, the quality verdict) are attached to the
+    Allure report as JSON attachments.
     """
     outcome = yield
     report = outcome.get_result()
@@ -339,6 +350,36 @@ def pytest_runtest_makereport(item, call):
             )
         except Exception:
             pass  # Allure not available
+
+        # Judge the diagnosis's quality (groundedness + completeness + actionability,
+        # everything except correctness — a live failure has no reference answer).
+        # Opt-in and subordinate to analysis: skip unless --judge-diagnosis is set,
+        # so a normal triage run pays for diagnosis but not the extra judge call.
+        if not item.config.getoption("--judge-diagnosis"):
+            return
+        from evals.judge import DEFAULT_JUDGE_MODEL, judge_live
+        judgement = judge_live(
+            failure_context,
+            diagnosis,
+            model=os.getenv("AI_JUDGE_MODEL", DEFAULT_JUDGE_MODEL),
+            api_key=os.getenv("GROQ_API_KEY"),
+        )
+        if judgement:
+            logger.info(
+                f"⚖️ Diagnosis quality [{judgement['overall_verdict']}] — "
+                f"groundedness: {judgement['groundedness']['verdict']}, "
+                f"completeness: {judgement['completeness']['verdict']}, "
+                f"actionability: {judgement['actionability']['verdict']}"
+            )
+            try:
+                import allure
+                allure.attach(
+                    json.dumps(judgement, indent=2),
+                    name="⚖️ Diagnosis Quality (LLM-as-a-judge)",
+                    attachment_type=allure.attachment_type.JSON
+                )
+            except Exception:
+                pass  # Allure not available
 
 def pytest_sessionfinish(session, exitstatus):
     """
