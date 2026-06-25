@@ -139,7 +139,7 @@ JUDGE_OUTPUT_SCHEMA = _output_schema(("correctness", "groundedness", "completene
 LIVE_JUDGE_OUTPUT_SCHEMA = _output_schema(("groundedness", "completeness", "actionability"))
 
 
-def strip_diagnosis(diagnosis: dict) -> dict:
+def sanitize_diagnosis(diagnosis: dict) -> dict:
     """
     Clean an analyzer diagnosis before it is shown to the judge.
 
@@ -244,7 +244,7 @@ def judge_live(failure_context: dict, diagnosis: dict, model: str = DEFAULT_JUDG
 
     Used in-pytest on live failures, which have no reference answer — so
     correctness is deliberately not judged. The diagnosis is cleaned with
-    :func:`strip_diagnosis` before being shown to the judge.
+    :func:`sanitize_diagnosis` before being shown to the judge.
 
     :param failure_context: The context the analyzer was given for this failure.
     :param diagnosis: The raw diagnosis the analyzer produced.
@@ -254,5 +254,5 @@ def judge_live(failure_context: dict, diagnosis: dict, model: str = DEFAULT_JUDG
         ``actionability``, ``overall_verdict``), or ``None`` if the call or
         parse fails.
     """
-    payload = {"failure_context": failure_context, "diagnosis": strip_diagnosis(diagnosis)}
+    payload = {"failure_context": failure_context, "diagnosis": sanitize_diagnosis(diagnosis)}
     return _call_judge(LIVE_JUDGE_SYSTEM_PROMPT, LIVE_JUDGE_OUTPUT_SCHEMA, payload, model, api_key)

@@ -628,8 +628,23 @@ Only `GROQ_API_KEY` is needed (both the analyzer and the judge run on Groq).
 
 ```bash
 poetry run python -m evals                                  # run on the golden dataset
-poetry run python -m evals --judge-model openai/gpt-oss-120b   # override the judge model
+poetry run python -m evals --judge-model openai/gpt-oss-20b   # override the judge default model openai/gpt-oss-120b
 ```
+#### Eval Summary Table
+| case_id                      | category (expected→got) | corr | grnd | cmpl | actn | overall |
+|------------------------------|-------------------------|------|------|------|------|---------|
+| timeout_slow_response        | timeout→timeout         | pass | pass | pass | pass | PASS    |
+| timeout_read_timeout         | timeout→timeout         | pass | fail | pass | pass | FAIL    |
+| auth_error_invalid_token     | auth_error→auth_error   | pass | pass | pass | pass | PASS    |
+| schema_mismatch_pydantic     | schema_mismatch→api_bug | fail | pass | pass | pass | FAIL    |
+| api_bug_wrong_value          | api_bug→api_bug         | pass | pass | pass | pass | PASS    |
+| test_bug_wrong_expectation   | test_bug→test_bug       | pass | pass | pass | pass | PASS    |
+| data_issue_stale_id          | data_issue→data_issue   | pass | pass | pass | pass | PASS    |
+| environment_connection_error | environment→environment | pass | pass | pass | pass | PASS    |
+
+Cases: 8  judged: 8  scout_failures: 0  judge_errors: 0
+Category accuracy: 88%
+Pass rates — correctness: 88%  groundedness: 88%  completeness: 100%  actionability: 100%  overall: 75%
 
 It prints a per-case table plus aggregate metrics (category accuracy, per-dimension
 pass rates) and writes a full report to `evals/results/eval_results.json` (gitignored).

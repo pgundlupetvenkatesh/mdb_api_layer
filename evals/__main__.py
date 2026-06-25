@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 from loguru import logger
 
 from evals.dataset import load_dataset
-from evals.judge import DEFAULT_JUDGE_MODEL, judge_case, strip_diagnosis
+from evals.judge import DEFAULT_JUDGE_MODEL, judge_case, sanitize_diagnosis
 
 DEFAULT_DATASET = "evals/golden_dataset.yaml"
 DEFAULT_OUTPUT = "evals/results/eval_results.json"
@@ -101,7 +101,7 @@ def _diagnose_cases(cases: list[dict]) -> list[dict]:
             {
                 "case_id": case["id"],
                 "expected_category": case["expected"]["expected_category"],
-                "diagnosis": strip_diagnosis(diagnosis) if diagnosis else None,
+                "diagnosis": sanitize_diagnosis(diagnosis) if diagnosis else None,
                 "scout_failure": diagnosis is None,
             }
         )
