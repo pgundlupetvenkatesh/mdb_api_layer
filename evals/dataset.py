@@ -47,7 +47,7 @@ def load_dataset(path: str | Path) -> list[dict]:
     if not cases:
         raise ValueError(f"{path}: dataset has no cases")
 
-    seen_ids: set[str] = set()
+    seen_ids: set[str] = set() # Tracks IDs already encountered for duplicate detection.
     for i, case in enumerate(cases):
         case_id = case.get("id")
         label = case_id or f"case[{i}]"

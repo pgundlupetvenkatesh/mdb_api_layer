@@ -154,13 +154,16 @@ def sanitize_diagnosis(diagnosis: dict) -> dict:
     :param diagnosis: The raw diagnosis dict from the analyzer.
     :returns: A new dict safe to embed in a judge payload and a report.
     """
+    # rebuilds the diagnosis keeping every key except test_name and model so the judge can't be biased by knowing which
+    # model wrote the answer
     cleaned = {k: v for k, v in diagnosis.items() if k not in ("test_name", "model")}
     if "confidence" in cleaned:
         try:
+            # Parsing to int() for consistency in report and judge payload
             cleaned["confidence"] = int(str(cleaned["confidence"]).strip())
         except (ValueError, TypeError):
             pass  # leave as-is; the judge tolerates a non-int confidence
-    return cleaned
+    return cleaned # stripped-and-normalized copy, ready to embed in a judge payload
 
 
 def _call_judge(system_prompt: str, output_schema: dict, payload: dict, model: str, api_key: str) -> dict | None:
@@ -181,13 +184,18 @@ def _call_judge(system_prompt: str, output_schema: dict, payload: dict, model: s
     :param api_key: Groq API key; falls back to the client's env-based default.
     :returns: The parsed judge output, or ``None`` on failure.
     """
+    # Lazy import
     from groq import Groq
 
     client = Groq(api_key=api_key)
+    logger.info(f"Sending user payload {json.dumps(payload, indent=2)}")
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": json.dumps(payload, indent=2)},
     ]
+    # temperature — near-deterministic; a grader should be stable, not creative.
+    # reasoning_effort — GPT model is a reasoning model; low effort keeps it cheap/fast as judging is a constrained task.
+    # max_completion_tokens — headroom for the reasoning tokens GPT emits before the JSON.
     kwargs = dict(model=model, messages=messages, temperature=0.1, reasoning_effort="low", max_completion_tokens=1500)
 
     try:
@@ -214,6 +222,7 @@ def _call_judge(system_prompt: str, output_schema: dict, payload: dict, model: s
         logger.warning(f"Judge returned unparseable JSON: {e}")
         return None
 
+    # checks every key is present; if any is missing, log the keys for debugging and return none
     if not all(k in result for k in output_schema["required"]):
         logger.warning(f"Judge output missing required keys: {sorted(result)}")
         return None
