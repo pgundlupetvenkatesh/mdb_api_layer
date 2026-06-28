@@ -47,7 +47,7 @@ def _make_scout():
     """
     from tests.helpers.failure_analyzer import FailureAnalyzer
 
-    scout = FailureAnalyzer()
+    scout = FailureAnalyzer() # Here self.enabled is whatever AI_ANALYSIS_ENABLED is; likely false during an eval run
     scout.enabled = True
     scout.api_key = os.getenv("GROQ_API_KEY")
     return scout
@@ -59,12 +59,38 @@ def _build_payload(case: dict, diagnosis: dict) -> dict:
 
     The payload bundles the three things the judge needs: the ``failure_context``
     the analyzer saw, the ``diagnosis`` it produced (already cleaned), and the
-    ``expected`` reference answer the dataset author wrote. The judge scores
-    correctness against ``expected`` and scores groundedness/completeness from
-    ``failure_context`` alone. This is the exact shape ``judge.judge_case``
-    documents and ``JUDGE_SYSTEM_PROMPT`` describes.
+    ``expected`` reference answer the dataset author wrote.
 
-    :param case: A dataset case (``id``, ``failure_context``, ``expected``).
+    The ``failure_context`` is fed to Scout to produce the *whole* diagnosis, and
+    that one diagnosis is then judged on all four dimensions — ``failure_context``
+    is not tied to any single dimension. What sets correctness apart is the judge,
+    not the input: correctness compares Scout's ``diagnosis`` (its ``category`` and
+    ``root_cause``) against ``expected`` — the known-true answer a human authored
+    for this case — so it needs that reference to grade against. Groundedness,
+    completeness, and actionability need no reference: they judge the diagnosis
+    against the ``failure_context`` evidence itself, asking whether it is
+    internally sound, not whether it is *right*.
+
+    This is why correctness is an offline-only dimension. ``expected`` exists only
+    in the curated dataset; it is hand-written by someone who already knew the true
+    cause, and is *not* derivable from ``failure_context`` (if it were, we would not
+    need Scout). A live failure has no such answer key — so ``judge_live`` drops
+    correctness and scores only the other three. This is the exact shape
+    ``judge.judge_case`` documents and ``JUDGE_SYSTEM_PROMPT`` describes.
+
+    How it differs from the live path
+
+      ┌──────────────────────┬───────────────────────────────────────────────┬─────────────────────────────┐
+      │                      │           _build_payload (offline)            │ judge_live's inline payload │
+      ├──────────────────────┼───────────────────────────────────────────────┼─────────────────────────────┤
+      │ keys                 │ case_id, failure_context, diagnosis, expected │ failure_context, diagnosis  │
+      ├──────────────────────┼───────────────────────────────────────────────┼─────────────────────────────┤
+      │ expected?            │ yes (enables correctness)                     │ no (no reference)           │
+      ├──────────────────────┼───────────────────────────────────────────────┼─────────────────────────────┤
+      │ sanitizes diagnosis? │ no — caller already did                       │ yes — inline                │
+      └──────────────────────┴───────────────────────────────────────────────┴─────────────────────────────┘
+
+    :param case: A dataset case (``id``, ``failure_context``, ``expected``) from :func:`evals.dataset.load_dataset`
     :param diagnosis: The cleaned diagnosis for that case.
     :returns: The judge input object.
     """
@@ -86,6 +112,14 @@ def _diagnose_cases(cases: list[dict]) -> list[dict]:
     LLM call fails; that is captured as ``scout_failure`` so the case is carried
     through the report (and excluded from quality metrics) rather than crashing
     the run.
+
+    Exercise the analyzer (Scout) on known inputs. Each dataset case carries a
+    realistic ``failure_context``; this function feeds that context to a fresh
+    ``FailureAnalyzer`` and captures what Llama Scout says. This is the only
+    place in the eval where the system-under-test actually runs.
+
+    Purpose: Take the golden dataset and produce one diagnosis per case from
+    the live analyzer — the raw material the judge will later grade.
 
     :param cases: The validated dataset cases.
     :returns: One record per case, each with ``case_id``, ``expected_category``
@@ -181,6 +215,7 @@ def _summarize(records: list[dict]) -> dict:
         """Safe count/total ratio rounded to 3 dp; 0.0 when the pool is empty."""
         return round(numerator / len(pool), 3) if pool else 0.0
 
+    # How many judged cases the judge passed on each dimension
     pass_rates = {
         dim: fraction(sum(1 for r in judged if r["judge"][dim]["verdict"] == "pass"), judged)
         for dim in DIMENSIONS
@@ -188,12 +223,12 @@ def _summarize(records: list[dict]) -> dict:
     pass_rates["overall"] = fraction(sum(1 for r in judged if r["overall_pass"]), judged)
 
     return {
-        "total_cases": len(records),
-        "judged_cases": len(judged),
-        "scout_failures": sum(1 for r in records if r["scout_failure"]),
-        "judge_errors": sum(1 for r in records if r.get("judge_error")),
-        "category_accuracy": fraction(sum(1 for r in diagnosed if r["category_match"]), diagnosed),
-        "pass_rates": pass_rates,
+        "total_cases": len(records), # Every record, including failures.
+        "judged_cases": len(judged), # Size of the judged pool
+        "scout_failures": sum(1 for r in records if r["scout_failure"]), # Count over all records where the analyzer produced nothing
+        "judge_errors": sum(1 for r in records if r.get("judge_error")), # Count where the judge failed
+        "category_accuracy": fraction(sum(1 for r in diagnosed if r["category_match"]), diagnosed), # Fraction of diagnosed cases whose category matched
+        "pass_rates": pass_rates, # The per-dimension + overall dict built above
     }
 
 
