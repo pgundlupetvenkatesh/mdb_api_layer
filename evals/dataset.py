@@ -8,6 +8,7 @@ against, so a malformed case is a hard error rather than a silent skip.
 
 .. module:: evals.dataset
    :synopsis: Load and validate the eval golden dataset.
+   :no-index:
 """
 
 from pathlib import Path

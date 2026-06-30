@@ -21,6 +21,7 @@ bias.
 
 .. module:: evals.judge
    :synopsis: GPT-OSS-as-a-judge wrapper over Groq.
+   :no-index:
 """
 
 import json

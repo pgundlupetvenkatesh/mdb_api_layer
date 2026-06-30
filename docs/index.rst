@@ -20,3 +20,4 @@ documentation for details.
    tests
    k8s
    failure_mcp
+   evals
