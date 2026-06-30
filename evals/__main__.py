@@ -237,12 +237,15 @@ def _print_table(records: list[dict], summary: dict) -> None:
     Print the per-case table and the aggregate summary to the console.
 
     One row per case showing expected→diagnosed category (with a ✓/✗ match
-    mark) and the three per-dimension verdicts, followed by the counts and
+    mark) and the four per-dimension verdicts, followed by the counts and
     pass-rate percentages from :func:`_summarize`.
 
     :param records: The fully judged records.
     :param summary: The summary dict from :func:`_summarize`.
     """
+
+    logger.info(f"Summary: {summary}")
+    logger.info(f"Records: {records}")
 
     def verdict(record, dim):
         """Cell text for one dimension: the judge verdict, or an error marker if there's no judgement."""
@@ -283,8 +286,13 @@ def main(argv=None) -> int:
     """
     Entry point: diagnose every dataset case, judge each diagnosis, report.
 
-    Loads the dataset, runs the analyzer over it, judges the results, writes the
+    The orchestrator that Loads the dataset, runs the analyzer over it, judges the results, writes the
     JSON report, and prints the summary table.
+
+    The shape of it: It does no analysis or grading itself, it just sequences the named stages and handles the I/O
+    boundary (args in, env check, file out, exit code out). Three things stand out as intentional: the early fail-fast
+    on the missing key (exit 2 before any work), the single shared records list threaded through
+    produce→grade→aggregate, and the three distinct exit codes that let a caller distinguish can't-run / failed / passed
 
     :param argv: Optional argument list (defaults to ``sys.argv``).
     :returns: Process exit code — ``0`` if every judged case passed all four
@@ -305,11 +313,13 @@ def main(argv=None) -> int:
     cases = load_dataset(args.dataset)
     cases_by_id = {c["id"]: c for c in cases}
 
-    records = _diagnose_cases(cases)
-    _judge_records(records, cases_by_id, model=args.judge_model, api_key=api_key)
-    summary = _summarize(records)
+    # The heart of the run
+    records = _diagnose_cases(cases) # Produce
+    _judge_records(records, cases_by_id, model=args.judge_model, api_key=api_key) # Grade
+    summary = _summarize(records) # Aggregate
 
     scout_model = _make_scout().model
+    # Assemble report
     report = {
         "run_at": datetime.now(timezone.utc).isoformat(),
         "dataset": args.dataset,
@@ -319,6 +329,7 @@ def main(argv=None) -> int:
         "cases": records,
     }
 
+    # Build Report
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(report, indent=2))

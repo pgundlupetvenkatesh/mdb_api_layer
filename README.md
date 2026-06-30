@@ -597,12 +597,12 @@ call per failed test — leave it off for normal triage runs and turn it on when
 you're evaluating the analyzer itself. To measure correctness too, run the
 offline eval below.
 
-| Dimension     | Failure mode it catches                                                |
-|---------------|------------------------------------------------------------------------|
-| Correctness   | The diagnosis is wrong — names the wrong cause                          |
-| Groundedness  | The diagnosis is made up — cites facts not in failure_context          |
+| Dimension     | Failure mode it catches                                                   |
+|---------------|---------------------------------------------------------------------------|
+| Correctness   | The diagnosis is wrong — names the wrong cause                            |
+| Groundedness  | The diagnosis is made up — cites facts not in failure_context             |
 | Completeness  | The diagnosis is thin — ignores a decisive signal or leaves a field empty |
-| Actionability | The suggested fix is vague — a direction, not a concrete next step      |
+| Actionability | The suggested fix is vague — a direction, not a concrete next step        |
 
 ```bash
 poetry run pytest tests/ --failure-analysis --judge-diagnosis -v
@@ -950,21 +950,21 @@ Claude Code behaves when working in the repo.
 Invoke explicitly with `/<name>`, or let Claude trigger one automatically.
 The table is a summary; each `SKILL.md` is authoritative.
 
-| Skill              | What it does                                                                 |
-|--------------------|-----------------------------------------------------------------------------|
+| Skill              | What it does                                                                        |
+|--------------------|-------------------------------------------------------------------------------------|
 | `commit-rules`     | Enforces atomic commits, message style, secret/artifact exclusion, required trailer |
-| `update-claude-md` | Reconciles CLAUDE.md against the code after a structural change              |
-| `review-tests`     | Reviews a diff against this repo's test conventions (complements `/code-review`) |
+| `update-claude-md` | Reconciles CLAUDE.md against the code after a structural change                     |
+| `review-tests`     | Reviews a diff against this repo's test conventions (complements `/code-review`)    |
 
 ### Hooks
 
 Configured in `.claude/settings.json`, run automatically, and fail-open
 (never wedge legitimate work).
 
-| Hook                   | Event              | Behavior                                                                 |
-|------------------------|--------------------|--------------------------------------------------------------------------|
-| `guard-commit.sh`      | `PreToolUse(Bash)` | Blocks a `git commit` that stages a `.env` or a credential-like token    |
-| `claude-md-reminder.sh`| `Stop`             | Nudges to run `update-claude-md` when `api/`/`config/` changed but CLAUDE.md didn't |
+| Hook                    | Event              | Behavior                                                                            |
+|-------------------------|--------------------|-------------------------------------------------------------------------------------|
+| `guard-commit.sh`       | `PreToolUse(Bash)` | Blocks a `git commit` that stages a `.env` or a credential-like token               |
+| `claude-md-reminder.sh` | `Stop`             | Nudges to run `update-claude-md` when `api/`/`config/` changed but CLAUDE.md didn't |
 
 > Skills and hooks are version-controlled, so every contributor using Claude
 > Code in this repo gets the same commit hygiene, doc-sync reminders, and
