@@ -244,9 +244,6 @@ def _print_table(records: list[dict], summary: dict) -> None:
     :param summary: The summary dict from :func:`_summarize`.
     """
 
-    logger.info(f"Summary: {summary}")
-    logger.info(f"Records: {records}")
-
     def verdict(record, dim):
         """Cell text for one dimension: the judge verdict, or an error marker if there's no judgement."""
         if record["scout_failure"]:
