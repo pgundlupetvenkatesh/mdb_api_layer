@@ -146,7 +146,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AI_ANALYSIS_ENABLED=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="si">}</span><span class="s2"> and GROQ_API_KEY </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AI_ANALYSIS_ENABLED=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="si">}</span><span class="s2"> and GROQ_API_KEY </span><span class="si">{</span><span class="s1">&#39;set&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;missing&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="n">prompt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_prompt</span><span class="p">(</span><span class="n">failure_context</span><span class="p">)</span>
 
@@ -270,6 +270,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../tests.html">Tests Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../k8s.html">Kubernetes Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../evals.html">Evaluation Harness (evals)</a></li>
 </ul>
 
 <div class="relations">

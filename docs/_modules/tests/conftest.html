@@ -35,7 +35,7 @@
 
 <span class="sd">This module is automatically loaded by pytest before test collection. It provides:</span>
 
-<span class="sd">- **CLI options**: ``--loguru-log-level``, ``--log-to-file``, ``--failure-analysis``</span>
+<span class="sd">- **CLI options**: ``--loguru-log-level``, ``--log-to-file``, ``--failure-analysis``, ``--judge-diagnosis``</span>
 <span class="sd">- **Hooks**: Logging setup, AI failure analysis, Allure/HTML report customization</span>
 <span class="sd">- **Fixtures**: API client factory, Pydantic schema loader, test data loader</span>
 
@@ -92,6 +92,14 @@
         <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Enable AI-powered test failure analysis (requires GROQ_API_KEY)&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">addoption</span><span class="p">(</span>
+        <span class="s2">&quot;--judge-diagnosis&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Also judge each diagnosis&#39;s quality (groundedness + completeness + actionability) &quot;</span>
+             <span class="s2">&quot;with the LLM judge. Requires --failure-analysis and GROQ_API_KEY; &quot;</span>
+             <span class="s2">&quot;adds one judge LLM call per failed test.&quot;</span>
     <span class="p">)</span></div>
 
 
@@ -125,7 +133,13 @@
         <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AI_ANALYSIS_ENABLED&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;true&quot;</span>
         <span class="n">analyzer</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># Update instance</span>
         <span class="n">analyzer</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">)</span>    <span class="c1"># re-read in case .env loads later</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AI analysis is enabled. AI_ANALYSIS_ENABLED = </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AI_ANALYSIS_ENABLED&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AI analysis is enabled. AI_ANALYSIS_ENABLED = </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AI_ANALYSIS_ENABLED&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--judge-diagnosis&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--failure-analysis&quot;</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;--judge-diagnosis has no effect without --failure-analysis: &quot;</span>
+            <span class="s2">&quot;there is no diagnosis to judge.&quot;</span>
+        <span class="p">)</span></div>
 
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">tests.data.data_loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_test_data</span>
@@ -352,8 +366,11 @@
 
 <span class="sd">    Runs after each test phase (setup/call/teardown). On failure during</span>
 <span class="sd">    the &#39;call&#39; phase, extracts context from the test and API response,</span>
-<span class="sd">    then sends it to the LLM for diagnosis. The analysis is attached</span>
-<span class="sd">    to the Allure report as a text attachment.</span>
+<span class="sd">    then sends it to the LLM for diagnosis. When --judge-diagnosis is also set,</span>
+<span class="sd">    the diagnosis is scored by an LLM judge for groundedness, completeness, and</span>
+<span class="sd">    actionability (correctness is not scored live — a failure has no reference).</span>
+<span class="sd">    The diagnosis (and, when judged, the quality verdict) are attached to the</span>
+<span class="sd">    Allure report as JSON attachments.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">outcome</span> <span class="o">=</span> <span class="k">yield</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">outcome</span><span class="o">.</span><span class="n">get_result</span><span class="p">()</span>
@@ -405,7 +422,36 @@
                 <span class="n">attachment_type</span><span class="o">=</span><span class="n">allure</span><span class="o">.</span><span class="n">attachment_type</span><span class="o">.</span><span class="n">JSON</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">pass</span>  <span class="c1"># Allure not available</span></div>
+            <span class="k">pass</span>  <span class="c1"># Allure not available</span>
+
+        <span class="c1"># Judge the diagnosis&#39;s quality (groundedness + completeness + actionability,</span>
+        <span class="c1"># everything except correctness — a live failure has no reference answer).</span>
+        <span class="c1"># Opt-in and subordinate to analysis: skip unless --judge-diagnosis is set,</span>
+        <span class="c1"># so a normal triage run pays for diagnosis but not the extra judge call.</span>
+        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--judge-diagnosis&quot;</span><span class="p">):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">evals.judge</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_JUDGE_MODEL</span><span class="p">,</span> <span class="n">judge_live</span>
+            <span class="n">judgement</span> <span class="o">=</span> <span class="n">judge_live</span><span class="p">(</span>
+                <span class="n">failure_context</span><span class="p">,</span>
+                <span class="n">diagnosis</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AI_JUDGE_MODEL&quot;</span><span class="p">,</span> <span class="n">DEFAULT_JUDGE_MODEL</span><span class="p">),</span>
+                <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">judgement</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;⚖️ Diagnosis quality [</span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;overall_verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">] — &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;groundedness: </span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;groundedness&#39;</span><span class="p">][</span><span class="s1">&#39;verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;completeness: </span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;completeness&#39;</span><span class="p">][</span><span class="s1">&#39;verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;actionability: </span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;actionability&#39;</span><span class="p">][</span><span class="s1">&#39;verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="kn">import</span><span class="w"> </span><span class="nn">allure</span>
+                    <span class="n">allure</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span>
+                        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">judgement</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+                        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;⚖️ Diagnosis Quality (LLM-as-a-judge)&quot;</span><span class="p">,</span>
+                        <span class="n">attachment_type</span><span class="o">=</span><span class="n">allure</span><span class="o">.</span><span class="n">attachment_type</span><span class="o">.</span><span class="n">JSON</span>
+                    <span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">pass</span>  <span class="c1"># Allure not available</span></div>
 
 
 <div class="viewcode-block" id="pytest_sessionfinish">
@@ -474,6 +520,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../tests.html">Tests Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../k8s.html">Kubernetes Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../evals.html">Evaluation Harness (evals)</a></li>
 </ul>
 
 <div class="relations">

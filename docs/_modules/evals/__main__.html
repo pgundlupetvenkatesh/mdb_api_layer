@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>evals.__main__ &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for evals.__main__</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">CLI runner for the failure-analyzer evaluation.</span>
+
+<span class="sd">Runs the AI failure analyzer (Llama Scout via Groq) live on each case in the</span>
+<span class="sd">golden dataset, then judges every produced diagnosis with the GPT-OSS judge on</span>
+<span class="sd">four dimensions (correctness, groundedness, completeness, actionability). Prints</span>
+<span class="sd">a per-case table plus aggregate metrics and writes a JSON report.</span>
+
+<span class="sd">Both the analyzer under test and the judge call Groq, so only ``GROQ_API_KEY``</span>
+<span class="sd">is required.</span>
+
+<span class="sd">Usage::</span>
+
+<span class="sd">    poetry run python -m evals</span>
+<span class="sd">    poetry run python -m evals --judge-model openai/gpt-oss-120b</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">evals.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">evals.judge</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_JUDGE_MODEL</span><span class="p">,</span> <span class="n">judge_case</span><span class="p">,</span> <span class="n">sanitize_diagnosis</span>
+
+<span class="n">DEFAULT_DATASET</span> <span class="o">=</span> <span class="s2">&quot;evals/golden_dataset.yaml&quot;</span>
+<span class="n">DEFAULT_OUTPUT</span> <span class="o">=</span> <span class="s2">&quot;evals/results/eval_results.json&quot;</span>
+<span class="n">DIMENSIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;correctness&quot;</span><span class="p">,</span> <span class="s2">&quot;groundedness&quot;</span><span class="p">,</span> <span class="s2">&quot;completeness&quot;</span><span class="p">,</span> <span class="s2">&quot;actionability&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="_make_scout">
+<a class="viewcode-back" href="../../evals.html#evals.__main__._make_scout">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_scout</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build a fresh, force-enabled analyzer instance.</span>
+
+<span class="sd">    Mirrors how ``tests/conftest.py`` force-enables analysis under</span>
+<span class="sd">    ``--failure-analysis`` (sets ``enabled`` and re-reads the key), but on a new</span>
+<span class="sd">    instance rather than the module singleton — so the eval never appends to the</span>
+<span class="sd">    singleton&#39;s ``_results`` or writes ``ai_analysis/``, and works regardless of</span>
+<span class="sd">    the ``AI_ANALYSIS_ENABLED`` env var.</span>
+
+<span class="sd">    :returns: A ready-to-use ``FailureAnalyzer``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">tests.helpers.failure_analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="n">FailureAnalyzer</span>
+
+    <span class="n">scout</span> <span class="o">=</span> <span class="n">FailureAnalyzer</span><span class="p">()</span> <span class="c1"># Here self.enabled is whatever AI_ANALYSIS_ENABLED is; likely false during an eval run</span>
+    <span class="n">scout</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">scout</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">scout</span></div>
+
+
+
+<div class="viewcode-block" id="_build_payload">
+<a class="viewcode-back" href="../../evals.html#evals.__main__._build_payload">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_payload</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">diagnosis</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble the single JSON object sent to the judge for one case.</span>
+
+<span class="sd">    The payload bundles the three things the judge needs: the ``failure_context``</span>
+<span class="sd">    the analyzer saw, the ``diagnosis`` it produced (already cleaned), and the</span>
+<span class="sd">    ``expected`` reference answer the dataset author wrote.</span>
+
+<span class="sd">    The ``failure_context`` is fed to Scout to produce the *whole* diagnosis, and</span>
+<span class="sd">    that one diagnosis is then judged on all four dimensions — ``failure_context``</span>
+<span class="sd">    is not tied to any single dimension. What sets correctness apart is the judge,</span>
+<span class="sd">    not the input: correctness compares Scout&#39;s ``diagnosis`` (its ``category`` and</span>
+<span class="sd">    ``root_cause``) against ``expected`` — the known-true answer a human authored</span>
+<span class="sd">    for this case — so it needs that reference to grade against. Groundedness,</span>
+<span class="sd">    completeness, and actionability need no reference: they judge the diagnosis</span>
+<span class="sd">    against the ``failure_context`` evidence itself, asking whether it is</span>
+<span class="sd">    internally sound, not whether it is *right*.</span>
+
+<span class="sd">    This is why correctness is an offline-only dimension. ``expected`` exists only</span>
+<span class="sd">    in the curated dataset; it is hand-written by someone who already knew the true</span>
+<span class="sd">    cause, and is *not* derivable from ``failure_context`` (if it were, we would not</span>
+<span class="sd">    need Scout). A live failure has no such answer key — so ``judge_live`` drops</span>
+<span class="sd">    correctness and scores only the other three. This is the exact shape</span>
+<span class="sd">    ``judge.judge_case`` documents and ``JUDGE_SYSTEM_PROMPT`` describes.</span>
+
+<span class="sd">    How it differs from the live path</span>
+
+<span class="sd">      ┌──────────────────────┬───────────────────────────────────────────────┬─────────────────────────────┐</span>
+<span class="sd">      │                      │           _build_payload (offline)            │ judge_live&#39;s inline payload │</span>
+<span class="sd">      ├──────────────────────┼───────────────────────────────────────────────┼─────────────────────────────┤</span>
+<span class="sd">      │ keys                 │ case_id, failure_context, diagnosis, expected │ failure_context, diagnosis  │</span>
+<span class="sd">      ├──────────────────────┼───────────────────────────────────────────────┼─────────────────────────────┤</span>
+<span class="sd">      │ expected?            │ yes (enables correctness)                     │ no (no reference)           │</span>
+<span class="sd">      ├──────────────────────┼───────────────────────────────────────────────┼─────────────────────────────┤</span>
+<span class="sd">      │ sanitizes diagnosis? │ no — caller already did                       │ yes — inline                │</span>
+<span class="sd">      └──────────────────────┴───────────────────────────────────────────────┴─────────────────────────────┘</span>
+
+<span class="sd">    :param case: A dataset case (``id``, ``failure_context``, ``expected``) from :func:`evals.dataset.load_dataset`</span>
+<span class="sd">    :param diagnosis: The cleaned diagnosis for that case.</span>
+<span class="sd">    :returns: The judge input object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;case_id&quot;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;failure_context&quot;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s2">&quot;failure_context&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;diagnosis&quot;</span><span class="p">:</span> <span class="n">diagnosis</span><span class="p">,</span>
+        <span class="s2">&quot;expected&quot;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s2">&quot;expected&quot;</span><span class="p">],</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_diagnose_cases">
+<a class="viewcode-back" href="../../evals.html#evals.__main__._diagnose_cases">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_diagnose_cases</span><span class="p">(</span><span class="n">cases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run the analyzer once per dataset case and collect the diagnoses.</span>
+
+<span class="sd">    Uses a single fresh analyzer instance (see :func:`_make_scout`) for the</span>
+<span class="sd">    whole pass. For each case it calls ``analyze(failure_context)`` and records</span>
+<span class="sd">    the produced diagnosis. ``analyze`` returns ``None`` when the analyzer&#39;s own</span>
+<span class="sd">    LLM call fails; that is captured as ``scout_failure`` so the case is carried</span>
+<span class="sd">    through the report (and excluded from quality metrics) rather than crashing</span>
+<span class="sd">    the run.</span>
+
+<span class="sd">    Exercise the analyzer (Scout) on known inputs. Each dataset case carries a</span>
+<span class="sd">    realistic ``failure_context``; this function feeds that context to a fresh</span>
+<span class="sd">    ``FailureAnalyzer`` and captures what Llama Scout says. This is the only</span>
+<span class="sd">    place in the eval where the system-under-test actually runs.</span>
+
+<span class="sd">    Purpose: Take the golden dataset and produce one diagnosis per case from</span>
+<span class="sd">    the live analyzer — the raw material the judge will later grade.</span>
+
+<span class="sd">    :param cases: The validated dataset cases.</span>
+<span class="sd">    :returns: One record per case, each with ``case_id``, ``expected_category``</span>
+<span class="sd">        (lifted out for the table/metrics), the cleaned ``diagnosis`` (or</span>
+<span class="sd">        ``None``), and a ``scout_failure`` flag.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">scout</span> <span class="o">=</span> <span class="n">_make_scout</span><span class="p">()</span>
+    <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Diagnosing </span><span class="si">{</span><span class="n">case</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">diagnosis</span> <span class="o">=</span> <span class="n">scout</span><span class="o">.</span><span class="n">analyze</span><span class="p">(</span><span class="n">case</span><span class="p">[</span><span class="s2">&quot;failure_context&quot;</span><span class="p">])</span>
+        <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;case_id&quot;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;expected_category&quot;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s2">&quot;expected&quot;</span><span class="p">][</span><span class="s2">&quot;expected_category&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;diagnosis&quot;</span><span class="p">:</span> <span class="n">sanitize_diagnosis</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">)</span> <span class="k">if</span> <span class="n">diagnosis</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;scout_failure&quot;</span><span class="p">:</span> <span class="n">diagnosis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">records</span></div>
+
+
+
+<div class="viewcode-block" id="_judge_records">
+<a class="viewcode-back" href="../../evals.html#evals.__main__._judge_records">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_judge_records</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">cases_by_id</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Score every diagnosed record with the judge, mutating each record in place.</span>
+
+<span class="sd">    For each record it: (1) skips analyzer failures, marking them as not passing;</span>
+<span class="sd">    (2) computes ``category_match`` directly in code (exact string compare of the</span>
+<span class="sd">    diagnosed category vs. the expected one) — this is deterministic and does not</span>
+<span class="sd">    rely on the judge; (3) calls :func:`judge.judge_case` and stores the raw judge</span>
+<span class="sd">    output under ``judge``; (4) recomputes ``overall_pass`` here as &quot;all four</span>
+<span class="sd">    dimensions passed&quot; rather than trusting the judge&#39;s own ``overall_verdict``,</span>
+<span class="sd">    so the headline pass/fail is always consistent with the per-dimension verdicts.</span>
+<span class="sd">    A judge that errors or returns malformed JSON is recorded as ``judge_error``.</span>
+
+<span class="sd">    :param records: Records from :func:`_diagnose_cases`.</span>
+<span class="sd">    :param cases_by_id: The dataset keyed by case id, to rebuild each judge payload.</span>
+<span class="sd">    :param model: Judge model id.</span>
+<span class="sd">    :param api_key: Groq API key for the judge.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;scout_failure&quot;</span><span class="p">]:</span>
+            <span class="n">record</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">category_match</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">judge</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">judge_error</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">overall_pass</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">case</span> <span class="o">=</span> <span class="n">cases_by_id</span><span class="p">[</span><span class="n">record</span><span class="p">[</span><span class="s2">&quot;case_id&quot;</span><span class="p">]]</span>
+        <span class="n">record</span><span class="p">[</span><span class="s2">&quot;category_match&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">record</span><span class="p">[</span><span class="s2">&quot;diagnosis&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;expected_category&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Judging </span><span class="si">{</span><span class="n">record</span><span class="p">[</span><span class="s1">&#39;case_id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">judgement</span> <span class="o">=</span> <span class="n">judge_case</span><span class="p">(</span><span class="n">_build_payload</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;diagnosis&quot;</span><span class="p">]),</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">judgement</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">record</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">judge</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">judge_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">overall_pass</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Recompute overall in code — never trust the judge&#39;s own overall_verdict for aggregates.</span>
+        <span class="n">record</span><span class="p">[</span><span class="s2">&quot;judge&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">judgement</span>
+        <span class="n">record</span><span class="p">[</span><span class="s2">&quot;judge_error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">record</span><span class="p">[</span><span class="s2">&quot;overall_pass&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">judgement</span><span class="p">[</span><span class="n">dim</span><span class="p">][</span><span class="s2">&quot;verdict&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;pass&quot;</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">DIMENSIONS</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_summarize">
+<a class="viewcode-back" href="../../evals.html#evals.__main__._summarize">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_summarize</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Roll the per-case records up into the report&#39;s aggregate ``summary`` block.</span>
+
+<span class="sd">    Every number here is just a count or a count/total fraction:</span>
+
+<span class="sd">    - ``scout_failures`` / ``judge_errors`` — how many cases the analyzer or the</span>
+<span class="sd">      judge could not produce output for. These are surfaced separately and</span>
+<span class="sd">      excluded from the quality fractions below, so an infrastructure hiccup</span>
+<span class="sd">      doesn&#39;t masquerade as a quality regression.</span>
+<span class="sd">    - ``category_accuracy`` — of the cases the analyzer actually diagnosed, the</span>
+<span class="sd">      fraction whose category matched the expected one. Computed in code, not by</span>
+<span class="sd">      the judge.</span>
+<span class="sd">    - ``pass_rates`` — of the judged cases, the fraction the judge passed on each</span>
+<span class="sd">      dimension (correctness/groundedness/completeness/actionability) plus</span>
+<span class="sd">      ``overall`` (passed all four). This is the headline quality score: one number per dimension</span>
+<span class="sd">      that you can compare across runs to see if a prompt/model change made the</span>
+<span class="sd">      analyzer better or worse.</span>
+
+<span class="sd">    :param records: The fully judged records.</span>
+<span class="sd">    :returns: The ``summary`` dict embedded in the report and printed to console.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Denominators: only cases that got a diagnosis / a judgement count toward</span>
+    <span class="c1"># the corresponding quality fractions.</span>
+    <span class="n">diagnosed</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;scout_failure&quot;</span><span class="p">]]</span>
+    <span class="n">judged</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;judge&quot;</span><span class="p">)]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fraction</span><span class="p">(</span><span class="n">numerator</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pool</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Safe count/total ratio rounded to 3 dp; 0.0 when the pool is empty.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">numerator</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span> <span class="k">if</span> <span class="n">pool</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+    <span class="c1"># How many judged cases the judge passed on each dimension</span>
+    <span class="n">pass_rates</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">dim</span><span class="p">:</span> <span class="n">fraction</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">judged</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;judge&quot;</span><span class="p">][</span><span class="n">dim</span><span class="p">][</span><span class="s2">&quot;verdict&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;pass&quot;</span><span class="p">),</span> <span class="n">judged</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">DIMENSIONS</span>
+    <span class="p">}</span>
+    <span class="n">pass_rates</span><span class="p">[</span><span class="s2">&quot;overall&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fraction</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">judged</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;overall_pass&quot;</span><span class="p">]),</span> <span class="n">judged</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;total_cases&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">),</span> <span class="c1"># Every record, including failures.</span>
+        <span class="s2">&quot;judged_cases&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">judged</span><span class="p">),</span> <span class="c1"># Size of the judged pool</span>
+        <span class="s2">&quot;scout_failures&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;scout_failure&quot;</span><span class="p">]),</span> <span class="c1"># Count over all records where the analyzer produced nothing</span>
+        <span class="s2">&quot;judge_errors&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;judge_error&quot;</span><span class="p">)),</span> <span class="c1"># Count where the judge failed</span>
+        <span class="s2">&quot;category_accuracy&quot;</span><span class="p">:</span> <span class="n">fraction</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">diagnosed</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;category_match&quot;</span><span class="p">]),</span> <span class="n">diagnosed</span><span class="p">),</span> <span class="c1"># Fraction of diagnosed cases whose category matched</span>
+        <span class="s2">&quot;pass_rates&quot;</span><span class="p">:</span> <span class="n">pass_rates</span><span class="p">,</span> <span class="c1"># The per-dimension + overall dict built above</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="_print_table">
+<a class="viewcode-back" href="../../evals.html#evals.__main__._print_table">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_print_table</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">summary</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print the per-case table and the aggregate summary to the console.</span>
+
+<span class="sd">    One row per case showing expected→diagnosed category (with a ✓/✗ match</span>
+<span class="sd">    mark) and the four per-dimension verdicts, followed by the counts and</span>
+<span class="sd">    pass-rate percentages from :func:`_summarize`.</span>
+
+<span class="sd">    :param records: The fully judged records.</span>
+<span class="sd">    :param summary: The summary dict from :func:`_summarize`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">verdict</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cell text for one dimension: the judge verdict, or an error marker if there&#39;s no judgement.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;scout_failure&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="s2">&quot;SCOUT-ERR&quot;</span>
+        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;judge_error&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;judge&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;JUDGE-ERR&quot;</span>
+        <span class="k">return</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;judge&quot;</span><span class="p">][</span><span class="n">dim</span><span class="p">][</span><span class="s2">&quot;verdict&quot;</span><span class="p">]</span>
+
+    <span class="n">header</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;case_id&#39;</span><span class="si">:</span><span class="s2">&lt;28</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;category (expected→got)&#39;</span><span class="si">:</span><span class="s2">&lt;34</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;corr&#39;</span><span class="si">:</span><span class="s2">&lt;5</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;grnd&#39;</span><span class="si">:</span><span class="s2">&lt;5</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;cmpl&#39;</span><span class="si">:</span><span class="s2">&lt;5</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;actn&#39;</span><span class="si">:</span><span class="s2">&lt;5</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;overall&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">header</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="n">got</span> <span class="o">=</span> <span class="s2">&quot;—&quot;</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;scout_failure&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;diagnosis&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;?&quot;</span><span class="p">)</span>
+        <span class="n">cat</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;expected_category&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">→</span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">mark</span> <span class="o">=</span> <span class="s2">&quot;✓&quot;</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;category_match&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;✗&quot;</span>
+        <span class="n">overall</span> <span class="o">=</span> <span class="s2">&quot;PASS&quot;</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;overall_pass&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;FAIL&quot;</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;case_id&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">&lt;28</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">cat</span><span class="si">:</span><span class="s2">&lt;32</span><span class="si">}{</span><span class="n">mark</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">verdict</span><span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;correctness&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">&lt;5</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">verdict</span><span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;groundedness&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">&lt;5</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">verdict</span><span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;completeness&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">&lt;5</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">verdict</span><span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;actionability&#39;</span><span class="p">)</span><span class="si">:</span><span class="s2">&lt;5</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">overall</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">pr</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;pass_rates&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Cases: </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;total_cases&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">  judged: </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;judged_cases&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">  &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;scout_failures: </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;scout_failures&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">  judge_errors: </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;judge_errors&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Category accuracy: </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;category_accuracy&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Pass rates — correctness: </span><span class="si">{</span><span class="n">pr</span><span class="p">[</span><span class="s1">&#39;correctness&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">  &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;groundedness: </span><span class="si">{</span><span class="n">pr</span><span class="p">[</span><span class="s1">&#39;groundedness&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">  completeness: </span><span class="si">{</span><span class="n">pr</span><span class="p">[</span><span class="s1">&#39;completeness&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">  &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;actionability: </span><span class="si">{</span><span class="n">pr</span><span class="p">[</span><span class="s1">&#39;actionability&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">  overall: </span><span class="si">{</span><span class="n">pr</span><span class="p">[</span><span class="s1">&#39;overall&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../evals.html#evals.__main__.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Entry point: diagnose every dataset case, judge each diagnosis, report.</span>
+
+<span class="sd">    The orchestrator that Loads the dataset, runs the analyzer over it, judges the results, writes the</span>
+<span class="sd">    JSON report, and prints the summary table.</span>
+
+<span class="sd">    The shape of it: It does no analysis or grading itself, it just sequences the named stages and handles the I/O</span>
+<span class="sd">    boundary (args in, env check, file out, exit code out). Three things stand out as intentional: the early fail-fast</span>
+<span class="sd">    on the missing key (exit 2 before any work), the single shared records list threaded through</span>
+<span class="sd">    produce→grade→aggregate, and the three distinct exit codes that let a caller distinguish can&#39;t-run / failed / passed</span>
+
+<span class="sd">    :param argv: Optional argument list (defaults to ``sys.argv``).</span>
+<span class="sd">    :returns: Process exit code — ``0`` if every judged case passed all four</span>
+<span class="sd">        dimensions, ``1`` if any failed, ``2`` if ``GROQ_API_KEY`` is missing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">load_dotenv</span><span class="p">()</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">prog</span><span class="o">=</span><span class="s2">&quot;python -m evals&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="vm">__doc__</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--dataset&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_DATASET</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;golden dataset YAML&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--output&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_OUTPUT</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;results JSON path&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--judge-model&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_JUDGE_MODEL</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Groq model id for the judge&quot;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
+
+    <span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">api_key</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ERROR: GROQ_API_KEY is not set (needed for both the analyzer and the judge).&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">2</span>
+
+    <span class="n">cases</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="n">cases_by_id</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">}</span>
+
+    <span class="c1"># The heart of the run</span>
+    <span class="n">records</span> <span class="o">=</span> <span class="n">_diagnose_cases</span><span class="p">(</span><span class="n">cases</span><span class="p">)</span> <span class="c1"># Produce</span>
+    <span class="n">_judge_records</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">cases_by_id</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">judge_model</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span> <span class="c1"># Grade</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="n">_summarize</span><span class="p">(</span><span class="n">records</span><span class="p">)</span> <span class="c1"># Aggregate</span>
+
+    <span class="n">scout_model</span> <span class="o">=</span> <span class="n">_make_scout</span><span class="p">()</span><span class="o">.</span><span class="n">model</span>
+    <span class="c1"># Assemble report</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;run_at&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+        <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="s2">&quot;scout_model&quot;</span><span class="p">:</span> <span class="n">scout_model</span><span class="p">,</span>
+        <span class="s2">&quot;judge_model&quot;</span><span class="p">:</span> <span class="n">args</span><span class="o">.</span><span class="n">judge_model</span><span class="p">,</span>
+        <span class="s2">&quot;summary&quot;</span><span class="p">:</span> <span class="n">summary</span><span class="p">,</span>
+        <span class="s2">&quot;cases&quot;</span><span class="p">:</span> <span class="n">records</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Build Report</span>
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">out_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">out_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">_print_table</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">summary</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Report written to </span><span class="si">{</span><span class="n">out_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;pass_rates&quot;</span><span class="p">][</span><span class="s2">&quot;overall&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">1.0</span> <span class="k">else</span> <span class="mi">1</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../evals.html">Evaluation Harness (evals)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

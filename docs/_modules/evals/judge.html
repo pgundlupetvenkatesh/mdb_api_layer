@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>evals.judge &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for evals.judge</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">LLM-as-a-judge for the AI failure analyzer.</span>
+
+<span class="sd">Sends a JSON payload (the failure context, the diagnosis under test, and —</span>
+<span class="sd">for offline evaluation — the expected reference) to a judge model on Groq and</span>
+<span class="sd">gets back a strict per-dimension verdict on whether the diagnosis is correct,</span>
+<span class="sd">grounded, complete, and actionable.</span>
+
+<span class="sd">Two modes share one judge call:</span>
+
+<span class="sd">- :func:`judge_case` (offline eval) — scores all four dimensions. Correctness</span>
+<span class="sd">  is scored against the case&#39;s ``expected`` reference; groundedness,</span>
+<span class="sd">  completeness, and actionability are judged from ``failure_context`` alone.</span>
+<span class="sd">- :func:`judge_live` (in-pytest, on real failures) — scores groundedness,</span>
+<span class="sd">  completeness, and actionability (every dimension except correctness), because</span>
+<span class="sd">  a real failure has no reference answer to score correctness against.</span>
+
+<span class="sd">The judge runs on Groq (same provider as the analyzer it evaluates) but a</span>
+<span class="sd">different model family — GPT-OSS judging Llama — so there is no self-preference</span>
+<span class="sd">bias.</span>
+
+<span class="sd">.. module:: evals.judge</span>
+<span class="sd">   :synopsis: GPT-OSS-as-a-judge wrapper over Groq.</span>
+<span class="sd">   :no-index:</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
+<span class="n">DEFAULT_JUDGE_MODEL</span> <span class="o">=</span> <span class="s2">&quot;openai/gpt-oss-120b&quot;</span>
+
+<span class="n">JUDGE_SYSTEM_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">You are a strict, impartial evaluator of AI-generated API test failure diagnoses. You will receive a JSON object with three parts:</span>
+
+<span class="s2">- &quot;failure_context&quot;: the raw test failure information (test name, file, API URL, status code, response body, error message, traceback) that was given to a diagnosis model. This is the ONLY source of truth about what happened.</span>
+<span class="s2">- &quot;diagnosis&quot;: the diagnosis produced by that model, with fields: root_cause, category, suggested_fix, confidence, explanation, evidence.</span>
+<span class="s2">- &quot;expected&quot;: the reference answer, with expected_category (one of: api_bug | test_bug | data_issue | timeout | auth_error | schema_mismatch | environment) and expected_root_cause (a short gist of the true root cause).</span>
+
+<span class="s2">Evaluate the diagnosis on exactly four dimensions and give each a verdict of &quot;pass&quot; or &quot;fail&quot;:</span>
+
+<span class="s2">1. correctness — Does the diagnosis identify the right failure cause?</span>
+<span class="s2">   - FAIL if diagnosis.category does not exactly equal expected.expected_category.</span>
+<span class="s2">   - FAIL if diagnosis.root_cause is not semantically consistent with expected.expected_root_cause (it need not match the wording, but it must describe the same underlying cause).</span>
+<span class="s2">   - FAIL if diagnosis.suggested_fix addresses a different problem than expected.expected_root_cause describes.</span>
+<span class="s2">   - Otherwise PASS.</span>
+
+<span class="s2">2. groundedness — Is every claim supported by failure_context?</span>
+<span class="s2">   - Check every factual claim in diagnosis.root_cause, diagnosis.explanation, and every item in diagnosis.evidence.</span>
+<span class="s2">   - FAIL if any claim asserts a status code, field name, value, timing, URL, error text, or other fact that does not appear in, and cannot be directly derived from, failure_context. Paraphrase is fine; invention is not.</span>
+<span class="s2">   - FAIL if any evidence item does not correspond to something actually present in failure_context.</span>
+<span class="s2">   - Do NOT use the expected reference for this dimension; a diagnosis can be wrong yet grounded, or correct yet hallucinated.</span>
+<span class="s2">   - Otherwise PASS.</span>
+
+<span class="s2">3. completeness — Does the diagnosis cover the decisive signals?</span>
+<span class="s2">   - FAIL if it ignores a key signal present in failure_context (e.g. the HTTP status code, the central error message, a timing value, or the specific assertion that failed) that a competent analyst would cite.</span>
+<span class="s2">   - FAIL if any required field (root_cause, category, suggested_fix, confidence, explanation, evidence) is missing, empty, or filled with boilerplate that adds no information. Treat confidence as populated if it is a number between 0 and 100, even if encoded as a string.</span>
+<span class="s2">   - Otherwise PASS.</span>
+
+<span class="s2">4. actionability — Is suggested_fix a concrete, specific next step a developer could act on directly?</span>
+<span class="s2">   - FAIL if suggested_fix is missing or empty.</span>
+<span class="s2">   - FAIL if it is generic boilerplate that would fit almost any failure (e.g. &quot;investigate the issue&quot;, &quot;check the API&quot;, &quot;review the test and fix it&quot;).</span>
+<span class="s2">   - FAIL if it only names a direction without a concrete action (e.g. &quot;handle the timeout better&quot; fails; &quot;raise exp_max_elp_secs above the observed 17.7s in the update_list test data&quot; passes).</span>
+<span class="s2">   - Judge only specificity and executability — a fix can be actionable even if it targets the wrong problem; that is correctness&#39;s concern, not this dimension&#39;s.</span>
+<span class="s2">   - Otherwise PASS.</span>
+
+<span class="s2">For each dimension provide 1-3 sentences of reasoning and a list of specific issues found (exact hallucinated claims, the missed signal, the category mismatch, the vague fix, etc.). Use an empty list when there are no issues.</span>
+
+<span class="s2">Set overall_verdict to &quot;pass&quot; only if all four dimensions pass, otherwise &quot;fail&quot;.</span>
+
+<span class="s2">Be strict and literal. Judge only what is written; do not give credit for what the diagnosis &quot;probably meant&quot;. Respond only with the required JSON object.</span><span class="se">\</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">LIVE_JUDGE_SYSTEM_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">You are a strict, impartial evaluator of AI-generated API test failure diagnoses. You will receive a JSON object with two parts:</span>
+
+<span class="s2">- &quot;failure_context&quot;: the raw test failure information (test name, file, API URL, status code, response body, error message, traceback) that was given to a diagnosis model. This is the ONLY source of truth about what happened.</span>
+<span class="s2">- &quot;diagnosis&quot;: the diagnosis produced by that model, with fields: root_cause, category, suggested_fix, confidence, explanation, evidence.</span>
+
+<span class="s2">There is no reference answer here, so do NOT judge whether the diagnosis is correct. Evaluate exactly these three dimensions and give each a verdict of &quot;pass&quot; or &quot;fail&quot;:</span>
+
+<span class="s2">1. groundedness — Is every claim supported by failure_context?</span>
+<span class="s2">   - Check every factual claim in diagnosis.root_cause, diagnosis.explanation, and every item in diagnosis.evidence.</span>
+<span class="s2">   - FAIL if any claim asserts a status code, field name, value, timing, URL, error text, or other fact that does not appear in, and cannot be directly derived from, failure_context. Paraphrase is fine; invention is not.</span>
+<span class="s2">   - FAIL if any evidence item does not correspond to something actually present in failure_context.</span>
+<span class="s2">   - Otherwise PASS.</span>
+
+<span class="s2">2. completeness — Does the diagnosis cover the decisive signals?</span>
+<span class="s2">   - FAIL if it ignores a key signal present in failure_context (e.g. the HTTP status code, the central error message, a timing value, or the specific assertion that failed) that a competent analyst would cite.</span>
+<span class="s2">   - FAIL if any required field (root_cause, category, suggested_fix, confidence, explanation, evidence) is missing, empty, or filled with boilerplate that adds no information. Treat confidence as populated if it is a number between 0 and 100, even if encoded as a string.</span>
+<span class="s2">   - Otherwise PASS.</span>
+
+<span class="s2">3. actionability — Is suggested_fix a concrete, specific next step a developer could act on directly?</span>
+<span class="s2">   - FAIL if suggested_fix is missing or empty.</span>
+<span class="s2">   - FAIL if it is generic boilerplate that would fit almost any failure (e.g. &quot;investigate the issue&quot;, &quot;check the API&quot;, &quot;review the test and fix it&quot;).</span>
+<span class="s2">   - FAIL if it only names a direction without a concrete action (e.g. &quot;handle the timeout better&quot; fails; &quot;increase the read timeout above 30s&quot; passes).</span>
+<span class="s2">   - Judge only whether the fix is concrete and specific, not whether it actually solves the underlying problem.</span>
+<span class="s2">   - Otherwise PASS.</span>
+
+<span class="s2">For each dimension provide 1-3 sentences of reasoning and a list of specific issues found (exact hallucinated claims, the missed signal, the vague fix, etc.). Use an empty list when there are no issues.</span>
+
+<span class="s2">Set overall_verdict to &quot;pass&quot; only if all three dimensions pass, otherwise &quot;fail&quot;.</span>
+
+<span class="s2">Be strict and literal. Judge only what is written; do not give credit for what the diagnosis &quot;probably meant&quot;. Respond only with the required JSON object.</span><span class="se">\</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">_DIMENSION_SCHEMA</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;additionalProperties&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;verdict&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;fail&quot;</span><span class="p">]},</span>
+        <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">},</span>
+        <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span> <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">}},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="_output_schema">
+<a class="viewcode-back" href="../../evals.html#evals.judge._output_schema">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_output_schema</span><span class="p">(</span><span class="n">dimensions</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the strict judge output schema for a given set of dimensions.</span>
+
+<span class="sd">    :param dimensions: The dimension names the judge must return (e.g.</span>
+<span class="sd">        ``(&quot;correctness&quot;, &quot;groundedness&quot;, &quot;completeness&quot;)``).</span>
+<span class="sd">    :returns: A JSON Schema requiring one ``_DIMENSION_SCHEMA`` block per</span>
+<span class="sd">        dimension plus an ``overall_verdict`` string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;additionalProperties&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">*</span><span class="n">dimensions</span><span class="p">,</span> <span class="s2">&quot;overall_verdict&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="n">_DIMENSION_SCHEMA</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">},</span>
+            <span class="s2">&quot;overall_verdict&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;fail&quot;</span><span class="p">]},</span>
+        <span class="p">},</span>
+    <span class="p">}</span></div>
+
+
+
+<span class="n">JUDGE_OUTPUT_SCHEMA</span> <span class="o">=</span> <span class="n">_output_schema</span><span class="p">((</span><span class="s2">&quot;correctness&quot;</span><span class="p">,</span> <span class="s2">&quot;groundedness&quot;</span><span class="p">,</span> <span class="s2">&quot;completeness&quot;</span><span class="p">,</span> <span class="s2">&quot;actionability&quot;</span><span class="p">))</span>
+<span class="n">LIVE_JUDGE_OUTPUT_SCHEMA</span> <span class="o">=</span> <span class="n">_output_schema</span><span class="p">((</span><span class="s2">&quot;groundedness&quot;</span><span class="p">,</span> <span class="s2">&quot;completeness&quot;</span><span class="p">,</span> <span class="s2">&quot;actionability&quot;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="sanitize_diagnosis">
+<a class="viewcode-back" href="../../evals.html#evals.judge.sanitize_diagnosis">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sanitize_diagnosis</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Clean an analyzer diagnosis before it is shown to the judge.</span>
+
+<span class="sd">    The analyzer (``FailureAnalyzer.analyze``) injects two bookkeeping keys into</span>
+<span class="sd">    its output — ``test_name`` and ``model``. We drop them so the judge sees</span>
+<span class="sd">    only the model&#39;s actual answer and is never biased by knowing which model</span>
+<span class="sd">    produced it. We also coerce ``confidence`` from a numeric string (the</span>
+<span class="sd">    analyzer sometimes returns ``&quot;90&quot;``) to an int for a consistent type; a</span>
+<span class="sd">    value we can&#39;t parse is left untouched because the judge prompt explicitly</span>
+<span class="sd">    tolerates a non-int confidence.</span>
+
+<span class="sd">    :param diagnosis: The raw diagnosis dict from the analyzer.</span>
+<span class="sd">    :returns: A new dict safe to embed in a judge payload and a report.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># rebuilds the diagnosis keeping every key except test_name and model so the judge can&#39;t be biased by knowing which</span>
+    <span class="c1"># model wrote the answer</span>
+    <span class="n">cleaned</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">diagnosis</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;test_name&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">)}</span>
+    <span class="k">if</span> <span class="s2">&quot;confidence&quot;</span> <span class="ow">in</span> <span class="n">cleaned</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Parsing to int() for consistency in report and judge payload</span>
+            <span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">cleaned</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="k">pass</span>  <span class="c1"># leave as-is; the judge tolerates a non-int confidence</span>
+    <span class="k">return</span> <span class="n">cleaned</span> <span class="c1"># stripped-and-normalized copy, ready to embed in a judge payload</span></div>
+
+
+
+<div class="viewcode-block" id="_call_judge">
+<a class="viewcode-back" href="../../evals.html#evals.judge._call_judge">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_call_judge</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make one judge call and return the parsed, validated verdict.</span>
+
+<span class="sd">    Sends ``system_prompt`` plus the JSON-serialized ``payload`` to the judge</span>
+<span class="sd">    model on Groq with strict structured outputs. If the account/model rejects</span>
+<span class="sd">    strict ``json_schema``, it retries once with the looser ``json_object`` mode</span>
+<span class="sd">    the analyzer itself uses. Any API error, unparseable response, or output</span>
+<span class="sd">    missing a required key returns ``None`` (the caller treats that as a judge</span>
+<span class="sd">    error rather than crashing).</span>
+
+<span class="sd">    :param system_prompt: The judge instructions (full or live variant).</span>
+<span class="sd">    :param output_schema: The strict JSON Schema for the expected output.</span>
+<span class="sd">    :param payload: The judge input object to serialize into the user message.</span>
+<span class="sd">    :param model: Groq model id for the judge.</span>
+<span class="sd">    :param api_key: Groq API key; falls back to the client&#39;s env-based default.</span>
+<span class="sd">    :returns: The parsed judge output, or ``None`` on failure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Lazy import</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">groq</span><span class="w"> </span><span class="kn">import</span> <span class="n">Groq</span>
+
+    <span class="n">client</span> <span class="o">=</span> <span class="n">Groq</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sending user payload </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span><span class="w"> </span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">system_prompt</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)},</span>
+    <span class="p">]</span>
+    <span class="c1"># temperature — near-deterministic; a grader should be stable, not creative.</span>
+    <span class="c1"># reasoning_effort — GPT model is a reasoning model; low effort keeps it cheap/fast as judging is a constrained task.</span>
+    <span class="c1"># max_completion_tokens — headroom for the reasoning tokens GPT emits before the JSON.</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">reasoning_effort</span><span class="o">=</span><span class="s2">&quot;low&quot;</span><span class="p">,</span> <span class="n">max_completion_tokens</span><span class="o">=</span><span class="mi">1500</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="n">response_format</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;json_schema&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;json_schema&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;diagnosis_judgement&quot;</span><span class="p">,</span> <span class="s2">&quot;strict&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;schema&quot;</span><span class="p">:</span> <span class="n">output_schema</span><span class="p">},</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># Some models/accounts don&#39;t accept strict json_schema; retry with the</span>
+        <span class="c1"># looser json_object mode the analyzer itself uses.</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Judge json_schema call failed (</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">); retrying with json_object&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">response_format</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;json_object&quot;</span><span class="p">})</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e2</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Judge call failed: </span><span class="si">{</span><span class="n">e2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Judge returned unparseable JSON: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># checks every key is present; if any is missing, log the keys for debugging and return none</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">result</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">output_schema</span><span class="p">[</span><span class="s2">&quot;required&quot;</span><span class="p">]):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Judge output missing required keys: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="judge_case">
+<a class="viewcode-back" href="../../evals.html#evals.judge.judge_case">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">judge_case</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_JUDGE_MODEL</span><span class="p">,</span> <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Score one diagnosis on all four dimensions against its expected reference.</span>
+
+<span class="sd">    Used by the offline eval, where each case carries an ``expected`` block.</span>
+
+<span class="sd">    :param payload: The judge input object (``case_id``, ``failure_context``,</span>
+<span class="sd">        ``diagnosis``, ``expected``).</span>
+<span class="sd">    :param model: Groq model id for the judge. Defaults to DEFAULT_JUDGE_MODEL.</span>
+<span class="sd">    :param api_key: Groq API key; falls back to the client&#39;s env-based default.</span>
+<span class="sd">    :returns: The parsed judge output (per-dimension ``{verdict, reasoning,</span>
+<span class="sd">        issues}`` for correctness/groundedness/completeness/actionability plus</span>
+<span class="sd">        ``overall_verdict``), or ``None`` if the call or parse fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_call_judge</span><span class="p">(</span><span class="n">JUDGE_SYSTEM_PROMPT</span><span class="p">,</span> <span class="n">JUDGE_OUTPUT_SCHEMA</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">api_key</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="judge_live">
+<a class="viewcode-back" href="../../evals.html#evals.judge.judge_live">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">judge_live</span><span class="p">(</span><span class="n">failure_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">diagnosis</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_JUDGE_MODEL</span><span class="p">,</span> <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Score a live failure&#39;s diagnosis on groundedness, completeness, and actionability.</span>
+
+<span class="sd">    Used in-pytest on live failures, which have no reference answer — so</span>
+<span class="sd">    correctness is deliberately not judged. The diagnosis is cleaned with</span>
+<span class="sd">    :func:`sanitize_diagnosis` before being shown to the judge.</span>
+
+<span class="sd">    :param failure_context: The context the analyzer was given for this failure.</span>
+<span class="sd">    :param diagnosis: The raw diagnosis the analyzer produced.</span>
+<span class="sd">    :param model: Groq model id for the judge. Defaults to DEFAULT_JUDGE_MODEL.</span>
+<span class="sd">    :param api_key: Groq API key; falls back to the client&#39;s env-based default.</span>
+<span class="sd">    :returns: The parsed judge output (``groundedness``, ``completeness``,</span>
+<span class="sd">        ``actionability``, ``overall_verdict``), or ``None`` if the call or</span>
+<span class="sd">        parse fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;failure_context&quot;</span><span class="p">:</span> <span class="n">failure_context</span><span class="p">,</span> <span class="s2">&quot;diagnosis&quot;</span><span class="p">:</span> <span class="n">sanitize_diagnosis</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">)}</span>
+    <span class="k">return</span> <span class="n">_call_judge</span><span class="p">(</span><span class="n">LIVE_JUDGE_SYSTEM_PROMPT</span><span class="p">,</span> <span class="n">LIVE_JUDGE_OUTPUT_SCHEMA</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">api_key</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../evals.html">Evaluation Harness (evals)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
