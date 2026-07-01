@@ -63,7 +63,7 @@ def pytest_addoption(parser):
         "--judge-diagnosis",
         action="store_true",
         default=False,
-        help="Also judge each diagnosis's quality (groundedness + completeness) "
+        help="Also judge each diagnosis's quality (groundedness + completeness + actionability) "
              "with the LLM judge. Requires --failure-analysis and GROQ_API_KEY; "
              "adds one judge LLM call per failed test."
     )
@@ -97,6 +97,12 @@ def pytest_configure(config):
         analyzer.enabled = True # Update instance
         analyzer.api_key = os.getenv("GROQ_API_KEY")    # re-read in case .env loads later
         logger.info(f"AI analysis is enabled. AI_ANALYSIS_ENABLED = {os.environ["AI_ANALYSIS_ENABLED"]}")
+
+    if config.getoption("--judge-diagnosis") and not config.getoption("--failure-analysis"):
+        logger.warning(
+            "--judge-diagnosis has no effect without --failure-analysis: "
+            "there is no diagnosis to judge."
+        )
 
 from tests.data.data_loader import load_test_data
 from api.movies_api import MoviesAPI
@@ -355,31 +361,30 @@ def pytest_runtest_makereport(item, call):
         # everything except correctness — a live failure has no reference answer).
         # Opt-in and subordinate to analysis: skip unless --judge-diagnosis is set,
         # so a normal triage run pays for diagnosis but not the extra judge call.
-        if not item.config.getoption("--judge-diagnosis"):
-            return
-        from evals.judge import DEFAULT_JUDGE_MODEL, judge_live
-        judgement = judge_live(
-            failure_context,
-            diagnosis,
-            model=os.getenv("AI_JUDGE_MODEL", DEFAULT_JUDGE_MODEL),
-            api_key=os.getenv("GROQ_API_KEY"),
-        )
-        if judgement:
-            logger.info(
-                f"⚖️ Diagnosis quality [{judgement['overall_verdict']}] — "
-                f"groundedness: {judgement['groundedness']['verdict']}, "
-                f"completeness: {judgement['completeness']['verdict']}, "
-                f"actionability: {judgement['actionability']['verdict']}"
+        if item.config.getoption("--judge-diagnosis"):
+            from evals.judge import DEFAULT_JUDGE_MODEL, judge_live
+            judgement = judge_live(
+                failure_context,
+                diagnosis,
+                model=os.getenv("AI_JUDGE_MODEL", DEFAULT_JUDGE_MODEL),
+                api_key=os.getenv("GROQ_API_KEY"),
             )
-            try:
-                import allure
-                allure.attach(
-                    json.dumps(judgement, indent=2),
-                    name="⚖️ Diagnosis Quality (LLM-as-a-judge)",
-                    attachment_type=allure.attachment_type.JSON
+            if judgement:
+                logger.info(
+                    f"⚖️ Diagnosis quality [{judgement['overall_verdict']}] — "
+                    f"groundedness: {judgement['groundedness']['verdict']}, "
+                    f"completeness: {judgement['completeness']['verdict']}, "
+                    f"actionability: {judgement['actionability']['verdict']}"
                 )
-            except Exception:
-                pass  # Allure not available
+                try:
+                    import allure
+                    allure.attach(
+                        json.dumps(judgement, indent=2),
+                        name="⚖️ Diagnosis Quality (LLM-as-a-judge)",
+                        attachment_type=allure.attachment_type.JSON
+                    )
+                except Exception:
+                    pass  # Allure not available
 
 def pytest_sessionfinish(session, exitstatus):
     """
