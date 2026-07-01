@@ -167,7 +167,7 @@ def sanitize_diagnosis(diagnosis: dict) -> dict:
     return cleaned # stripped-and-normalized copy, ready to embed in a judge payload
 
 
-def _call_judge(system_prompt: str, output_schema: dict, payload: dict, model: str, api_key: str) -> dict | None:
+def _call_judge(system_prompt: str, output_schema: dict, payload: dict, model: str, api_key: str | None) -> dict | None:
     """
     Make one judge call and return the parsed, validated verdict.
 
@@ -189,7 +189,7 @@ def _call_judge(system_prompt: str, output_schema: dict, payload: dict, model: s
     from groq import Groq
 
     client = Groq(api_key=api_key)
-    logger.info(f"Sending user payload {json.dumps(payload, indent=2)}")
+    logger.debug(f"Sending user payload {json.dumps(payload, indent=2)}")
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": json.dumps(payload, indent=2)},
@@ -231,7 +231,7 @@ def _call_judge(system_prompt: str, output_schema: dict, payload: dict, model: s
     return result
 
 
-def judge_case(payload: dict, model: str = DEFAULT_JUDGE_MODEL, api_key: str = None) -> dict | None:
+def judge_case(payload: dict, model: str = DEFAULT_JUDGE_MODEL, api_key: str | None = None) -> dict | None:
     """
     Score one diagnosis on all four dimensions against its expected reference.
 
@@ -248,7 +248,7 @@ def judge_case(payload: dict, model: str = DEFAULT_JUDGE_MODEL, api_key: str = N
     return _call_judge(JUDGE_SYSTEM_PROMPT, JUDGE_OUTPUT_SCHEMA, payload, model, api_key)
 
 
-def judge_live(failure_context: dict, diagnosis: dict, model: str = DEFAULT_JUDGE_MODEL, api_key: str = None) -> dict | None:
+def judge_live(failure_context: dict, diagnosis: dict, model: str = DEFAULT_JUDGE_MODEL, api_key: str | None = None) -> dict | None:
     """
     Score a live failure's diagnosis on groundedness, completeness, and actionability.
 
