@@ -180,11 +180,14 @@ poetry run pytest tests/movie_lists/test_popular.py -v -s
 Once that passes, use the commands below for everyday runs:
 
 ```commandline
-# Run all tests (integration + contract)
+# Run the TMDB API suite (integration + contract) — offline unit tests are excluded by default
 poetry run pytest tests/ -v
 
-# Run all tests except contract tests
-poetry run pytest tests/ -v -m "not contract"
+# Live TMDB integration only (no contract, no unit)
+poetry run pytest tests/ -v -m "not contract and not unit"
+
+# Offline unit tests only (opt-in; no live API or GROQ_API_KEY needed)
+poetry run pytest tests/ -v -m unit
 
 # Run tests by module
 poetry run pytest tests/movies/ -v -s
@@ -216,6 +219,28 @@ allure generate allure-results -o allure-report --clean
 # Keep history between local runs
 cp -r allure-report/history allure-results/ 2>/dev/null || true
 ```
+
+### Offline unit tests
+
+Almost every test in this project is an **integration test** that exercises the
+live TMDB API — that's the framework's whole purpose. The one exception is a
+small set of **offline unit tests** under `tests/evals/` that cover the pure
+logic of the AI-evaluation harness (`evals/`): golden-dataset validation
+(`load_dataset`), diagnosis sanitizing (`sanitize_diagnosis`), and the judge
+output-schema builder (`_output_schema`). These make **no** network calls and
+need **no** `GROQ_API_KEY`, so they run in a fraction of a second.
+
+To keep `pytest tests/` meaning "run the TMDB API suite," these tests are marked
+`@pytest.mark.unit` and excluded from the default run via
+`addopts = "-m 'not unit'"` in `pyproject.toml`. Run them explicitly with:
+
+```bash
+poetry run pytest tests/ -v -m unit
+```
+
+> **Note:** a command-line `-m` *replaces* the default marker filter rather than
+> combining with it, which is why "integration only" is spelled out in full as
+> `-m "not contract and not unit"`.
 
 ## Project Structure
 
