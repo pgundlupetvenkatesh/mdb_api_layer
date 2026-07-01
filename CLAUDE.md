@@ -13,9 +13,10 @@ Dependencies are managed with Poetry; always run through `poetry run`.
 
 ```bash
 poetry install                                          # set up venv from poetry.lock
-poetry run pytest tests/ --failure-analysis -v                            # all tests (integration + contract)
-poetry run pytest tests/ --failure-analysis -v -m "not contract"          # integration only
+poetry run pytest tests/ --failure-analysis -v                            # TMDB API suite (integration + contract); unit excluded by default via addopts
+poetry run pytest tests/ --failure-analysis -v -m "not contract and not unit"   # live TMDB integration only
 poetry run pytest tests/contracts/ --failure-analysis -v -m contract      # contract (Pact) tests only
+poetry run pytest tests/ -v -m unit                                       # offline unit tests only (opt-in; no API/GROQ_API_KEY)
 poetry run pytest tests/movies/test_details.py --failure-analysis -v -s   # one module
 poetry run pytest tests/movies/test_details.py::TestDetails::test_get_movie_details --failure-analysis -v -s   # one test
 ```
@@ -24,12 +25,15 @@ Test-run flags (all defined in `tests/conftest.py` via `pytest_addoption`):
 - `--loguru-log-level=DEBUG|INFO|WARNING|ERROR|CRITICAL` — app log verbosity (default INFO)
 - `--log-to-file` — also write to `logs/test_run.log`
 - `--failure-analysis` — opt into AI failure analysis for that run (needs `GROQ_API_KEY`)
+- `--judge-diagnosis` — also score each diagnosis's groundedness + completeness + actionability with the LLM judge (needs `--failure-analysis`; adds one judge call per failed test)
 
 Reporting:
 ```bash
 poetry run pytest tests/ --failure-analysis --html=report/tmdb_report.html --self-contained-html -v   # HTML
 poetry run pytest tests/ --failure-analysis --alluredir=allure-results -v && allure serve allure-results   # Allure (brew install allure)
 ```
+
+Evaluate the AI analyzer (LLM-as-a-judge over a golden dataset; needs `GROQ_API_KEY`): `poetry run python -m evals` (override the judge with `--judge-model <groq-model-id>`).
 
 Docs (Sphinx, from docstrings): `cd docs && make clean && make html` → open `docs/_build/html/index.html`.
 
@@ -51,13 +55,15 @@ Layered, with a strict separation between the API client and the tests:
 - Dedicated per-client fixtures — `movies_api`, `people_api`, `lists_api`, `search_api`, `discover_api` — each returns a fresh, type-annotated endpoint client (e.g. `MoviesAPI()`); a test declares the one it needs in its signature. (`AccountAPI` has no fixture; it's used directly in `tests/helpers/test_data_generators.py`.)
 - `load_schema` fixture: maps a schema name → a **Pydantic model** in `tests/schemas/models.py` (despite the JSON files in `tests/schemas/`, validation is done with `model.model_validate(response.data)`).
 - `_store_test_name` (autouse): injects `self._test_name` into class-based tests for assertion messages.
-- Hooks for AI failure analysis (`pytest_runtest_makereport`) and Allure/HTML report customization and `environment.properties` writing (`pytest_sessionfinish`).
+- Hooks for AI failure analysis (`pytest_runtest_makereport`) and Allure/HTML report customization and `environment.properties` writing (`pytest_sessionfinish`). When `--failure-analysis` is on, `pytest_runtest_makereport` diagnoses each failure and attaches it to Allure; when `--judge-diagnosis` is *also* passed, it additionally calls `evals.judge.judge_live` to score the diagnosis for groundedness + completeness + actionability (reference-free; correctness needs the offline eval) and attaches the quality verdict too. Judging is opt-in and subordinate to analysis so a normal triage run pays only for the diagnosis, not the extra per-failure judge call. Judge model defaults to `evals.judge.DEFAULT_JUDGE_MODEL`, overridable via the `AI_JUDGE_MODEL` env var.
 
 **Test conventions** — Tests are class-based. Response **bodies** are validated by `load_schema(...).model_validate(response.data)` against the strict Pydantic models in `tests/schemas/models.py` — the models are the single source of truth for body structure/types, so per-field manual assertions are not duplicated in tests. Response **metadata** (status, method, content-type, elapsed time, URL) is checked with the shared `assert_get_metadata` helper (`tests/helpers/response_assertions.py`), which maps a test-case dict onto `assert_http_response`. (Classes still inherit `FieldAssertions` from `tests/helpers/field_assertions.py`, but it now mainly carries `_test_name`; its `assert_*_field` typed-check methods are no longer called by any test.) Tests are data-driven: `TEST_DATA = load_test_data("test_data.yaml", "<section>")` is a **module-level constant** (required because `@pytest.mark.parametrize` is evaluated at collection time, before fixtures exist). The second arg scopes the load to one top-level YAML section (e.g. `"get_movie_details"`), so only that section's `$placeholder` generators run — access stays `TEST_DATA["<section>"][...]`. `data_loader.py` applies YAML defaults (a section's `defaults` override the global `defaults` block for shared keys) and resolves `$placeholder` tokens to generator functions (random rating, random movie id, timestamp, etc.); `$random_movie_id` reads `movie_ids.txt`, which is cached per process via `lru_cache`. Tests wrap steps in `allure.step(...)` and tag with `@allure.epic/feature/story`.
 
 **`tests/contracts/`** — Pact consumer-driven contract tests, marked `@pytest.mark.contract`. They point a client at a local Pact mock server (no live API) and emit a single merged `mdb_api_layer-api_pvd.json` contract into `tests/pacts/`. Shared Pact wiring lives in `tests/contracts/conftest.py`: the `pact` fixture (one consumer/provider pair — `PACT_CONSUMER`/`PACT_PROVIDER` — so all interactions merge into one contract file), `pact_movies_api` (client whose `base_url` each test repoints at the mock once `pact.serve()` is up), and `pact_address` (host + OS-assigned port). Each test's mocked response body is also validated against the same `load_schema` Pydantic models the integration tests use, keeping contract and integration in sync.
 
 **`failure_mcp/`** — an MCP server (`server.py`, stdio transport) that wraps the existing `FailureAnalyzer` singleton (`tests/helpers/failure_analyzer.py`) and exposes `analyze_failure`, `get_results`, `save_results` as tools. It does not modify the analyzer. Run with `poetry run python -m failure_mcp.server` (needs `AI_ANALYSIS_ENABLED=true` + `GROQ_API_KEY`).
+
+**`evals/`** — LLM-as-a-judge for the failure analyzer's diagnosis quality. `evals/judge.py` is the shared judge (a judge model on Groq, `openai/gpt-oss-120b` by default — different family from the analyzer, so no self-preference) with two modes off one Groq call (`_call_judge` + strict structured output): `judge_case` scores all four dimensions (correctness, groundedness, completeness, actionability) for the offline eval, `judge_live` scores groundedness + completeness + actionability (everything except correctness, used in-pytest where real failures have no reference). `sanitize_diagnosis` (drops `test_name`/`model`, normalizes `confidence`) is shared by both. The offline eval runs as a standalone CLI (`python -m evals`, separate from the pytest suite): `evals/__main__.py` runs a fresh force-enabled `FailureAnalyzer` (never touches the module singleton or `ai_analysis/`) over each case in `evals/golden_dataset.yaml` (curated YAML, ≥1 case per failure category, each with an `expected` block = reference category + root-cause gist), then `judge_case` scores correctness (vs. `expected`), groundedness, completeness, and actionability; `evals/dataset.py` loads/validates the dataset (category must be in the analyzer's 7-value enum). Writes a per-case + aggregate JSON report to `evals/results/` (gitignored). The **live** path is wired into `tests/conftest.py`'s `pytest_runtest_makereport` (see above). Reuses the existing `groq` dep and `GROQ_API_KEY` — no new dependency; `AI_JUDGE_MODEL` optionally overrides the live judge model. The package's pure logic (`load_dataset` validation, `sanitize_diagnosis`, `_output_schema`) is unit-tested in `tests/evals/`, marked `@pytest.mark.unit` (module-level `pytestmark`) — these are the suite's only non-API tests; they need no live API or `GROQ_API_KEY`. They're **excluded from the default run** by `addopts = "-m 'not unit'"`, so `pytest tests/` stays the TMDB API suite; opt in with `-m unit`.
 
 ## Gotchas
 

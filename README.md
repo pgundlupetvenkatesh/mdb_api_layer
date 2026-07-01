@@ -180,11 +180,14 @@ poetry run pytest tests/movie_lists/test_popular.py -v -s
 Once that passes, use the commands below for everyday runs:
 
 ```commandline
-# Run all tests (integration + contract)
+# Run the TMDB API suite (integration + contract) — offline unit tests are excluded by default
 poetry run pytest tests/ -v
 
-# Run all tests except contract tests
-poetry run pytest tests/ -v -m "not contract"
+# Live TMDB integration only (no contract, no unit)
+poetry run pytest tests/ -v -m "not contract and not unit"
+
+# Offline unit tests only (opt-in; no live API or GROQ_API_KEY needed)
+poetry run pytest tests/ -v -m unit
 
 # Run tests by module
 poetry run pytest tests/movies/ -v -s
@@ -216,6 +219,28 @@ allure generate allure-results -o allure-report --clean
 # Keep history between local runs
 cp -r allure-report/history allure-results/ 2>/dev/null || true
 ```
+
+### Offline unit tests
+
+Almost every test in this project is an **integration test** that exercises the
+live TMDB API — that's the framework's whole purpose. The one exception is a
+small set of **offline unit tests** under `tests/evals/` that cover the pure
+logic of the AI-evaluation harness (`evals/`): golden-dataset validation
+(`load_dataset`), diagnosis sanitizing (`sanitize_diagnosis`), and the judge
+output-schema builder (`_output_schema`). These make **no** network calls and
+need **no** `GROQ_API_KEY`, so they run in a fraction of a second.
+
+To keep `pytest tests/` meaning "run the TMDB API suite," these tests are marked
+`@pytest.mark.unit` and excluded from the default run via
+`addopts = "-m 'not unit'"` in `pyproject.toml`. Run them explicitly with:
+
+```bash
+poetry run pytest tests/ -v -m unit
+```
+
+> **Note:** a command-line `-m` *replaces* the default marker filter rather than
+> combining with it, which is why "integration only" is spelled out in full as
+> `-m "not contract and not unit"`.
 
 ## Project Structure
 
@@ -578,10 +603,77 @@ attached to the Allure report deployed to GitHub Pages.
 |------------------------|-------------------------------------------|------------|----------------------------------------------|
 | `AI_ANALYSIS_ENABLED`  | Enable AI failure analysis                | No         | `false`                                      |
 | `GROQ_API_KEY`         | Groq API key for LLM access               | If enabled | -                                            |
-| `AI_MODEL`             | LLM model identifier on Groq              | No         | `meta-llama/llama-4-scout-17b-16e-instruct`  |
+| `AI_MODEL`             | Analyzer (diagnosis) model on Groq        | No         | `meta-llama/llama-4-scout-17b-16e-instruct`  |
+| `AI_JUDGE_MODEL`       | Judge model on Groq for live judging      | No         | `openai/gpt-oss-120b`                        |
 
 > **Note:** Groq free tier has rate limits. For large test suites with many failures, analysis may be throttled.
 > The analyzer gracefully handles errors — if an LLM call fails, the test result is unaffected.
+
+#### Live diagnosis judging
+
+Add `--judge-diagnosis` (on top of `--failure-analysis`) to also score each
+diagnosis with an LLM judge (`AI_JUDGE_MODEL`) for **groundedness** (no
+hallucinated facts), **completeness** (covers the decisive signals), and
+**actionability** (the suggested fix is concrete) — correctness is *not* judged
+live because a real failure has no reference answer. The verdict is logged
+(`⚖️ Diagnosis quality [pass] …`) and attached to the Allure report
+("⚖️ Diagnosis Quality (LLM judge)"). Judging is opt-in because it adds one judge
+call per failed test — leave it off for normal triage runs and turn it on when
+you're evaluating the analyzer itself. To measure correctness too, run the
+offline eval below.
+
+| Dimension     | Failure mode it catches                                                   |
+|---------------|---------------------------------------------------------------------------|
+| Correctness   | The diagnosis is wrong — names the wrong cause                            |
+| Groundedness  | The diagnosis is made up — cites facts not in failure_context             |
+| Completeness  | The diagnosis is thin — ignores a decisive signal or leaves a field empty |
+| Actionability | The suggested fix is vague — a direction, not a concrete next step        |
+
+```bash
+poetry run pytest tests/ --failure-analysis --judge-diagnosis -v
+poetry run pytest tests/ --failure-analysis --judge-diagnosis --alluredir=allure-results -v -s
+```
+
+![grade_diag](grade_diagnosis.png)
+
+### Evaluating the AI Analyzer
+
+The `evals/` package measures how good the analyzer's diagnoses actually are, using
+an **LLM-as-a-judge**. It runs the analyzer (Llama Scout) live on a curated golden
+dataset of realistic TMDB failures (`evals/golden_dataset.yaml`, one+ case per
+category), then has a judge model (`openai/gpt-oss-120b` on Groq) score each
+diagnosis on four dimensions:
+
+- **correctness** — right category (vs. the case's `expected` reference) and a root cause consistent with the expected gist
+- **groundedness** — every claim/evidence item is supported by the failure context (no hallucinated status codes, fields, or values)
+- **completeness** — covers the decisive signals and all required fields are populated
+- **actionability** — the `suggested_fix` is a concrete, specific next step, not vague boilerplate
+
+Only `GROQ_API_KEY` is needed (both the analyzer and the judge run on Groq).
+
+```bash
+poetry run python -m evals                                  # run on the golden dataset
+poetry run python -m evals --judge-model openai/gpt-oss-20b   # override the judge default model openai/gpt-oss-120b
+```
+#### Eval Summary Table
+| case_id                      | category (expected→got)   | corr | grnd | cmpl | actn | overall |
+|------------------------------|---------------------------|------|------|------|------|---------|
+| timeout_slow_response        | timeout→timeout         ✓ | pass | pass | pass | pass | PASS    |
+| timeout_read_timeout         | timeout→timeout         ✓ | pass | fail | pass | pass | FAIL    |
+| auth_error_invalid_token     | auth_error→auth_error   ✓ | pass | pass | pass | pass | PASS    |
+| schema_mismatch_pydantic     | schema_mismatch→api_bug ✗ | fail | pass | pass | pass | FAIL    |
+| api_bug_wrong_value          | api_bug→api_bug         ✓ | pass | pass | pass | pass | PASS    |
+| test_bug_wrong_expectation   | test_bug→test_bug       ✓ | pass | pass | pass | pass | PASS    |
+| data_issue_stale_id          | data_issue→data_issue   ✓ | pass | pass | pass | pass | PASS    |
+| environment_connection_error | environment→environment ✓ | pass | pass | pass | pass | PASS    |
+
+Cases: 8  judged: 8  scout_failures: 0  judge_errors: 0
+Category accuracy: 88%
+Pass rates — correctness: 88%  groundedness: 88%  completeness: 100%  actionability: 100%  overall: 75%
+
+It prints a per-case table plus aggregate metrics (category accuracy, per-dimension
+pass rates) and writes a full report to `evals/results/eval_results.json` (gitignored).
+Exit code is non-zero if any case fails, so it can gate CI.
 
 ## Reports
 
@@ -883,21 +975,21 @@ Claude Code behaves when working in the repo.
 Invoke explicitly with `/<name>`, or let Claude trigger one automatically.
 The table is a summary; each `SKILL.md` is authoritative.
 
-| Skill              | What it does                                                                 |
-|--------------------|-----------------------------------------------------------------------------|
+| Skill              | What it does                                                                        |
+|--------------------|-------------------------------------------------------------------------------------|
 | `commit-rules`     | Enforces atomic commits, message style, secret/artifact exclusion, required trailer |
-| `update-claude-md` | Reconciles CLAUDE.md against the code after a structural change              |
-| `review-tests`     | Reviews a diff against this repo's test conventions (complements `/code-review`) |
+| `update-claude-md` | Reconciles CLAUDE.md against the code after a structural change                     |
+| `review-tests`     | Reviews a diff against this repo's test conventions (complements `/code-review`)    |
 
 ### Hooks
 
 Configured in `.claude/settings.json`, run automatically, and fail-open
 (never wedge legitimate work).
 
-| Hook                   | Event              | Behavior                                                                 |
-|------------------------|--------------------|--------------------------------------------------------------------------|
-| `guard-commit.sh`      | `PreToolUse(Bash)` | Blocks a `git commit` that stages a `.env` or a credential-like token    |
-| `claude-md-reminder.sh`| `Stop`             | Nudges to run `update-claude-md` when `api/`/`config/` changed but CLAUDE.md didn't |
+| Hook                    | Event              | Behavior                                                                            |
+|-------------------------|--------------------|-------------------------------------------------------------------------------------|
+| `guard-commit.sh`       | `PreToolUse(Bash)` | Blocks a `git commit` that stages a `.env` or a credential-like token               |
+| `claude-md-reminder.sh` | `Stop`             | Nudges to run `update-claude-md` when `api/`/`config/` changed but CLAUDE.md didn't |
 
 > Skills and hooks are version-controlled, so every contributor using Claude
 > Code in this repo gets the same commit hygiene, doc-sync reminders, and
@@ -930,6 +1022,5 @@ update the gh-pages branch GitHub Docs: Token Permissions.<br>
 
 ## Future Improvements
 
-* AI-based test generation
 * Load perf testing with Locust
 * Send test results to Grafana

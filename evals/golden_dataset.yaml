@@ -1,0 +1,163 @@
+# Golden dataset for evaluating the AI failure analyzer (tests/helpers/failure_analyzer.py).
+#
+# Each case is a realistic TMDB test failure. `failure_context` mirrors exactly
+# what FailureAnalyzer.analyze() accepts; the analyzer (Llama Scout) is run live
+# on it to produce the diagnosis under evaluation. `expected` is the reference the
+# judge scores correctness against: expected_category is one of
+# api_bug | test_bug | data_issue | timeout | auth_error | schema_mismatch | environment,
+# and expected_root_cause is a short gist (not an exact-match string).
+#
+# At least one case per category, plus an extra discriminator (test_bug vs
+# api_bug). Tracebacks are kept short — the analyzer only sends the last 20 lines.
+
+cases:
+  # 1. timeout — slow-but-successful response trips an elapsed-time assertion.
+  #    Modeled on a real entry in ai_analysis/failure_analysis.json.
+  - id: timeout_slow_response
+    failure_context:
+      test_name: "test_update_list_description[update_list0]"
+      test_file: "tests/lists/test_update_list.py"
+      api_url: "https://api.themoviedb.org/4/list/8284605"
+      status_code: 201
+      response_body: "{'success': True, 'status_code': 12, 'status_message': 'The item/record was updated successfully.'}"
+      error_message: "AssertionError: Response time 17.729938s exceeded expected max 15s"
+      traceback: |
+        tests/lists/test_update_list.py:52: in test_update_list_description
+            assert_get_metadata(response, case)
+        tests/helpers/response_assertions.py:38: in assert_get_metadata
+            assert_http_response(response, exp_max_elp_secs=case["exp_max_elp_secs"])
+        E   AssertionError: Response time 17.729938s exceeded expected max 15s
+    expected:
+      expected_category: timeout
+      expected_root_cause: "The API call succeeded (HTTP 201) but took ~17.7s, exceeding the test's 15-second response-time threshold."
+
+  # 2. timeout — hard ReadTimeout, no HTTP response at all (no status/body).
+  #    Exercises the optional-field-omission path.
+  - id: timeout_read_timeout
+    failure_context:
+      test_name: "test_update_list_description[update_list0]"
+      test_file: "tests/lists/test_update_list.py"
+      api_url: "https://api.themoviedb.org/4/list/8284605"
+      error_message: "requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='api.themoviedb.org', port=443): Read timed out. (read timeout=30)"
+      traceback: |
+        api/base_api.py:84: in put
+            response = self.session.put(url, json=payload, timeout=self.timeout)
+        .venv/lib/python3.12/site-packages/requests/sessions.py:649: in put
+            return self.request("PUT", url, data=data, **kwargs)
+        E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='api.themoviedb.org', port=443): Read timed out. (read timeout=30)
+    expected:
+      expected_category: timeout
+      expected_root_cause: "The PUT request to update the list never returned within the 30s read timeout, raising requests.exceptions.ReadTimeout."
+
+  # 3. auth_error — expired/invalid v4 bearer token, TMDB status_code 7.
+  - id: auth_error_invalid_token
+    failure_context:
+      test_name: "test_get_account_lists[account0]"
+      test_file: "tests/account/test_account.py"
+      api_url: "https://api.themoviedb.org/4/account/abc123/lists"
+      status_code: 401
+      response_body: "{'success': False, 'status_code': 7, 'status_message': 'Invalid API key: You must be granted a valid key.'}"
+      error_message: "AssertionError: Expected status code 200 but got 401"
+      traceback: |
+        tests/account/test_account.py:41: in test_get_account_lists
+            assert_get_metadata(response, case)
+        tests/helpers/response_assertions.py:31: in assert_get_metadata
+            assert response.status_code == case["exp_status_code"]
+        E   AssertionError: Expected status code 200 but got 401
+    expected:
+      expected_category: auth_error
+      expected_root_cause: "The request was rejected with HTTP 401 and TMDB status_code 7 (invalid API key/token), an authentication failure."
+
+  # 4. schema_mismatch — response body fails Pydantic validation (wrong type).
+  - id: schema_mismatch_pydantic
+    failure_context:
+      test_name: "test_get_movie_details[get_movie_details0]"
+      test_file: "tests/movies/test_details.py"
+      api_url: "https://api.themoviedb.org/3/movie/27205"
+      status_code: 200
+      response_body: "{'id': 27205, 'title': 'Inception', 'runtime': '148', 'release_date': '2010-07-15', 'budget': 160000000}"
+      error_message: "pydantic_core._pydantic_core.ValidationError: 1 validation error for MovieDetails\nruntime\n  Input should be a valid integer [type=int_type, input_value='148', input_type=str]"
+      traceback: |
+        tests/movies/test_details.py:48: in test_get_movie_details
+            load_schema("movie_details").model_validate(response.data)
+        .venv/lib/python3.12/site-packages/pydantic/main.py:705: in model_validate
+            return cls.__pydantic_validator__.validate_python(obj)
+        E   pydantic_core._pydantic_core.ValidationError: 1 validation error for MovieDetails
+        E   runtime
+        E     Input should be a valid integer [type=int_type, input_value='148', input_type=str]
+    expected:
+      expected_category: schema_mismatch
+      expected_root_cause: "The response returned HTTP 200 but its 'runtime' field was a string ('148') instead of an integer, failing the MovieDetails Pydantic model validation."
+
+  # 5. api_bug — HTTP 200 but a field value contradicts the request/contract.
+  - id: api_bug_wrong_value
+    failure_context:
+      test_name: "test_search_movie[search_movie_page2]"
+      test_file: "tests/search/test_search.py"
+      api_url: "https://api.themoviedb.org/3/search/movie?query=inception&page=2"
+      status_code: 200
+      response_body: "{'page': 1, 'total_pages': 7, 'total_results': 135, 'results': [{'id': 27205, 'title': 'Inception'}]}"
+      error_message: "AssertionError: Expected page 2 in response but got page 1"
+      traceback: |
+        tests/search/test_search.py:55: in test_search_movie
+            assert response.data["page"] == case["expected_page"]
+        E   AssertionError: Expected page 2 in response but got page 1
+    expected:
+      expected_category: api_bug
+      expected_root_cause: "The request asked for page=2 but the API returned page 1 in the body, an incorrect/unexpected response value from the API."
+
+  # 6. test_bug — the test asserts 200 for a deliberately invalid id; the API
+  #    correctly returns 404. The fault is the test's expectation, not the API.
+  #    Discriminator: weaker models mislabel this api_bug.
+  - id: test_bug_wrong_expectation
+    failure_context:
+      test_name: "test_get_movie_details_invalid[get_movie_details_invalid0]"
+      test_file: "tests/movies/test_details.py"
+      api_url: "https://api.themoviedb.org/3/movie/0"
+      status_code: 404
+      response_body: "{'success': False, 'status_code': 34, 'status_message': 'The resource you requested could not be found.'}"
+      error_message: "AssertionError: Expected status code 200 but got 404"
+      traceback: |
+        tests/movies/test_details.py:71: in test_get_movie_details_invalid
+            assert response.status_code == 200
+        E   AssertionError: Expected status code 200 but got 404
+    expected:
+      expected_category: test_bug
+      expected_root_cause: "The API correctly returns 404 (status_code 34) for the invalid movie id 0; the test wrongly asserts 200, so the test's expectation is the bug."
+
+  # 7. data_issue — a previously-valid movie id from test data now 404s because
+  #    the resource was removed from TMDB.
+  - id: data_issue_stale_id
+    failure_context:
+      test_name: "test_get_movie_details[get_movie_details_random]"
+      test_file: "tests/movies/test_details.py"
+      api_url: "https://api.themoviedb.org/3/movie/1399992"
+      status_code: 404
+      response_body: "{'success': False, 'status_code': 34, 'status_message': 'The resource you requested could not be found.'}"
+      error_message: "AssertionError: Expected status code 200 but got 404 for movie id 1399992 sourced from movie_ids.txt"
+      traceback: |
+        tests/movies/test_details.py:48: in test_get_movie_details
+            assert_get_metadata(response, case)
+        tests/helpers/response_assertions.py:31: in assert_get_metadata
+            assert response.status_code == case["exp_status_code"]
+        E   AssertionError: Expected status code 200 but got 404 for movie id 1399992 sourced from movie_ids.txt
+    expected:
+      expected_category: data_issue
+      expected_root_cause: "The test movie id 1399992 (from movie_ids.txt) no longer exists on TMDB and returns 404; the test data is stale, not a code or API bug."
+
+  # 8. environment — connection/DNS failure, no HTTP response.
+  - id: environment_connection_error
+    failure_context:
+      test_name: "test_get_popular_movies[get_popular0]"
+      test_file: "tests/movies/test_popular.py"
+      api_url: "https://api.themoviedb.org/3/movie/popular"
+      error_message: "requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.themoviedb.org', port=443): Max retries exceeded with url: /3/movie/popular (Caused by NewConnectionError('Failed to establish a new connection: [Errno -2] Name or service not known'))"
+      traceback: |
+        api/base_api.py:67: in get
+            response = self.session.get(url, params=params, timeout=self.timeout)
+        .venv/lib/python3.12/site-packages/requests/sessions.py:602: in get
+            return self.request("GET", url, **kwargs)
+        E   requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.themoviedb.org', port=443): Max retries exceeded with url: /3/movie/popular (Caused by NewConnectionError('Failed to establish a new connection: [Errno -2] Name or service not known'))
+    expected:
+      expected_category: environment
+      expected_root_cause: "DNS resolution / network connectivity to api.themoviedb.org failed (ConnectionError, name or service not known), an environment/connectivity issue rather than an API or test fault."

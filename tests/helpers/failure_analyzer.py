@@ -110,7 +110,7 @@ class FailureAnalyzer:
         if not self.enabled:
             return None
         else:
-            logger.info(f"AI_ANALYSIS_ENABLED={self.enabled} and GROQ_API_KEY {self.api_key}")
+            logger.info(f"AI_ANALYSIS_ENABLED={self.enabled} and GROQ_API_KEY {'set' if self.api_key else 'missing'}")
 
         prompt = self._build_prompt(failure_context)
 

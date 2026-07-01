@@ -33,7 +33,12 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+# Exclude the offline unit tests from the default run so `pytest tests/` stays
+# the TMDB API suite (integration + contract). Opt in with `-m unit` (a
+# command-line -m replaces this default rather than combining with it).
+addopts = "-m 'not unit'"
 generate_report_on_test = true
 markers = [
-    "contract: marks tests as contract tests (deselect with '-m \"not contract\"')"
+    "contract: marks tests as contract tests (deselect with '-m \"not contract\"')",
+    "unit: marks fast offline unit tests that don't hit the TMDB API (select with '-m unit', deselect with '-m \"not unit\"')"
 ]
