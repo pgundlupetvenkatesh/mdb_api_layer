@@ -504,7 +504,7 @@ pytest_runtest_makereport hook captures:
   • error message & traceback
   • API URL, status code, response body (if available)
   ↓
-FailureAnalyzer sends context to Groq API (Llama 4 Scout / Qwen 3)
+FailureAnalyzer sends context to Groq API (Llama 3.3 70B)
   ↓
 LLM returns structured JSON diagnosis:
   { root_cause, category, suggested_fix, confidence, explanation, evidence }
@@ -577,14 +577,14 @@ When enabled, each failed test produces a console log like:
   "explanation": "The test expects a 200 OK but the API returned 404 Not Found because the movie resource was deleted or never existed. Refresh test data with current valid IDs.", 
   "evidence": ["HTTP status code: 404", "Response body: {'status_code':34, 'status_message':'The resource you requested could not be found.'}"],
   "test_name": "test_get_movie_details[invalid_id]",
-  "model": "meta-llama/llama-4-scout-17b-16e-instruct"
+  "model": "llama-3.3-70b-versatile"
 }
 ```
-![allure_failure_ss](allure_failure_ss.png)
+![allure_failure_ss](images/allure_failure_ss.png)
 
 ### Supported Models
 
-The default model is `meta-llama/llama-4-scout-17b-16e-instruct` on Groq's free tier.
+The default model is `llama-3.3-70b-versatile` on Groq's free tier.
 Override via environment variable:
 ```bash
 # In .env
@@ -603,7 +603,7 @@ attached to the Allure report deployed to GitHub Pages.
 |------------------------|-------------------------------------------|------------|----------------------------------------------|
 | `AI_ANALYSIS_ENABLED`  | Enable AI failure analysis                | No         | `false`                                      |
 | `GROQ_API_KEY`         | Groq API key for LLM access               | If enabled | -                                            |
-| `AI_MODEL`             | Analyzer (diagnosis) model on Groq        | No         | `meta-llama/llama-4-scout-17b-16e-instruct`  |
+| `AI_MODEL`             | Analyzer (diagnosis) model on Groq        | No         | `llama-3.3-70b-versatile`                    |
 | `AI_JUDGE_MODEL`       | Judge model on Groq for live judging      | No         | `openai/gpt-oss-120b`                        |
 
 > **Note:** Groq free tier has rate limits. For large test suites with many failures, analysis may be throttled.
@@ -634,12 +634,12 @@ poetry run pytest tests/ --failure-analysis --judge-diagnosis -v
 poetry run pytest tests/ --failure-analysis --judge-diagnosis --alluredir=allure-results -v -s
 ```
 
-![grade_diag](grade_diagnosis.png)
+![grade_diag](images/grade_diagnosis.png)
 
 ### Evaluating the AI Analyzer
 
 The `evals/` package measures how good the analyzer's diagnoses actually are, using
-an **LLM-as-a-judge**. It runs the analyzer (Llama Scout) live on a curated golden
+an **LLM-as-a-judge**. It runs the analyzer (Llama 3.3 70B) live on a curated golden
 dataset of realistic TMDB failures (`evals/golden_dataset.yaml`, one+ case per
 category), then has a judge model (`openai/gpt-oss-120b` on Groq) score each
 diagnosis on four dimensions:
@@ -684,7 +684,7 @@ poetry run pytest tests/ --html=report/tmdb_report.html --self-contained-html -v
 
 Generate a simple pytest HTML test report:
 Open the generated `tmdb_report.html` in your web browser to view the test results.
-![sample_report](sample_report.png)
+![sample_report](images/sample_report.png)
 
 ### Allure Report
 ```bash
@@ -693,7 +693,7 @@ poetry run pytest tests/ --alluredir=allure-results -v
 ```
 `--alluredir` option tells pytest to save the test results in a format that Allure can process.
 See [Running Tests](#running-tests) section for more Allure details.
-![sample_allure_report](sample_allure_report.png)
+![sample_allure_report](images/sample_allure_report.png)
 
 ### Docker Parallel Reports
 When running via `docker compose`, two separate reports are generated and then merged in CI:
@@ -716,7 +716,7 @@ To clean previous builds and rebuild run - `make clean && make html`
 
 ### View documentation
 Open `docs/_build/html/index.html` in your web browser.
-![doc_sample](doc_sample.png)
+![doc_sample](images/doc_sample.png)
 
 Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/docs/index.html) to See the current live documentation
 
@@ -817,7 +817,7 @@ failure_mcp/
   "explanation": "The API rejected the request with HTTP 401...",
   "evidence": ["HTTP status code 401", "Response body contains 'Invalid API key'"],
   "test_name": "test_get_movie_details",
-  "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+  "model": "llama-3.3-70b-versatile",
   "confidence_tier": "high"
 }
 ```
@@ -867,7 +867,7 @@ Expand **Environment Variables** and add:
 
 Click **Connect**. On success the right panel shows all 3 tools: `analyze_failure`, `get_results`, `save_results`.
 
-![mcp_inspector](mcp_inspect_ui_1.png)
+![mcp_inspector](images/mcp_inspect_ui_1.png)
 
 #### Step 2 — Call `analyze_failure`
 
@@ -889,7 +889,7 @@ Select the tool, paste the input JSON and click **Run**:
 
 Expected response includes `root_cause`, `category`, `confidence` (0–100), `confidence_tier`, `evidence`, and `suggested_fix`.
 
-![mcp_inspector_op](mcp_inspect_ui_2.png)
+![mcp_inspector_op](images/mcp_inspect_ui_2.png)
 
 #### Step 3 — Call `get_results`
 

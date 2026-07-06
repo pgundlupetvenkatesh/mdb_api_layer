@@ -222,7 +222,7 @@ async def handle_call(name: str, arguments: dict[str, Any]) -> list[types.TextCo
           "explanation": "...",
           "evidence": ["HTTP 401", "Response: Invalid API key"],
           "test_name": "test_get_movie_details",
-          "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+          "model": "llama-3.3-70b-versatile",
           "confidence_tier": "high"
         }
     """

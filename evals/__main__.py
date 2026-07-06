@@ -1,7 +1,7 @@
 """
 CLI runner for the failure-analyzer evaluation.
 
-Runs the AI failure analyzer (Llama Scout via Groq) live on each case in the
+Runs the AI failure analyzer (Llama 3.3 70B via Groq) live on each case in the
 golden dataset, then judges every produced diagnosis with the GPT-OSS judge on
 four dimensions (correctness, groundedness, completeness, actionability). Prints
 a per-case table plus aggregate metrics and writes a JSON report.
@@ -113,9 +113,9 @@ def _diagnose_cases(cases: list[dict]) -> list[dict]:
     through the report (and excluded from quality metrics) rather than crashing
     the run.
 
-    Exercise the analyzer (Scout) on known inputs. Each dataset case carries a
+    Exercise the analyzer (Llama 3.3 70B) on known inputs. Each dataset case carries a
     realistic ``failure_context``; this function feeds that context to a fresh
-    ``FailureAnalyzer`` and captures what Llama Scout says. This is the only
+    ``FailureAnalyzer`` and captures what the analyzer model says. This is the only
     place in the eval where the system-under-test actually runs.
 
     Purpose: Take the golden dataset and produce one diagnosis per case from

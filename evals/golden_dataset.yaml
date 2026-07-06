@@ -1,7 +1,7 @@
 # Golden dataset for evaluating the AI failure analyzer (tests/helpers/failure_analyzer.py).
 #
 # Each case is a realistic TMDB test failure. `failure_context` mirrors exactly
-# what FailureAnalyzer.analyze() accepts; the analyzer (Llama Scout) is run live
+# what FailureAnalyzer.analyze() accepts; the analyzer (Llama 3.3 70B) is run live
 # on it to produce the diagnosis under evaluation. `expected` is the reference the
 # judge scores correctness against: expected_category is one of
 # api_bug | test_bug | data_issue | timeout | auth_error | schema_mismatch | environment,
