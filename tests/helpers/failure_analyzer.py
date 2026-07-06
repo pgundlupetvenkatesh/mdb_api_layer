@@ -16,9 +16,9 @@ from pathlib import Path
 from loguru import logger
 
 # Model options on Groq free tier:
-#   "meta-llama/llama-4-scout-17b-16e-instruct"
+#   "llama-3.3-70b-versatile"
 #   "qwen/qwen3-32b"
-DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
+DEFAULT_MODEL = "llama-3.3-70b-versatile"
 SYSTEM_PROMPT = """
 You are an expert API test failure analyst. When given a test failure context, analyze it and respond with a JSON object containing:
 {
@@ -133,6 +133,12 @@ class FailureAnalyzer:
             diagnosis = json.loads(raw)
             diagnosis["test_name"] = failure_context.get("test_name", "unknown")
             diagnosis["model"] = self.model
+            # llama-3.3-70b sometimes returns confidence as a string ("95");
+            # downstream tiering compares it numerically, so coerce here.
+            try:
+                diagnosis["confidence"] = int(diagnosis.get("confidence", 0))
+            except (TypeError, ValueError):
+                diagnosis["confidence"] = 0
             self._results.append(diagnosis)
 
             logger.info(f"🤖 AI Analysis [{diagnosis.get('category', '?')}]: {diagnosis.get('root_cause', 'N/A')}")
