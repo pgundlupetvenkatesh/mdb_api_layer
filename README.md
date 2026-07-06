@@ -580,7 +580,7 @@ When enabled, each failed test produces a console log like:
   "model": "llama-3.3-70b-versatile"
 }
 ```
-![allure_failure_ss](allure_failure_ss.png)
+![allure_failure_ss](images/allure_failure_ss.png)
 
 ### Supported Models
 
@@ -634,7 +634,7 @@ poetry run pytest tests/ --failure-analysis --judge-diagnosis -v
 poetry run pytest tests/ --failure-analysis --judge-diagnosis --alluredir=allure-results -v -s
 ```
 
-![grade_diag](grade_diagnosis.png)
+![grade_diag](images/grade_diagnosis.png)
 
 ### Evaluating the AI Analyzer
 
@@ -684,7 +684,7 @@ poetry run pytest tests/ --html=report/tmdb_report.html --self-contained-html -v
 
 Generate a simple pytest HTML test report:
 Open the generated `tmdb_report.html` in your web browser to view the test results.
-![sample_report](sample_report.png)
+![sample_report](images/sample_report.png)
 
 ### Allure Report
 ```bash
@@ -693,7 +693,7 @@ poetry run pytest tests/ --alluredir=allure-results -v
 ```
 `--alluredir` option tells pytest to save the test results in a format that Allure can process.
 See [Running Tests](#running-tests) section for more Allure details.
-![sample_allure_report](sample_allure_report.png)
+![sample_allure_report](images/sample_allure_report.png)
 
 ### Docker Parallel Reports
 When running via `docker compose`, two separate reports are generated and then merged in CI:
@@ -716,7 +716,7 @@ To clean previous builds and rebuild run - `make clean && make html`
 
 ### View documentation
 Open `docs/_build/html/index.html` in your web browser.
-![doc_sample](doc_sample.png)
+![doc_sample](images/doc_sample.png)
 
 Click [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/docs/index.html) to See the current live documentation
 
@@ -867,7 +867,7 @@ Expand **Environment Variables** and add:
 
 Click **Connect**. On success the right panel shows all 3 tools: `analyze_failure`, `get_results`, `save_results`.
 
-![mcp_inspector](mcp_inspect_ui_1.png)
+![mcp_inspector](images/mcp_inspect_ui_1.png)
 
 #### Step 2 — Call `analyze_failure`
 
@@ -889,7 +889,7 @@ Select the tool, paste the input JSON and click **Run**:
 
 Expected response includes `root_cause`, `category`, `confidence` (0–100), `confidence_tier`, `evidence`, and `suggested_fix`.
 
-![mcp_inspector_op](mcp_inspect_ui_2.png)
+![mcp_inspector_op](images/mcp_inspect_ui_2.png)
 
 #### Step 3 — Call `get_results`
 
