@@ -4,7 +4,7 @@ Pytest configuration and shared fixtures for the TMDB API test suite.
 This module is automatically loaded by pytest before test collection. It provides:
 
 - **CLI options**: ``--loguru-log-level``, ``--log-to-file``, ``--failure-analysis``, ``--judge-diagnosis``
-- **Hooks**: Logging setup, AI failure analysis, Allure/HTML report customization
+- **Hooks**: Logging setup, AI failure analysis, end-of-run AI diagnosis console summary, Allure/HTML report customization
 - **Fixtures**: API client factory, Pydantic schema loader, test data loader
 
 .. module:: tests.conftest
@@ -385,6 +385,38 @@ def pytest_runtest_makereport(item, call):
                     )
                 except Exception:
                     pass  # Allure not available
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    """
+    Print all accumulated AI diagnoses as a console section at the end of the run.
+
+    Renders after the built-in summary sections so a terminal-only run gets the
+    same triage information as the reports. Keyed off the analyzer's accumulated
+    results rather than the --failure-analysis flag, so it also covers analysis
+    enabled via AI_ANALYSIS_ENABLED=true in .env; no failures analyzed = no
+    section. This is a triage summary (root cause + fix) — the full diagnosis
+    (explanation, evidence) stays in the Allure attachment and
+    ai_analysis/failure_analysis.json.
+
+    :param terminalreporter: Pytest's ``TerminalReporter`` to write the section to.
+    :param exitstatus: Integer exit code of the test session (unused).
+    :param config: Pytest's ``Config`` object (unused).
+    """
+    if not analyzer.results:
+        return
+
+    terminalreporter.section(f"🤖 AI Failure Analysis ({len(analyzer.results)} failures)")
+    for diagnosis in analyzer.results:
+        confidence = diagnosis.get("confidence", 0)
+        markup = {"green": True} if confidence >= 80 else {"yellow": True} if confidence >= 50 else {"red": True}
+        terminalreporter.write_line(
+            f"{diagnosis.get('test_name', 'unknown')}  "
+            f"[{diagnosis.get('category', '?')}, confidence {confidence}%]",
+            bold=True, **markup,
+        )
+        terminalreporter.write_line(f"  root cause:    {diagnosis.get('root_cause', 'N/A')}")
+        terminalreporter.write_line(f"  suggested fix: {diagnosis.get('suggested_fix', 'N/A')}")
+        terminalreporter.write_line("")
 
 def pytest_sessionfinish(session, exitstatus):
     """
