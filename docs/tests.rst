@@ -31,6 +31,18 @@ Data
    :language: yaml
    :caption: test_data.yaml
 
+Evals
+-----
+.. automodule:: tests.evals.test_dataset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: tests.evals.test_judge
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Helpers
 -------
 
