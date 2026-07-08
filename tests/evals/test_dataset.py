@@ -1,5 +1,5 @@
 """
-Unit tests for :func:`evals.dataset.load_dataset` validation.
+Unit tests for :func:`evals.dataset.load_dataset` validation. Covering deterministic logic.
 
 Pure offline tests — no API, no Groq, no ``GROQ_API_KEY`` needed. Each case is
 written to a temporary YAML file and fed to the loader to exercise its

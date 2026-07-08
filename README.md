@@ -511,6 +511,7 @@ LLM returns structured JSON diagnosis:
   ↓
 Diagnosis is:
   • Logged to console (🤖 emoji prefix)
+  • Summarized in a console section at the end of the run
   • Attached to Allure report as JSON
   • Saved to tests/ai_analysis/failure_analysis.json at session end
 ```
@@ -564,8 +565,13 @@ When enabled, each failed test produces a console log like:
 | Destination                               | Format | When                        |
 |-------------------------------------------|--------|-----------------------------|
 | Console log                               | Text   | Immediately on failure      |
+| Console summary (🤖 AI Failure Analysis)  | Text   | End of run, after test summary |
 | Allure report (🤖 AI Failure Analysis)    | JSON   | Attached to failed test     |
 | `tests/ai_analysis/failure_analysis.json` | JSON   | End of test session         |
+
+After execution completes, all diagnoses are re-printed as a dedicated console section — test name, category, confidence (color-coded green/yellow/red by tier), root cause, and suggested fix per failure — so terminal-only runs get the triage summary without opening a report:
+
+![ai_failure_analysis_console](images/ai_failure_analysis_console.png)
 
 **Sample diagnosis:**
 ```json

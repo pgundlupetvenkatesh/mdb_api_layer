@@ -91,6 +91,11 @@ class FailureAnalyzer:
 
         return self._client
 
+    @property
+    def results(self) -> list[dict]:
+        """All diagnoses accumulated this session (read-only view)."""
+        return self._results
+
     def analyze(self, failure_context: dict) -> dict | None:
         """
         Send failure context to the LLM and return structured diagnosis.

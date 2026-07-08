@@ -1,5 +1,5 @@
 """
-Unit tests for the pure helpers in :mod:`evals.judge`.
+Unit tests for the pure helpers in :mod:`evals.judge`. Covering deterministic logic.
 
 Covers :func:`~evals.judge.sanitize_diagnosis` and
 :func:`~evals.judge._output_schema` (plus the two built schema constants).
@@ -17,6 +17,7 @@ from evals.judge import (
     sanitize_diagnosis,
 )
 
+# Applies the unit marker to every test in the file at once, instead of decorating each class/test.
 pytestmark = pytest.mark.unit
 """Mark every test in this module as an offline unit test (not a TMDB API test)."""
 
@@ -36,7 +37,7 @@ class TestSanitizeDiagnosis:
         assert "model" not in cleaned
         assert cleaned["category"] == "timeout"
 
-    @allure.story("Normalize confidence")
+    @allure.story("Normalize confidence to int")
     def test_coerces_string_confidence_to_int(self):
         """A numeric-string ``confidence`` is coerced to ``int``."""
         assert sanitize_diagnosis({"confidence": "90"})["confidence"] == 90
