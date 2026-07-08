@@ -36,7 +36,7 @@
 <span class="sd">This module is automatically loaded by pytest before test collection. It provides:</span>
 
 <span class="sd">- **CLI options**: ``--loguru-log-level``, ``--log-to-file``, ``--failure-analysis``, ``--judge-diagnosis``</span>
-<span class="sd">- **Hooks**: Logging setup, AI failure analysis, Allure/HTML report customization</span>
+<span class="sd">- **Hooks**: Logging setup, AI failure analysis, end-of-run AI diagnosis console summary, Allure/HTML report customization</span>
 <span class="sd">- **Fixtures**: API client factory, Pydantic schema loader, test data loader</span>
 
 <span class="sd">.. module:: tests.conftest</span>
@@ -452,6 +452,41 @@
                     <span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="k">pass</span>  <span class="c1"># Allure not available</span></div>
+
+
+<div class="viewcode-block" id="pytest_terminal_summary">
+<a class="viewcode-back" href="../../tests.html#tests.conftest.pytest_terminal_summary">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytest_terminal_summary</span><span class="p">(</span><span class="n">terminalreporter</span><span class="p">,</span> <span class="n">exitstatus</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print all accumulated AI diagnoses as a console section at the end of the run.</span>
+
+<span class="sd">    Renders after the built-in summary sections so a terminal-only run gets the</span>
+<span class="sd">    same triage information as the reports. Keyed off the analyzer&#39;s accumulated</span>
+<span class="sd">    results rather than the --failure-analysis flag, so it also covers analysis</span>
+<span class="sd">    enabled via AI_ANALYSIS_ENABLED=true in .env; no failures analyzed = no</span>
+<span class="sd">    section. This is a triage summary (root cause + fix) — the full diagnosis</span>
+<span class="sd">    (explanation, evidence) stays in the Allure attachment and</span>
+<span class="sd">    ai_analysis/failure_analysis.json.</span>
+
+<span class="sd">    :param terminalreporter: Pytest&#39;s ``TerminalReporter`` to write the section to.</span>
+<span class="sd">    :param exitstatus: Integer exit code of the test session (unused).</span>
+<span class="sd">    :param config: Pytest&#39;s ``Config`` object (unused).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">results</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">terminalreporter</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 AI Failure Analysis (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">analyzer</span><span class="o">.</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2"> failures)&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">diagnosis</span> <span class="ow">in</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">results</span><span class="p">:</span>
+        <span class="n">confidence</span> <span class="o">=</span> <span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">markup</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;green&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span> <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="mi">80</span> <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;yellow&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span> <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="mi">50</span> <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;red&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+        <span class="n">terminalreporter</span><span class="o">.</span><span class="n">write_line</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;test_name&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;unknown&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">  &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;category&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;?&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">, confidence </span><span class="si">{</span><span class="n">confidence</span><span class="si">}</span><span class="s2">%]&quot;</span><span class="p">,</span>
+            <span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">markup</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">terminalreporter</span><span class="o">.</span><span class="n">write_line</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  root cause:    </span><span class="si">{</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;root_cause&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;N/A&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">terminalreporter</span><span class="o">.</span><span class="n">write_line</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  suggested fix: </span><span class="si">{</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;suggested_fix&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;N/A&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">terminalreporter</span><span class="o">.</span><span class="n">write_line</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pytest_sessionfinish">
