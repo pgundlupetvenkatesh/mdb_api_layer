@@ -172,6 +172,25 @@ get_person_details:
     - person_id: 9999999999
       expected_message: "The resource you requested could not be found."
 
+get_network_details:
+  defaults:
+    valid:
+      status_code: 200
+      reason: 'OK'
+    invalid:
+      status_code: 404
+      reason: 'Not Found'
+  valid: # Well-known, stable network IDs (verified against the live API)
+    - network_id: 213 # Netflix
+    - network_id: 49  # HBO
+    - network_id: 4   # BBC One
+    - network_id: 6   # NBC
+  invalid:
+    - network_id: 0
+      expected_message: "Invalid id: The pre-requisite id is invalid or not found."
+    - network_id: 99999999
+      expected_message: "The resource you requested could not be found."
+
 update_list:
   defaults:
     valid:

@@ -247,3 +247,27 @@ class PersonDetails(BaseModel):
     profile_path: Optional[str] = Field(default=None, pattern=r".*\.(png|jpg)$")
 
     model_config = {"extra": "allow"}
+
+class NetworkDetails(BaseModel):
+    """
+    Schema for network details response from ``GET /3/network/{network_id}``.
+
+    Validates the response structure for the TMDB network details endpoint.
+    The body is small and fully enumerated, so ``extra = "forbid"`` keeps
+    the contract strict.
+
+    :param headquarters: Network headquarters location, may be empty.
+    :param homepage: Network website URL, may be empty.
+    :param id: Unique TMDB network identifier.
+    :param logo_path: Path to the network logo image, or None.
+    :param name: Name of the network.
+    :param origin_country: ISO 3166-1 country code, may be empty (e.g., Netflix).
+    """
+    headquarters: StrictStr                                    # may be empty
+    homepage: StrictStr                                        # may be empty
+    id: StrictInt = Field(ge=1)
+    logo_path: Optional[str] = Field(default=None, pattern=r".*\.(png|jpg)$")
+    name: StrictStr = Field(min_length=1)
+    origin_country: StrictStr                                  # empty for some networks
+
+    model_config = {"extra": "forbid"}
