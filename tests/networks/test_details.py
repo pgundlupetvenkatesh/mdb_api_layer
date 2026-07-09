@@ -58,7 +58,7 @@ class TestDetails(FieldAssertions):
         :param network_details: Parametrized test data containing a valid
                                 network_id, expected status_code, and reason.
         """
-        logger.info(f"Testing get_network_details with network ID: {network_details['network_id']}")
+        logger.info(f"Random network ID picked: {network_details['network_id']}")
         allure.dynamic.title(f"Get details for network ID: {network_details['network_id']}")
 
         with allure.step(f"Send GET request for network ID {network_details['network_id']}"):

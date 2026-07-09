@@ -180,11 +180,8 @@ get_network_details:
     invalid:
       status_code: 404
       reason: 'Not Found'
-  valid: # Well-known, stable network IDs (verified against the live API)
-    - network_id: 213 # Netflix
-    - network_id: 49  # HBO
-    - network_id: 4   # BBC One
-    - network_id: 6   # NBC
+  valid:
+    - network_id: "$random_network_id" # picked from 10 verified well-known networks
   invalid:
     - network_id: 0
       expected_message: "Invalid id: The pre-requisite id is invalid or not found."

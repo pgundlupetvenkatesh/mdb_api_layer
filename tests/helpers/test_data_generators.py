@@ -63,6 +63,18 @@ def pick_random_movie_id() -> int:
     """
     return random.choice(_load_movie_ids())
 
+# Well-known, stable TMDB network IDs verified against the live API:
+# ABC, BBC One, NBC, CBS, FOX, HBO, Cartoon Network, The CW, AMC, Netflix.
+NETWORK_IDS = (2, 4, 6, 16, 19, 49, 56, 71, 174, 213)
+
+def pick_random_network_id() -> int:
+    """
+    Return a random TMDB network ID from the hardcoded :data:`NETWORK_IDS` list.
+
+    :return: Random network ID
+    """
+    return random.choice(NETWORK_IDS)
+
 def pick_random_rated_movie_id(acc_id, session_id) -> int:
     """
     Fetches rated movies from the account and returns a random movie ID.
