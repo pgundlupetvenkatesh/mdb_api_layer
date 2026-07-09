@@ -43,7 +43,7 @@ CI (`.github/workflows/tmdb_test.yml`) runs the Docker suite on push/PR to main,
 
 ## Configuration
 
-All runtime config comes from environment variables loaded from `.env` (gitignored) via `config/config.py`. `TMDB_API_KEY` and `TMDB_AUTH_TOKEN` (Bearer, v4) are required; everything else has defaults in the `Config` class. Tests will hit the live TMDB API unless run against the Pact mock (contract tests only).
+All runtime config comes from environment variables loaded from `.env` (gitignored) via `config/config.py`; `.env.example` is the committed template (`cp .env.example .env`, fill in credentials) — when adding an env var, add it there too. `TMDB_API_KEY` and `TMDB_AUTH_TOKEN` (Bearer, v4) are required; everything else has defaults in the `Config` class. Tests will hit the live TMDB API unless run against the Pact mock (contract tests only).
 
 ## Architecture
 

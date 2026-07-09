@@ -33,9 +33,8 @@ git clone https://github.com/pgundlupetvenkatesh/mdb_api_layer.git
 cd mdb_api_layer
 poetry install
 
-# 2. Add your TMDB credentials to a .env file (see Configuration below)
-echo "TMDB_API_KEY=your_api_key_here"        >> .env
-echo "TMDB_AUTH_TOKEN=your_read_access_token" >> .env
+# 2. Copy the env template and fill in your TMDB credentials (see Configuration below)
+cp .env.example .env
 
 # 3. Run a single test to verify the setup
 poetry run pytest tests/movie_lists/test_popular.py -v -s
@@ -127,7 +126,15 @@ poetry show
 
 ### Setting Up Environment Variables
 
-Create a `.env` file in the project root (this file is ignored):
+Copy the committed template to a `.env` file in the project root (`.env` itself is
+gitignored) and fill in your values — `.env.example` documents every variable the
+project reads, including the optional AI analysis/judging ones:
+
+```bash
+cp .env.example .env
+```
+
+The key variables:
 
 ```bash
 # Required
@@ -315,6 +322,7 @@ mdb_api_layer/
 ├── report/
 │   └── tmdb_report.html        # Generated HTML test reports
 ├── .env                        # Environment variables (not committed)
+├── .env.example                # Committed template for .env (placeholders only)
 ├── .gitignore
 ├── Dockerfile                  # Docker image definition for containerized test runs
 ├── docker-compose.yml          # Docker Compose config for local containerized runs
