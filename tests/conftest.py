@@ -65,7 +65,7 @@ def pytest_addoption(parser):
         default=False,
         help="Also judge each diagnosis's quality (groundedness + completeness + actionability) "
              "with the LLM judge. Requires --failure-analysis and GROQ_API_KEY; "
-             "adds one judge LLM call per failed test."
+             "adds one judge LLM call per failed test. CLI equivalent of AI_JUDGE_ENABLED=true."
     )
 
 # Set LOG_LEVEL to environment variable before any test modules are imported, ensuring loguru is configured correctly
@@ -98,10 +98,15 @@ def pytest_configure(config):
         analyzer.api_key = os.getenv("GROQ_API_KEY")    # re-read in case .env loads later
         logger.info(f"AI analysis is enabled. AI_ANALYSIS_ENABLED = {os.environ["AI_ANALYSIS_ENABLED"]}")
 
-    if config.getoption("--judge-diagnosis") and not config.getoption("--failure-analysis"):
+    # Same pattern for judging: the flag is CLI sugar for AI_JUDGE_ENABLED=true,
+    # which Docker/K8s/CI runs set via .env instead.
+    if config.getoption("--judge-diagnosis"):
+        os.environ["AI_JUDGE_ENABLED"] = "true"
+
+    if os.getenv("AI_JUDGE_ENABLED", "false").lower() == "true" and not analyzer.enabled:
         logger.warning(
-            "--judge-diagnosis has no effect without --failure-analysis: "
-            "there is no diagnosis to judge."
+            "--judge-diagnosis/AI_JUDGE_ENABLED has no effect without failure analysis "
+            "(--failure-analysis or AI_ANALYSIS_ENABLED=true): there is no diagnosis to judge."
         )
 
 from tests.data.data_loader import load_test_data
@@ -314,9 +319,10 @@ def pytest_runtest_makereport(item, call):
 
     Runs after each test phase (setup/call/teardown). On failure during
     the 'call' phase, extracts context from the test and API response,
-    then sends it to the LLM for diagnosis. When --judge-diagnosis is also set,
-    the diagnosis is scored by an LLM judge for groundedness, completeness, and
-    actionability (correctness is not scored live — a failure has no reference).
+    then sends it to the LLM for diagnosis. When judging is enabled
+    (--judge-diagnosis or AI_JUDGE_ENABLED=true), the diagnosis is scored by an
+    LLM judge for groundedness, completeness, and actionability (correctness is
+    not scored live — a failure has no reference).
     The diagnosis (and, when judged, the quality verdict) are attached to the
     Allure report as JSON attachments.
     """
@@ -374,9 +380,11 @@ def pytest_runtest_makereport(item, call):
 
         # Judge the diagnosis's quality (groundedness + completeness + actionability,
         # everything except correctness — a live failure has no reference answer).
-        # Opt-in and subordinate to analysis: skip unless --judge-diagnosis is set,
-        # so a normal triage run pays for diagnosis but not the extra judge call.
-        if item.config.getoption("--judge-diagnosis"):
+        # Opt-in and subordinate to analysis: skip unless judging is enabled
+        # (--judge-diagnosis sets AI_JUDGE_ENABLED=true in pytest_configure;
+        # Docker/K8s/CI set it via .env), so a normal triage run pays for
+        # diagnosis but not the extra judge call.
+        if os.getenv("AI_JUDGE_ENABLED", "false").lower() == "true":
             from evals.judge import DEFAULT_JUDGE_MODEL, judge_live
             judgement = judge_live(
                 failure_context,

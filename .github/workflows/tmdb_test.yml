@@ -1,11 +1,14 @@
 name: Docker API Tests
 
-# On every push to main or PR updates
+# On every push to main, PR updates, and a nightly scheduled run
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  schedule:
+    - cron: '17 9 * * *'   # nightly ~2 AM Pacific (GitHub cron is UTC; runs on the default branch)
+  workflow_dispatch:        # manual trigger for testing the nightly path
 
 # Grant GITHUB_TOKEN the permissions required for Pages deployment
 permissions:
@@ -75,6 +78,7 @@ jobs:
         echo "TMDB_REQ_TOKEN=${{ secrets.TMDB_REQ_TOKEN }}" >> .env
         echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
         echo "AI_ANALYSIS_ENABLED=${{ vars.AI_ANALYSIS_ENABLED }}" >> .env
+        echo "AI_JUDGE_ENABLED=${{ vars.AI_JUDGE_ENABLED }}" >> .env
 
     # Run integration and contract tests in parallel using docker compose.
     # --no-build: skip building since the image was already built by buildx above.
@@ -120,7 +124,7 @@ jobs:
     # is installed there (not on the runner).
     # Only runs if both report files exist (both containers succeeded).
     - name: Merge Reports
-      if: always() && github.event_name == 'push'
+      if: always() && github.event_name != 'pull_request'
       run: |
         echo "=== Checking for report files ==="
         ls -la report/*.html || echo "No HTML files found"
@@ -144,9 +148,9 @@ jobs:
     # - Copies report/ contents to the gh-pages branch under /report
     # - keep_files: true means previous reports are preserved (appended)
     # - Runs even if tests fail so you can see the failure report
-    # - Only deploys on push (PR tokens cannot write to gh-pages)
+    # - Skipped on PRs (PR tokens cannot write to gh-pages); runs on push/schedule/dispatch
     - name: Deploy report to GitHub Pages
-      if: always() && github.event_name == 'push'
+      if: always() && github.event_name != 'pull_request'
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -177,7 +181,7 @@ jobs:
 
     # Install Allure CLI on the runner
     - name: Install Allure CLI
-      if: always() && github.event_name == 'push'
+      if: always() && github.event_name != 'pull_request'
       run: |
         curl -sL https://github.com/allure-framework/allure2/releases/download/2.30.0/allure-2.30.0.tgz | tar -xz
         echo "$PWD/allure-2.30.0/bin" >> $GITHUB_PATH
@@ -186,7 +190,7 @@ jobs:
     # then download previous history from gh-pages for trend charts.
     # Order matters: merge results first, then add history on top.
     - name: Prepare Allure results & history
-      if: always() && github.event_name == 'push'
+      if: always() && github.event_name != 'pull_request'
       run: |
         # 1. Merge results from both test containers
         mkdir -p allure-results-merged
@@ -206,12 +210,12 @@ jobs:
 
     # Generate static Allure report from the merged results + history.
     - name: Generate Allure Report
-      if: always() && github.event_name == 'push'
+      if: always() && github.event_name != 'pull_request'
       run: allure generate allure-results-merged -o allure-report --clean
 
     # Deploy Allure report to GitHub Pages under /allure
     - name: Deploy Allure report to GitHub Pages
-      if: always() && github.event_name == 'push'
+      if: always() && github.event_name != 'pull_request'
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
