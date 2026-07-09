@@ -435,6 +435,37 @@ Defaults to page 1 if not specified.</p>
 </dd></dl>
 
 </section>
+<section id="networks-api">
+<h2>Networks API<a class="headerlink" href="#networks-api" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">api.networks_api.</span></span><span class="sig-name descname"><span class="pre">NetworksAPI</span></span><a class="reference internal" href="_modules/api/networks_api.html#NetworksAPI"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAPI</span></code></p>
+<p>Client for TMDB Networks API endpoints.</p>
+<p>Provides methods for retrieving TV network details. All methods return
+a response object containing status code, headers, and parsed data.</p>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>_sub_path (str): Base path segment for network endpoints.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_network_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">network_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/networks_api.html#NetworksAPI.get_network_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Retrieve detailed information for a specific TV network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>network_id</strong> – TMDB network ID (e.g., 213 for Netflix).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Response object with network details including name,
+headquarters, homepage, logo path, and origin country.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 <section id="people-api">
 <h2>People API<a class="headerlink" href="#people-api" title="Link to this heading">¶</a></h2>
 <dl class="py class">
@@ -544,6 +575,7 @@ Defaults to page 1 if not specified.</p>
 <li class="toctree-l2"><a class="reference internal" href="#discover-api">Discover API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#lists-api">Lists API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#movies-api">Movies API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#networks-api">Networks API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#people-api">People API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#search-api">Search API</a></li>
 </ul>

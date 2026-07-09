@@ -98,6 +98,13 @@ Movies
    :undoc-members:
    :show-inheritance:
 
+Networks
+--------
+.. automodule:: tests.networks.test_details
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 People
 ------
 .. automodule:: tests.people.test_details

@@ -41,6 +41,14 @@ Movies API
    :undoc-members:
    :show-inheritance:
 
+Networks API
+------------
+.. automodule:: api.networks_api
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 People API
 ----------
 .. automodule:: api.people_api

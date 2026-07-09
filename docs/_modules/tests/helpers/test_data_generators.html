@@ -104,6 +104,21 @@
     <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">_load_movie_ids</span><span class="p">())</span></div>
 
 
+<span class="c1"># Well-known, stable TMDB network IDs verified against the live API:</span>
+<span class="c1"># ABC, BBC One, NBC, CBS, FOX, HBO, Cartoon Network, The CW, AMC, Netflix.</span>
+<span class="n">NETWORK_IDS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="mi">71</span><span class="p">,</span> <span class="mi">174</span><span class="p">,</span> <span class="mi">213</span><span class="p">)</span>
+
+<div class="viewcode-block" id="pick_random_network_id">
+<a class="viewcode-back" href="../../../helpers_test_data_generators.html#tests.helpers.test_data_generators.pick_random_network_id">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pick_random_network_id</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a random TMDB network ID from the hardcoded :data:`NETWORK_IDS` list.</span>
+
+<span class="sd">    :return: Random network ID</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">NETWORK_IDS</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="pick_random_rated_movie_id">
 <a class="viewcode-back" href="../../../helpers_test_data_generators.html#tests.helpers.test_data_generators.pick_random_rated_movie_id">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">pick_random_rated_movie_id</span><span class="p">(</span><span class="n">acc_id</span><span class="p">,</span> <span class="n">session_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
