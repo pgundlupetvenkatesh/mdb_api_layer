@@ -39,6 +39,8 @@ Docs (Sphinx, from docstrings): `cd docs && make clean && make html` → open `d
 
 Docker (parallel integration + contract containers, reads `.env`): `docker compose up --build`.
 
+CI (`.github/workflows/tmdb_test.yml`) runs the Docker suite on push/PR to main, nightly at 09:17 UTC (`schedule` cron, ~2 AM Pacific), and on manual `workflow_dispatch`; the HTML/Allure reports publish to GitHub Pages on every non-PR run.
+
 ## Configuration
 
 All runtime config comes from environment variables loaded from `.env` (gitignored) via `config/config.py`. `TMDB_API_KEY` and `TMDB_AUTH_TOKEN` (Bearer, v4) are required; everything else has defaults in the `Config` class. Tests will hit the live TMDB API unless run against the Pact mock (contract tests only).

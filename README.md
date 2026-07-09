@@ -443,6 +443,7 @@ docker-compose.yml
 ### CI/CD (GitHub Actions)
 
 In CI, tests run inside the same Docker image with additional optimizations:
+- **Triggers:** push/PR to main, a nightly scheduled run (`cron: '17 9 * * *'` UTC, ~2 AM Pacific), and manual `workflow_dispatch`; reports deploy to GitHub Pages on every non-PR run
 - **Docker Buildx** for layer caching between workflow runs
 - Secrets are written to `.env` file (never baked into the image)
 - **Parallel execution** via `docker compose up --no-build` (image pre-built by Buildx)
