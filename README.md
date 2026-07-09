@@ -56,7 +56,7 @@ Each step is expanded in [Prerequisites](#prerequisites), [Installation](#instal
 - Data-driven testing with per-section YAML test data and cached dynamic generators
 - Automatic retries for flaky live-API latency via pytest-rerunfailures
 - Reusable HTTP response assertion helpers (status, method, content-type, response time)
-- Dedicated per-client pytest fixtures (`movies_api`, `people_api`, `lists_api`, `search_api`, `discover_api`)
+- Dedicated per-client pytest fixtures (`movies_api`, `people_api`, `lists_api`, `search_api`, `discover_api`, `networks_api`)
 - Structured logging with [Loguru](https://github.com/Delgan/loguru) (configurable level & file output)
 - Configurable environment-based settings via `.env`
 - AI-powered test failure analysis using open-source LLMs via [Groq](https://groq.com/) (opt-in)
@@ -253,7 +253,8 @@ mdb_api_layer/
 │   ├── lists_api.py            # Lists endpoint implementation (v4 API)
 │   ├── account_api.py          # Account endpoint implementation
 │   ├── search_api.py           # Search endpoint implementation
-│   └── discover_api.py         # Discover endpoint implementation
+│   ├── discover_api.py         # Discover endpoint implementation
+│   └── networks_api.py         # Networks endpoint implementation
 ├── config/
 │   └── config.py               # Environment configuration & Loguru logging setup
 ├── tests/
@@ -289,6 +290,8 @@ mdb_api_layer/
 │   │   └── test_movie.py       # Movie search integration tests
 │   ├── discover/
 │   │   └── test_movie.py       # Movie discovery integration tests
+│   ├── networks/
+│   │   └── test_details.py     # Network details integration tests
 │   ├── pacts/
 │   │   └── *.json              # Generated Pact contract files
 │   └── schemas/

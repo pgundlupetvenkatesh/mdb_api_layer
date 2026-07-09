@@ -110,6 +110,7 @@ from api.people_api import PeopleAPI
 from api.lists_api import ListsAPI
 from api.search_api import SearchAPI
 from api.discover_api import DiscoverAPI
+from api.networks_api import NetworksAPI
 
 @pytest.fixture(autouse=True)
 def _store_test_name(request):
@@ -198,10 +199,23 @@ def discover_api() -> DiscoverAPI:
     """
     return DiscoverAPI()
 
+@pytest.fixture
+def networks_api() -> NetworksAPI:
+    """
+    Provide a fresh ``NetworksAPI`` client for a test.
+
+    Dedicated, type-annotated alternative to ``get_api_instance('networks_api')``
+    — the dependency is declared in the test signature, typo-checked at
+    collection time, and gives editor autocomplete for network endpoints.
+
+    :return: A configured ``NetworksAPI`` instance.
+    """
+    return NetworksAPI()
+
 from tests.schemas.models import (
     GenericResponse, RatingResponse, MovieDetails,
     PopularMoviesResponse, PersonDetails, SearchMoviesResponse,
-    DiscoverMoviesResponse
+    DiscoverMoviesResponse, NetworkDetails
 )
 
 @pytest.fixture
@@ -219,6 +233,7 @@ def load_schema():
         'person_details_schema': PersonDetails,
         'search_movies_schema': SearchMoviesResponse,
         'discover_movies_schema': DiscoverMoviesResponse,
+        'network_details_schema': NetworkDetails,
     }
 
     def _load(name):
