@@ -99,7 +99,7 @@
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Also judge each diagnosis&#39;s quality (groundedness + completeness + actionability) &quot;</span>
              <span class="s2">&quot;with the LLM judge. Requires --failure-analysis and GROQ_API_KEY; &quot;</span>
-             <span class="s2">&quot;adds one judge LLM call per failed test.&quot;</span>
+             <span class="s2">&quot;adds one judge LLM call per failed test. CLI equivalent of AI_JUDGE_ENABLED=true.&quot;</span>
     <span class="p">)</span></div>
 
 
@@ -135,10 +135,15 @@
         <span class="n">analyzer</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">)</span>    <span class="c1"># re-read in case .env loads later</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AI analysis is enabled. AI_ANALYSIS_ENABLED = </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AI_ANALYSIS_ENABLED&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--judge-diagnosis&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--failure-analysis&quot;</span><span class="p">):</span>
+    <span class="c1"># Same pattern for judging: the flag is CLI sugar for AI_JUDGE_ENABLED=true,</span>
+    <span class="c1"># which Docker/K8s/CI runs set via .env instead.</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--judge-diagnosis&quot;</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AI_JUDGE_ENABLED&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;true&quot;</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AI_JUDGE_ENABLED&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;true&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s2">&quot;--judge-diagnosis has no effect without --failure-analysis: &quot;</span>
-            <span class="s2">&quot;there is no diagnosis to judge.&quot;</span>
+            <span class="s2">&quot;--judge-diagnosis/AI_JUDGE_ENABLED has no effect without failure analysis &quot;</span>
+            <span class="s2">&quot;(--failure-analysis or AI_ANALYSIS_ENABLED=true): there is no diagnosis to judge.&quot;</span>
         <span class="p">)</span></div>
 
 
@@ -384,9 +389,10 @@
 
 <span class="sd">    Runs after each test phase (setup/call/teardown). On failure during</span>
 <span class="sd">    the &#39;call&#39; phase, extracts context from the test and API response,</span>
-<span class="sd">    then sends it to the LLM for diagnosis. When --judge-diagnosis is also set,</span>
-<span class="sd">    the diagnosis is scored by an LLM judge for groundedness, completeness, and</span>
-<span class="sd">    actionability (correctness is not scored live — a failure has no reference).</span>
+<span class="sd">    then sends it to the LLM for diagnosis. When judging is enabled</span>
+<span class="sd">    (--judge-diagnosis or AI_JUDGE_ENABLED=true), the diagnosis is scored by an</span>
+<span class="sd">    LLM judge for groundedness, completeness, and actionability (correctness is</span>
+<span class="sd">    not scored live — a failure has no reference).</span>
 <span class="sd">    The diagnosis (and, when judged, the quality verdict) are attached to the</span>
 <span class="sd">    Allure report as JSON attachments.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -444,9 +450,11 @@
 
         <span class="c1"># Judge the diagnosis&#39;s quality (groundedness + completeness + actionability,</span>
         <span class="c1"># everything except correctness — a live failure has no reference answer).</span>
-        <span class="c1"># Opt-in and subordinate to analysis: skip unless --judge-diagnosis is set,</span>
-        <span class="c1"># so a normal triage run pays for diagnosis but not the extra judge call.</span>
-        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--judge-diagnosis&quot;</span><span class="p">):</span>
+        <span class="c1"># Opt-in and subordinate to analysis: skip unless judging is enabled</span>
+        <span class="c1"># (--judge-diagnosis sets AI_JUDGE_ENABLED=true in pytest_configure;</span>
+        <span class="c1"># Docker/K8s/CI set it via .env), so a normal triage run pays for</span>
+        <span class="c1"># diagnosis but not the extra judge call.</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AI_JUDGE_ENABLED&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;true&quot;</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">evals.judge</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_JUDGE_MODEL</span><span class="p">,</span> <span class="n">judge_live</span>
             <span class="n">judgement</span> <span class="o">=</span> <span class="n">judge_live</span><span class="p">(</span>
                 <span class="n">failure_context</span><span class="p">,</span>
