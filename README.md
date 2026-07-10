@@ -33,9 +33,8 @@ git clone https://github.com/pgundlupetvenkatesh/mdb_api_layer.git
 cd mdb_api_layer
 poetry install
 
-# 2. Add your TMDB credentials to a .env file (see Configuration below)
-echo "TMDB_API_KEY=your_api_key_here"        >> .env
-echo "TMDB_AUTH_TOKEN=your_read_access_token" >> .env
+# 2. Copy the env template and fill in your TMDB credentials (see Configuration below)
+cp .env.example .env
 
 # 3. Run a single test to verify the setup
 poetry run pytest tests/movie_lists/test_popular.py -v -s
@@ -127,7 +126,15 @@ poetry show
 
 ### Setting Up Environment Variables
 
-Create a `.env` file in the project root (this file is ignored):
+Copy the committed template to a `.env` file in the project root (`.env` itself is
+gitignored) and fill in your values — `.env.example` documents every variable the
+project reads, including the optional AI analysis/judging ones:
+
+```bash
+cp .env.example .env
+```
+
+The key variables:
 
 ```bash
 # Required
@@ -315,6 +322,7 @@ mdb_api_layer/
 ├── report/
 │   └── tmdb_report.html        # Generated HTML test reports
 ├── .env                        # Environment variables (not committed)
+├── .env.example                # Committed template for .env (placeholders only)
 ├── .gitignore
 ├── Dockerfile                  # Docker image definition for containerized test runs
 ├── docker-compose.yml          # Docker Compose config for local containerized runs
@@ -443,6 +451,7 @@ docker-compose.yml
 ### CI/CD (GitHub Actions)
 
 In CI, tests run inside the same Docker image with additional optimizations:
+- **Triggers:** push/PR to main, a nightly scheduled run (`cron: '17 9 * * *'` UTC, ~2 AM Pacific), and manual `workflow_dispatch`; reports deploy to GitHub Pages on every non-PR run
 - **Docker Buildx** for layer caching between workflow runs
 - Secrets are written to `.env` file (never baked into the image)
 - **Parallel execution** via `docker compose up --no-build` (image pre-built by Buildx)
@@ -603,7 +612,8 @@ AI_MODEL=qwen/qwen3-32b
 ### CI Integration
 
 In GitHub Actions, the feature works automatically when `GROQ_API_KEY` secret and `AI_ANALYSIS_ENABLED` variable is set in repository
-settings. The workflow writes them to the `.env` file so both Docker containers have access. Analysis results are
+settings; set the `AI_JUDGE_ENABLED` variable too to also score each diagnosis with the LLM judge. The workflow writes them to the
+`.env` file so both Docker containers have access. Analysis results (and judge verdicts) are
 attached to the Allure report deployed to GitHub Pages.
 
 ### AI Environment Variables
@@ -611,6 +621,7 @@ attached to the Allure report deployed to GitHub Pages.
 | Variable               | Description                               | Required   | Default                                      |
 |------------------------|-------------------------------------------|------------|----------------------------------------------|
 | `AI_ANALYSIS_ENABLED`  | Enable AI failure analysis                | No         | `false`                                      |
+| `AI_JUDGE_ENABLED`     | Enable live diagnosis judging             | No         | `false`                                      |
 | `GROQ_API_KEY`         | Groq API key for LLM access               | If enabled | -                                            |
 | `AI_MODEL`             | Analyzer (diagnosis) model on Groq        | No         | `llama-3.3-70b-versatile`                    |
 | `AI_JUDGE_MODEL`       | Judge model on Groq for live judging      | No         | `openai/gpt-oss-120b`                        |
@@ -621,7 +632,9 @@ attached to the Allure report deployed to GitHub Pages.
 #### Live diagnosis judging
 
 Add `--judge-diagnosis` (on top of `--failure-analysis`) to also score each
-diagnosis with an LLM judge (`AI_JUDGE_MODEL`) for **groundedness** (no
+diagnosis with an LLM judge (`AI_JUDGE_MODEL`) — the flag is the CLI equivalent
+of `AI_JUDGE_ENABLED=true`, which Docker/K8s/CI runs set via `.env` (in GitHub
+Actions, via the `AI_JUDGE_ENABLED` repository variable) — for **groundedness** (no
 hallucinated facts), **completeness** (covers the decisive signals), and
 **actionability** (the suggested fix is concrete) — correctness is *not* judged
 live because a real failure has no reference answer. The verdict is logged

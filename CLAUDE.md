@@ -25,7 +25,7 @@ Test-run flags (all defined in `tests/conftest.py` via `pytest_addoption`):
 - `--loguru-log-level=DEBUG|INFO|WARNING|ERROR|CRITICAL` — app log verbosity (default INFO)
 - `--log-to-file` — also write to `logs/test_run.log`
 - `--failure-analysis` — opt into AI failure analysis for that run (needs `GROQ_API_KEY`)
-- `--judge-diagnosis` — also score each diagnosis's groundedness + completeness + actionability with the LLM judge (needs `--failure-analysis`; adds one judge call per failed test)
+- `--judge-diagnosis` — also score each diagnosis's groundedness + completeness + actionability with the LLM judge (needs `--failure-analysis`; adds one judge call per failed test). CLI equivalent of `AI_JUDGE_ENABLED=true`, which is how Docker/K8s/CI enable it (in GitHub Actions via the `AI_JUDGE_ENABLED` repo variable) — mirroring the `--failure-analysis` ↔ `AI_ANALYSIS_ENABLED` pair
 
 Reporting:
 ```bash
@@ -39,9 +39,11 @@ Docs (Sphinx, from docstrings): `cd docs && make clean && make html` → open `d
 
 Docker (parallel integration + contract containers, reads `.env`): `docker compose up --build`.
 
+CI (`.github/workflows/tmdb_test.yml`) runs the Docker suite on push/PR to main, nightly at 09:17 UTC (`schedule` cron, ~2 AM Pacific), and on manual `workflow_dispatch`; the HTML/Allure reports publish to GitHub Pages on every non-PR run.
+
 ## Configuration
 
-All runtime config comes from environment variables loaded from `.env` (gitignored) via `config/config.py`. `TMDB_API_KEY` and `TMDB_AUTH_TOKEN` (Bearer, v4) are required; everything else has defaults in the `Config` class. Tests will hit the live TMDB API unless run against the Pact mock (contract tests only).
+All runtime config comes from environment variables loaded from `.env` (gitignored) via `config/config.py`; `.env.example` is the committed template (`cp .env.example .env`, fill in credentials) — when adding an env var, add it there too. `TMDB_API_KEY` and `TMDB_AUTH_TOKEN` (Bearer, v4) are required; everything else has defaults in the `Config` class. Tests will hit the live TMDB API unless run against the Pact mock (contract tests only).
 
 ## Architecture
 
@@ -55,7 +57,7 @@ Layered, with a strict separation between the API client and the tests:
 - Dedicated per-client fixtures — `movies_api`, `people_api`, `lists_api`, `search_api`, `discover_api`, `networks_api` — each returns a fresh, type-annotated endpoint client (e.g. `MoviesAPI()`); a test declares the one it needs in its signature. (`AccountAPI` has no fixture; it's used directly in `tests/helpers/test_data_generators.py`.)
 - `load_schema` fixture: maps a schema name → a **Pydantic model** in `tests/schemas/models.py`; validation is `model.model_validate(response.data)`.
 - `_store_test_name` (autouse): injects `self._test_name` into class-based tests for assertion messages.
-- Hooks: when `--failure-analysis` is on, `pytest_runtest_makereport` diagnoses each failure and attaches it to Allure; adding `--judge-diagnosis` also scores each diagnosis via `evals.judge.judge_live` (judge model overridable with `AI_JUDGE_MODEL`). `pytest_sessionfinish` handles Allure/HTML report customization and `environment.properties`. `pytest_terminal_summary` re-prints all accumulated diagnoses as an end-of-run console section (also fires under `AI_ANALYSIS_ENABLED=true`; silent when nothing was analyzed).
+- Hooks: when `--failure-analysis` is on, `pytest_runtest_makereport` diagnoses each failure and attaches it to Allure; adding `--judge-diagnosis` (or `AI_JUDGE_ENABLED=true`) also scores each diagnosis via `evals.judge.judge_live` (judge model overridable with `AI_JUDGE_MODEL`). `pytest_sessionfinish` handles Allure/HTML report customization and `environment.properties`. `pytest_terminal_summary` re-prints all accumulated diagnoses as an end-of-run console section (also fires under `AI_ANALYSIS_ENABLED=true`; silent when nothing was analyzed).
 
 **Test conventions** — Tests are class-based. Response **bodies** are validated by `load_schema(...).model_validate(response.data)` against the strict Pydantic models in `tests/schemas/models.py` — the models are the single source of truth for body structure/types, so per-field manual assertions are not duplicated in tests. Response **metadata** (status, method, content-type, elapsed time, URL) is checked with the shared `assert_get_metadata` helper (`tests/helpers/response_assertions.py`), which maps a test-case dict onto `assert_http_response`. (Classes still inherit `FieldAssertions` from `tests/helpers/field_assertions.py`, but it now mainly carries `_test_name`; its `assert_*_field` typed-check methods are no longer called by any test.) Tests are data-driven: `TEST_DATA = load_test_data("test_data.yaml", "<section>")` is a **module-level constant** (required because `@pytest.mark.parametrize` is evaluated at collection time, before fixtures exist). The second arg scopes the load to one top-level YAML section (e.g. `"get_movie_details"`), so only that section's `$placeholder` generators run — access stays `TEST_DATA["<section>"][...]`. `data_loader.py` applies YAML defaults (a section's `defaults` override the global `defaults` block for shared keys) and resolves `$placeholder` tokens to generator functions (random rating, random movie id, timestamp, etc.); `$random_movie_id` reads `movie_ids.txt`, which is cached per process via `lru_cache`. Tests wrap steps in `allure.step(...)` and tag with `@allure.epic/feature/story`.
 
