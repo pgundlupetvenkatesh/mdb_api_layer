@@ -37,6 +37,8 @@ Evaluate the AI analyzer (LLM-as-a-judge over a golden dataset; needs `GROQ_API_
 
 Docs (Sphinx, from docstrings): `cd docs && make clean && make html` → open `docs/_build/html/index.html`.
 
+Performance (Locust, hits live TMDB — keep load gentle, ≤5 users): `poetry run locust -f performance/locustfile.py` (web UI at `:8089`) or `--headless -u 3 -r 1 -t 30s`; add `--html`/`--csv performance/<name>` for reports (gitignored). See `performance/README.md`.
+
 Docker (parallel integration + contract containers, reads `.env`): `docker compose up --build`.
 
 CI (`.github/workflows/tmdb_test.yml`) runs the Docker suite on push/PR to main, nightly at 09:17 UTC (`schedule` cron, ~2 AM Pacific), and on manual `workflow_dispatch`; the HTML/Allure reports publish to GitHub Pages on every non-PR run.
@@ -66,6 +68,8 @@ Layered, with a strict separation between the API client and the tests:
 **`failure_mcp/`** — an MCP server (`server.py`, stdio transport) that wraps the existing `FailureAnalyzer` singleton (`tests/helpers/failure_analyzer.py`) and exposes `analyze_failure`, `get_results`, `save_results` as tools. It does not modify the analyzer. Run with `poetry run python -m failure_mcp.server` (needs `AI_ANALYSIS_ENABLED=true` + `GROQ_API_KEY`).
 
 **`evals/`** — LLM-as-a-judge for the failure analyzer's diagnosis quality. `evals/judge.py` is the shared judge (Groq, `openai/gpt-oss-120b` by default — a different model family from the analyzer, so no self-preference): `judge_case` scores correctness + groundedness + completeness + actionability for the offline eval; `judge_live` scores everything except correctness for the live in-pytest path (wired into `pytest_runtest_makereport`, see above). The offline eval is a standalone CLI (`python -m evals`): it runs a fresh force-enabled `FailureAnalyzer` (never touches the module singleton) over `evals/golden_dataset.yaml` (≥1 case per failure category, each with an `expected` reference block) and writes a per-case + aggregate JSON report to `evals/results/` (gitignored). Reuses the existing `groq` dep and `GROQ_API_KEY`. The package's pure logic is unit-tested in `tests/evals/`, marked `@pytest.mark.unit` — the suite's only offline tests, excluded from the default run by `addopts = "-m 'not unit'"`; opt in with `-m unit`.
+
+**`performance/`** — Locust load tests (`locustfile.py`), outside pytest collection (`testpaths = ["tests"]`). `TMDBMoviesUser` issues the same read-only GETs as `MoviesAPI` (details, popular, top-rated, alt titles; write endpoints deliberately excluded) through Locust's instrumented `self.client` — not through `BaseAPI`, which would bypass the stats. Auth/base URL come from `Config`; random ids reuse `pick_random_movie_id` from `tests/helpers/test_data_generators.py`. Parametrized URLs are grouped in the stats table via `name=` (e.g. `/3/movie/[id]`).
 
 ## Gotchas
 
