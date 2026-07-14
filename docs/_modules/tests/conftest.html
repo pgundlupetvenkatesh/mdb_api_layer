@@ -527,7 +527,8 @@
 <span class="sd">      ``tests/allure/categories.json`` into the allure results dir so Allure</span>
 <span class="sd">      can classify failures, and writes ``environment.properties`` with</span>
 <span class="sd">      runtime config values (base URL, API version, timeout, log level)</span>
-<span class="sd">      for the Allure Environment widget.</span>
+<span class="sd">      for the Allure Environment widget, plus GitHub run context</span>
+<span class="sd">      (event, branch, commit, actor, run number) when running in CI.</span>
 <span class="sd">    - **AI analysis report**: calls ``analyzer.save_results()`` to write all</span>
 <span class="sd">      accumulated LLM diagnoses to ``ai_analysis/failure_analysis.json``.</span>
 
@@ -546,13 +547,24 @@
 
         <span class="c1"># Write environment.properties with actual runtime config values</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">config.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span>
-        <span class="p">(</span><span class="n">allure_dir</span> <span class="o">/</span> <span class="s2">&quot;environment.properties&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="n">properties</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Base.URL=</span><span class="si">{</span><span class="n">Config</span><span class="o">.</span><span class="n">BASE_URL</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
             <span class="sa">f</span><span class="s2">&quot;API.Version=</span><span class="si">{</span><span class="n">Config</span><span class="o">.</span><span class="n">API_VERSION</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
             <span class="sa">f</span><span class="s2">&quot;Timeout=</span><span class="si">{</span><span class="n">Config</span><span class="o">.</span><span class="n">TIMEOUT</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
             <span class="sa">f</span><span class="s2">&quot;Log.Level=</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;LOG_LEVEL&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;INFO&#39;</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
             <span class="sa">f</span><span class="s2">&quot;Framework=pytest</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="p">)</span>
+        <span class="c1"># GitHub run context, passed into the container via the CI-generated</span>
+        <span class="c1"># .env (see .github/workflows/tmdb_test.yml). Absent on local runs.</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;GITHUB_EVENT_NAME&quot;</span><span class="p">):</span>
+            <span class="n">properties</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;CI.Event=</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;GITHUB_EVENT_NAME&#39;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;CI.Branch=</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;GITHUB_REF_NAME&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;CI.Commit=</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;GITHUB_SHA&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">)[:</span><span class="mi">12</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;CI.Actor=</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;GITHUB_ACTOR&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;CI.Run.Number=</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;GITHUB_RUN_NUMBER&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="p">(</span><span class="n">allure_dir</span> <span class="o">/</span> <span class="s2">&quot;environment.properties&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">properties</span><span class="p">)</span>
 
     <span class="n">analyzer</span><span class="o">.</span><span class="n">save_results</span><span class="p">()</span></div>
 
