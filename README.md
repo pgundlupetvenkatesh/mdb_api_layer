@@ -18,10 +18,37 @@ API Testing Framework for The Movie Database ([TMDB](https://themoviedb.org)) wi
 
 ## Overview
 
-A Python-based API testing framework for TMDB API, featuring structured test organization, JSON schema validation, 
-Contract tests, and comprehensive response assertions.
+A Python-based framework for testing the TMDB API — integration, contract (Pact), and performance
+([Locust](https://locust.io)) testing built on a layered API client; see Features below for the full list.
+
+### Infrastructure
+Around the tests: AI-powered failure analysis using open weight LLMs via [Groq](https://groq.com/), scored by an
+LLM-as-a-judge eval harness (`evals/`) and exposed to agents through an MCP server (`failure_mcp/`); parallel
+test execution in Docker and Kubernetes(optional); and GitHub Actions CI (push/PR + nightly) publishing live HTML/Allure
+reports and Sphinx docs to GitHub Pages.
 
 ###### View live code documentation & latest test report [here](https://pgundlupetvenkatesh.github.io/mdb_api_layer/)
+
+### Features
+
+- RESTful API client with session management (GET, POST, PUT, DELETE)
+- Multiple API clients: Movies, People, Lists, Account, Search, Discover, Networks
+- Strict Pydantic model validation for response structure (single source of truth)
+- Consumer-driven contract testing with Pact
+- Data-driven testing with per-section YAML test data and cached dynamic generators
+- Automatic retries for flaky live-API latency via pytest-rerunfailures
+- Reusable HTTP response assertion helpers (status, method, content-type, response time)
+- Dedicated per-client pytest fixtures (`movies_api`, `people_api`, `lists_api`, `search_api`, `discover_api`, `networks_api`)
+- Performance baselining with [Locust](https://locust.io) (`performance/`, separate from the pytest suite)
+- Structured logging with [Loguru](https://github.com/Delgan/loguru) (configurable level & file output)
+- Configurable environment-based settings via `.env`
+- AI-powered test failure analysis using open-source LLMs via [Groq](https://groq.com/) (opt-in)
+- LLM-as-a-judge evals of diagnosis quality (`evals/` — offline golden-dataset CLI plus optional live scoring per failed test)
+- MCP server exposing the failure analyzer as agent-callable tools (`failure_mcp/`)
+- Pytest integration with HTML and Allure reporting
+- Parallel containerized test runs with Docker Compose, optionally Kubernetes
+- GitHub Actions CI (push/PR + nightly) publishing HTML/Allure reports to GitHub Pages
+- Sphinx documentation with GitHub Pages deployment
 
 ## Quick Start
 
@@ -45,22 +72,6 @@ poetry run pytest tests/ -v -m "not contract"
 
 Each step is expanded in [Prerequisites](#prerequisites), [Installation](#installation),
 [Configuration](#configuration), and [Running Tests](#running-tests) below.
-
-## Features
-
-- RESTful API client with session management (GET, POST, PUT, DELETE)
-- Multiple API clients: Movies, People, Lists, Account
-- Strict Pydantic model validation for response structure (single source of truth)
-- Consumer-driven contract testing with Pact
-- Data-driven testing with per-section YAML test data and cached dynamic generators
-- Automatic retries for flaky live-API latency via pytest-rerunfailures
-- Reusable HTTP response assertion helpers (status, method, content-type, response time)
-- Dedicated per-client pytest fixtures (`movies_api`, `people_api`, `lists_api`, `search_api`, `discover_api`, `networks_api`)
-- Structured logging with [Loguru](https://github.com/Delgan/loguru) (configurable level & file output)
-- Configurable environment-based settings via `.env`
-- AI-powered test failure analysis using open-source LLMs via [Groq](https://groq.com/) (opt-in)
-- Pytest integration with HTML and Allure reporting
-- Sphinx documentation with GitHub Pages deployment
 
 ## Architecture
 
@@ -248,6 +259,13 @@ poetry run pytest tests/ -v -m unit
 > **Note:** a command-line `-m` *replaces* the default marker filter rather than
 > combining with it, which is why "integration only" is spelled out in full as
 > `-m "not contract and not unit"`.
+
+### Performance testing (Locust)
+
+Gentle load tests against the live TMDB movies endpoints live in `performance/`
+(separate from pytest — never collected by `pytest tests/`). See
+[performance/README.md](performance/README.md) for the run commands and how to
+read the results.
 
 ## Project Structure
 

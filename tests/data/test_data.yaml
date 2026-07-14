@@ -56,24 +56,29 @@ search_movies:
       status_code: 400
       reason: 'Bad Request'
   valid: # One case per supported query param + all combined; page defaults to 1 in the client
-    - query_param: { "query": "Batman" }
-    - query_param: { "query": "Batman", "page": 2 }
+    # Queries vary per case; the year/primary_release_year cases pair the query
+    # with that movie's actual release year, and the page-2 case uses a
+    # franchise with well over one page of matches.
+    - query_param: { "query": "Superman" }
+    - query_param: { "query": "Spider-Man", "page": 2 }
       exp_page: 2
-    - query_param: { "query": "Batman", "language": "en-US" }
-    - query_param: { "query": "Batman", "include_adult": "true" }
-    - query_param: { "query": "Batman", "region": "US" }
-    - query_param: { "query": "Batman", "year": "1989" }
-    - query_param: { "query": "Batman", "primary_release_year": "1989" }
-    - query_param: { "query": "Batman", "language": "en-US", "include_adult": "true", "region": "US",
-                     "year": "1989", "primary_release_year": "1989", "page": 1 }
+    - query_param: { "query": "Inception", "language": "en-US" }
+    # include_adult query must not collide with adult-catalog titles: TMDB returns
+    # those as sparse objects (no release_date/video/vote_*), failing the strict schema
+    - query_param: { "query": "Interstellar", "include_adult": "true" }
+    - query_param: { "query": "Titanic", "region": "US" }
+    - query_param: { "query": "The Matrix", "year": "1999" }
+    - query_param: { "query": "Jurassic Park", "primary_release_year": "1993" }
+    - query_param: { "query": "Terminator", "language": "en-US", "include_adult": "true", "region": "US",
+                     "year": "1984", "primary_release_year": "1984", "page": 1 }
   empty:
     - query_param: {} # no query at all
     - query_param: { "query": "" }
     - query_param: { "query": "zzzqqqxyzzy123" } # matches nothing
   invalid:
-    - query_param: { "query": "Batman", "page": -1 }
+    - query_param: { "query": "Avatar", "page": -1 }
       expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
-    - query_param: { "query": "Batman", "page": 501 }
+    - query_param: { "query": "Gladiator", "page": 501 }
       expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
 
 discover_movies:

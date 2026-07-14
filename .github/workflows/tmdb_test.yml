@@ -28,6 +28,21 @@ jobs:
     timeout-minutes: 20
 
     steps:
+    # Print the GitHub context that triggered this run — useful for
+    # debugging the event_name-gated steps (report merge/deploy) below.
+    - name: Show GitHub run context
+      run: |
+        echo "event_name:  ${{ github.event_name }}"
+        echo "ref:         ${{ github.ref }}"
+        echo "ref_name:    ${{ github.ref_name }}"
+        echo "sha:         ${{ github.sha }}"
+        echo "actor:       ${{ github.actor }}"
+        echo "repository:  ${{ github.repository }}"
+        echo "workflow:    ${{ github.workflow }}"
+        echo "run_id:      ${{ github.run_id }}"
+        echo "run_number:  ${{ github.run_number }}"
+        echo "run_attempt: ${{ github.run_attempt }}"
+
     # Clone your repo into the runner
     - name: Checkout code
       uses: actions/checkout@v4
@@ -79,6 +94,13 @@ jobs:
         echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
         echo "AI_ANALYSIS_ENABLED=${{ vars.AI_ANALYSIS_ENABLED }}" >> .env
         echo "AI_JUDGE_ENABLED=${{ vars.AI_JUDGE_ENABLED }}" >> .env
+        # GitHub run context — surfaced in the Allure Environment widget
+        # via environment.properties (written in tests/conftest.py).
+        echo "GITHUB_EVENT_NAME=${{ github.event_name }}" >> .env
+        echo "GITHUB_REF_NAME=${{ github.ref_name }}" >> .env
+        echo "GITHUB_SHA=${{ github.sha }}" >> .env
+        echo "GITHUB_ACTOR=${{ github.actor }}" >> .env
+        echo "GITHUB_RUN_NUMBER=${{ github.run_number }}" >> .env
 
     # Run integration and contract tests in parallel using docker compose.
     # --no-build: skip building since the image was already built by buildx above.

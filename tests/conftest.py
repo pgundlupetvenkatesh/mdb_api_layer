@@ -451,7 +451,8 @@ def pytest_sessionfinish(session, exitstatus):
       ``tests/allure/categories.json`` into the allure results dir so Allure
       can classify failures, and writes ``environment.properties`` with
       runtime config values (base URL, API version, timeout, log level)
-      for the Allure Environment widget.
+      for the Allure Environment widget, plus GitHub run context
+      (event, branch, commit, actor, run number) when running in CI.
     - **AI analysis report**: calls ``analyzer.save_results()`` to write all
       accumulated LLM diagnoses to ``ai_analysis/failure_analysis.json``.
 
@@ -470,12 +471,23 @@ def pytest_sessionfinish(session, exitstatus):
 
         # Write environment.properties with actual runtime config values
         from config.config import Config
-        (allure_dir / "environment.properties").write_text(
+        properties = (
             f"Base.URL={Config.BASE_URL}\n"
             f"API.Version={Config.API_VERSION}\n"
             f"Timeout={Config.TIMEOUT}\n"
             f"Log.Level={os.environ.get('LOG_LEVEL', 'INFO')}\n"
             f"Framework=pytest\n"
         )
+        # GitHub run context, passed into the container via the CI-generated
+        # .env (see .github/workflows/tmdb_test.yml). Absent on local runs.
+        if os.environ.get("GITHUB_EVENT_NAME"):
+            properties += (
+                f"CI.Event={os.environ['GITHUB_EVENT_NAME']}\n"
+                f"CI.Branch={os.environ.get('GITHUB_REF_NAME', '')}\n"
+                f"CI.Commit={os.environ.get('GITHUB_SHA', '')[:12]}\n"
+                f"CI.Actor={os.environ.get('GITHUB_ACTOR', '')}\n"
+                f"CI.Run.Number={os.environ.get('GITHUB_RUN_NUMBER', '')}\n"
+            )
+        (allure_dir / "environment.properties").write_text(properties)
 
     analyzer.save_results()
