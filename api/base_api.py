@@ -58,7 +58,7 @@ class BaseAPI:
         self.session = requests.Session()
 
     # Credential query params whose values must never surface in logs, test
-    # failure reprs, or report attachments (same policy as the logger rules).
+    # failure reprs, or report attachments.
     _SECRET_QUERY_PARAMS = ("session_id",)
 
     @staticmethod
@@ -77,6 +77,8 @@ class BaseAPI:
         if not isinstance(params, dict):
             return params
         return {
+            # comprehensions: expression-first, loop-last. Inverted execution order.
+            # Reading rule: for clause first, then read the leading expression.
             key: "<hidden>" if key in BaseAPI._SECRET_QUERY_PARAMS else value
             for key, value in params.items()
         }
