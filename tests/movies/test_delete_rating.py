@@ -101,7 +101,9 @@ class TestDeleteRating(FieldAssertions):
         allure.dynamic.title(f"Delete movie rating for ID: {movie_id}")
         # Use session_id from test data if provided, otherwise use valid Config.SESSION_ID
         session_id = delete_invalid_rating.get('session_id', Config.SESSION_ID)
-        logger.info(f"Testing {self._test_name} for movie_id: {movie_id} with session_id: {session_id}")
+        # Log the session_id's source, never its value — the fallback is the real credential
+        logger.info(f"Testing {self._test_name} for movie_id: {movie_id} with session_id: "
+                    f"{'invalid (from test data)' if 'session_id' in delete_invalid_rating else 'valid (Config, hidden)'}")
 
         with allure.step(f"Send DELETE rating request for invalid movie ID {movie_id}"):
             response = movies_api.delete_rating(movie_id, query_params={'session_id': session_id})
