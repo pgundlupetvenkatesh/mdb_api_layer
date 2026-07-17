@@ -66,7 +66,7 @@ class TestDeleteRating(FieldAssertions):
         logger.info(f"Testing delete_rating for movie_id: {movie_id}")
 
         with allure.step(f"Send DELETE rating request for movie ID {movie_id}"):
-            response = movies_api.delete_rating(movie_id, query_params=Config.SESSION_ID)
+            response = movies_api.delete_rating(movie_id, query_params={'session_id': Config.SESSION_ID})
             res_json = response.data
 
         with allure.step("Validate HTTP response metadata"):
@@ -104,7 +104,7 @@ class TestDeleteRating(FieldAssertions):
         logger.info(f"Testing {self._test_name} for movie_id: {movie_id} with session_id: {session_id}")
 
         with allure.step(f"Send DELETE rating request for invalid movie ID {movie_id}"):
-            response = movies_api.delete_rating(movie_id, query_params=session_id)
+            response = movies_api.delete_rating(movie_id, query_params={'session_id': session_id})
             res_json = response.data
 
         with allure.step("Validate HTTP response metadata"):

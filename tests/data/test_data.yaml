@@ -155,9 +155,12 @@ delete_rating:
   invalid:
     - movie_id: 9999999999
       expected_message: "The resource you requested could not be found."
+    # An invalid session_id is rejected (401) before the movie id is even looked at
     - movie_id: 0
       session_id: "$invalid_session_id"
-      expected_message: "Invalid id: The pre-requisite id is invalid or not found."
+      status_code: 401
+      reason: 'Unauthorized'
+      expected_message: "Authentication failed: You do not have permissions to access the service."
 
 get_person_details:
   defaults:

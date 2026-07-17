@@ -147,6 +147,6 @@ class BaseAPI:
         :rtype: APIResponse
         """
         url = f"{self.base_url}/{self.api_version}/{endpoint}"
-        response = self.session.delete(url, headers=self.headers, data=data, timeout=Config.TIMEOUT)
+        response = self.session.delete(url, headers=self.headers, params=params, data=data, timeout=Config.TIMEOUT)
 
         return self._build_response(response, params=params, payload=data)
