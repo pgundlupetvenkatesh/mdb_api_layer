@@ -32,12 +32,12 @@ the traffic is correlated like a real client's rather than independent samples.
 **User journeys covered by `JourneyUser`** (picked per iteration by a
 ~50/25/15/10 mix):
 
-| Journey | Flow |
-|---|---|
-| Browse & drill down (50%) | popular list → details of a listed movie → its alternative titles |
-| Search-driven (25%) | search a rotating query (shared with the integration suite's `test_data.yaml`) → page 2 of the same query → details of a result |
-| Filtered discovery (15%) | genre/sort-filtered discover → pages 2–3 → details of a hit |
-| Cast exploration (10%) | movie details → its credits → a cast member's person details |
+| Journey                   | Flow                                                                                                                            |
+|---------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| Browse & drill down (50%) | popular list → details of a listed movie → its alternative titles                                                               |
+| Search-driven (25%)       | search a rotating query (shared with the integration suite's `test_data.yaml`) → page 2 of the same query → details of a result |
+| Filtered discovery (15%)  | genre/sort-filtered discover → pages 2–3 → details of a hit                                                                     |
+| Cast exploration (10%)    | movie details → its credits → a cast member's person details                                                                    |
 
 Write endpoints (ratings, lists) are deliberately excluded from both models.
 
