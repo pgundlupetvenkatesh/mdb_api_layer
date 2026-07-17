@@ -5,6 +5,18 @@ Load tests for the TMDB movies endpoints, separate from the pytest suite in `tes
 weighted tasks in `locustfile.py` and records latency/throughput/failure stats per
 endpoint.
 
+## How it works
+
+Locust spawns simulated users (`-u` total, ramped at `-r` users/sec) and runs them
+for the duration `-t`. Each user lives in its own greenlet with its own `requests`
+session, carrying the same `.env`-sourced Bearer auth the test suite uses
+(`config.config.Config`), and pauses 1–3 s of think-time between actions so the
+load stays realistic. Every request is recorded into per-endpoint stats — request
+count, failures, median/p95/p99 latency, req/s — with parametrized URLs grouped
+under one stats row via `name=` (e.g. `/3/movie/[id]` instead of thousands of
+distinct ids). A journey's later steps reuse ids taken from earlier responses, so
+the traffic is correlated like a real client's rather than independent samples.
+
 ## User models
 
 `locustfile.py` defines two user classes — pass the class name on the CLI to pick one
@@ -13,16 +25,21 @@ endpoint.
 - **`MoviesUser`** — endpoint traffic mix: each iteration fires one independent,
   weighted read-only request (details ×3, popular ×2, top-rated ×1, alt titles ×1).
   Best for per-endpoint latency baselining.
-- **`JourneyUser`** — realistic sessions: each iteration runs one of four
-  `SequentialTaskSet` journeys, picked by weight (~50/25/15/10 user mix), with
-  think-time between steps and ids chained from earlier responses:
-  1. *Browse & drill down* — popular list → details of a listed movie → alt titles
-  2. *Search-driven* — search (queries shared with the integration suite's
-     `test_data.yaml`) → page 2 → details of a result
-  3. *Filtered discovery* — genre/sort-filtered discover → pages 2–3 → details of a hit
-  4. *Cast exploration* — movie details → credits → a cast member's person details
+- **`JourneyUser`** — realistic sessions: each iteration runs one complete
+  `SequentialTaskSet` journey, picked by weight, with think-time between steps
+  and ids chained from earlier responses.
 
-  Write endpoints (ratings, lists) are deliberately excluded from both models.
+**User journeys covered by `JourneyUser`** (picked per iteration by a
+~50/25/15/10 mix):
+
+| Journey | Flow |
+|---|---|
+| Browse & drill down (50%) | popular list → details of a listed movie → its alternative titles |
+| Search-driven (25%) | search a rotating query (shared with the integration suite's `test_data.yaml`) → page 2 of the same query → details of a result |
+| Filtered discovery (15%) | genre/sort-filtered discover → pages 2–3 → details of a hit |
+| Cast exploration (10%) | movie details → its credits → a cast member's person details |
+
+Write endpoints (ratings, lists) are deliberately excluded from both models.
 
 > **Live-API warning:** these tests hit the real TMDB API with your token.
 > Keep user counts low (≤ 5 users ≈ 2–3 req/s with the configured think-time).
