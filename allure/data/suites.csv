@@ -1,89 +1,5 @@
 "DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
 "
-        Test discovering movies with each supported filter/sort parameter.
-
-        Validates that a discovery request returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param discover_case: Parametrized test data containing valid query_param
-                              and expected status_code.
-        ","71","Discover movies with query params: {'include_adult': 'true'}","tests.discover","Sun Jul 19 09:57:08 UTC 2026","passed","Sun Jul 19 09:57:08 UTC 2026","TestDiscoverMovies","test_movie","",""
-"Each required per-case field is enforced with a naming ``ValueError``.
-
-        :param tmp_path: Pytest temp-dir fixture.
-        :param mutate: A function that breaks one field of a valid case in place.
-        :param match: Substring expected in the raised ``ValueError``.
-        ","1","test_rejects_invalid_case[<lambda>-not in]","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestLoadDataset","test_dataset","",""
-"The offline schema scores all four dimensions.","0","test_offline_schema_has_four_dimensions","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestOutputSchema","test_judge","",""
-"
-        Test retrieving popular movies with invalid parameters.
-
-        Validates that appropriate error responses are returned when
-        invalid query parameters are provided for the popular movies endpoint.
-
-        :param movies_api: MoviesAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_test: Parametrized test data containing invalid query_param,
-                             expected status_code, and expected_message.
-        ","76","Get invalid popular movies with query params: {'page': -1}","tests.movie_lists","Sun Jul 19 09:57:41 UTC 2026","passed","Sun Jul 19 09:57:41 UTC 2026","TestMoviesAPI","test_popular","",""
-"
-        Test successful retrieval of movie details for valid movie IDs.
-
-        Validates the response for existing movie IDs, ensuring the
-        expected status code, HTTP metadata, response structure, and
-        Pydantic schema all match for a valid request.
-
-        :param movies_api: MoviesAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param movie_details: Parametrized test data containing valid movie_id,
-                             expected status_code, and expected_message.
-        ","75","Get movie details for ID: 12626","tests.movies","Sun Jul 19 09:57:41 UTC 2026","passed","Sun Jul 19 09:57:41 UTC 2026","TestDetails","test_details","",""
-"
-        Test successful retrieval of movie details for valid movie IDs.
-
-        Validates the response for existing movie IDs, ensuring the
-        expected status code, HTTP metadata, response structure, and
-        Pydantic schema all match for a valid request.
-
-        :param movies_api: MoviesAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param movie_details: Parametrized test data containing valid movie_id,
-                             expected status_code, and expected_message.
-        ","105","Get movie details for ID: 60523","tests.movies","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
-"Each required per-case field is enforced with a naming ``ValueError``.
-
-        :param tmp_path: Pytest temp-dir fixture.
-        :param mutate: A function that breaks one field of a valid case in place.
-        :param match: Substring expected in the raised ``ValueError``.
-        ","1","test_rejects_invalid_case[<lambda>-test_name is required1]","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestLoadDataset","test_dataset","",""
-"
-        Test searching movies with each supported query parameter.
-
-        Validates that a matched search returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param search_api: SearchAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param search_case: Parametrized test data containing valid query_param
-                            and expected status_code.
-        ","84","Search movies with query params: {'query': 'Titanic', 'region': 'US'}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:43 UTC 2026","TestSearchMovies","test_movie","",""
-"
-        Test updating a list with an invalid list ID.
-
-        Validates that the API returns the expected error status code and
-        message, with a body that conforms to the strict GenericResponse schema.
-
-        :param lists_api: ListsAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param update_list_invalid: Parametrized test data containing invalid
-                                    list_id, payload, expected status_code, and
-                                    expected_message.
-        ","76","Update Description for invalid list ID 0","tests.lists","Sun Jul 19 09:57:41 UTC 2026","passed","Sun Jul 19 09:57:41 UTC 2026","TestUpdate","test_update","",""
-"
         Test searching movies with a missing, empty or unmatched query.
 
         TMDB returns 200 with an empty results page for these requests
@@ -94,7 +10,15 @@
         :param search_api: SearchAPI client fixture from conftest.py.
         :param empty_case: Parametrized test data containing a query_param
                            that yields no matches and expected status_code.
-        ","80","Search movies with no matches for query params: {'query': 'zzzqqqxyzzy123'}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:43 UTC 2026","TestSearchMovies","test_movie","",""
+        ","54","Search movies with no matches for query params: {'query': 'zzzqqqxyzzy123'}","tests.search","Mon Jul 20 10:21:28 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
+"Each required per-case field is enforced with a naming ``ValueError``.
+
+        :param tmp_path: Pytest temp-dir fixture.
+        :param mutate: A function that breaks one field of a valid case in place.
+        :param match: Substring expected in the raised ``ValueError``.
+        ","1","test_rejects_invalid_case[<lambda>-test_name is required1]","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestLoadDataset","test_dataset","",""
+"Verify movie details response structure for movie ID 550 (Fight Club). Using matchers to allow flexible type-based matching.","11","Get Movie Details","tests.contracts","Mon Jul 20 10:21:08 UTC 2026","passed","Mon Jul 20 10:21:08 UTC 2026","TestMovieDetails","test_movie_details","",""
+"A non-numeric ``confidence`` is left untouched (the judge tolerates it).","0","test_leaves_unparseable_confidence","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestSanitizeDiagnosis","test_judge","",""
 "
         Test searching movies with each supported query parameter.
 
@@ -106,55 +30,31 @@
         :param load_schema: Schema loader fixture from conftest.py.
         :param search_case: Parametrized test data containing valid query_param
                             and expected status_code.
-        ","84","Search movies with query params: {'query': 'Interstellar', 'include_adult': 'true'}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:43 UTC 2026","TestSearchMovies","test_movie","",""
+        ","23","Search movies with query params: {'query': 'Interstellar', 'include_adult': 'true'}","tests.search","Mon Jul 20 10:21:28 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
 "
-        Test fetching person details with a valid person ID.
+        Test error handling for invalid movie IDs.
 
-        Validates that the response returns the expected 200 status, correct
-        HTTP metadata, and a body that conforms to the strict PersonDetails
-        schema.
-
-        :param people_api: PeopleAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param person_details: Parametrized test data containing a valid
-                               person_id, expected status_code, and reason.
-        ","73","Get details for person ID: 11","tests.people","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
-"
-        Test fetching person details with an invalid person ID.
-
-        Validates that the API returns the expected error status code and
-        message, with a body that conforms to the strict GenericResponse schema.
-
-        :param people_api: PeopleAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_person_details: Parametrized test data containing an
-                                       invalid person_id, expected status_code,
-                                       and expected_message.
-        ","65","Get details for invalid person ID: 9999999999","tests.people","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
-"
-        Test adding a movie rating with an invalid rating value.
-
-        Validates that submitting an out-of-range rating value returns the
-        expected 400 Bad Request with one of the accepted validation messages.
+        Validates proper error responses when requesting non-existent
+        or invalid movie IDs, ensuring appropriate status codes and
+        error messages are returned.
 
         :param movies_api: MoviesAPI client fixture from conftest.py.
         :param load_schema: Schema loader fixture from conftest.py.
-        :param add_invalid_rating: Parametrized test data containing movie_id, an
-                                   invalid rating payload, expected status_code,
-                                   and the set of acceptable validation messages.
-        ","69","Add rating -8.0 for movie ID: 36005","tests.movies","Sun Jul 19 09:57:41 UTC 2026","passed","Sun Jul 19 09:57:41 UTC 2026","TestAddRating","test_add_rating","",""
+        :param invalid_test: Parametrized test data containing invalid movie_id,
+                             expected status_code, and expected_message.
+        ","27","Invalid movie ID: 0","tests.movies","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
 "
-        Test adding a movie rating with a valid session.
+        Test searching movies with each supported query parameter.
 
-        Validates that a valid rating submission returns the expected 201
-        success response, correct HTTP metadata, and a body that conforms
-        to the strict RatingResponse schema.
+        Validates that a matched search returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
 
-        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param search_api: SearchAPI client fixture from conftest.py.
         :param load_schema: Schema loader fixture from conftest.py.
-        :param add_valid_rating: Parametrized test data containing the rating
-                                 payload, expected status_code, and reason.
-        ","81","Add rating 6.5 for movie ID: 52070","tests.movies","Sun Jul 19 09:57:07 UTC 2026","passed","Sun Jul 19 09:57:07 UTC 2026","TestAddRating","test_add_rating","",""
+        :param search_case: Parametrized test data containing valid query_param
+                            and expected status_code.
+        ","27","Search movies with query params: {'query': 'Jurassic Park', 'primary_release_year': '1993'}","tests.search","Mon Jul 20 10:21:28 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
 "
         Test deleting a movie rating with an invalid movie ID (and, for one
         case, an invalid session ID).
@@ -167,31 +67,7 @@
         :param delete_invalid_rating: Parametrized test data containing invalid
                                       movie_id, optional session_id, expected
                                       status_code, and expected_message.
-        ","73","Delete movie rating for ID: 9999999999","tests.movies","Sun Jul 19 09:57:41 UTC 2026","passed","Sun Jul 19 09:57:41 UTC 2026","TestDeleteRating","test_delete_rating","",""
-"
-        Test searching movies with each supported query parameter.
-
-        Validates that a matched search returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param search_api: SearchAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param search_case: Parametrized test data containing valid query_param
-                            and expected status_code.
-        ","100","Search movies with query params: {'query': 'Terminator', 'language': 'en-US', 'include_adult': 'true', 'region': 'US', 'year': '1984', 'primary_release_year': '1984', 'page': 1}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:43 UTC 2026","TestSearchMovies","test_movie","",""
-"
-        Test error handling for invalid movie IDs.
-
-        Validates proper error responses when requesting non-existent
-        or invalid movie IDs, ensuring appropriate status codes and
-        error messages are returned.
-
-        :param movies_api: MoviesAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_test: Parametrized test data containing invalid movie_id,
-                             expected status_code, and expected_message.
-        ","79","Invalid movie ID: 9999999999","tests.movies","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
+        ","28","Delete movie rating for ID: 0","tests.movies","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDeleteRating","test_delete_rating","",""
 "
         Test discovering movies with each supported filter/sort parameter.
 
@@ -203,7 +79,19 @@
         :param load_schema: Schema loader fixture from conftest.py.
         :param discover_case: Parametrized test data containing valid query_param
                               and expected status_code.
-        ","79","Discover movies with query params: {}","tests.discover","Sun Jul 19 09:57:07 UTC 2026","passed","Sun Jul 19 09:57:07 UTC 2026","TestDiscoverMovies","test_movie","",""
+        ","27","Discover movies with query params: {}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDiscoverMovies","test_movie","",""
+"
+        Test discovering movies with each supported filter/sort parameter.
+
+        Validates that a discovery request returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param discover_case: Parametrized test data containing valid query_param
+                              and expected status_code.
+        ","25","Discover movies with query params: {'page': 2}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDiscoverMovies","test_movie","",""
 "
         Test discovering movies with filters that match nothing.
 
@@ -215,372 +103,42 @@
         :param discover_api: DiscoverAPI client fixture from conftest.py.
         :param empty_case: Parametrized test data containing a query_param
                            that yields no matches and expected status_code.
-        ","88","Discover movies with no matches for query params: {'with_genres': '28', 'without_genres': '28'}","tests.discover","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestDiscoverMovies","test_movie","",""
-"
-        Test searching movies with each supported query parameter.
-
-        Validates that a matched search returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param search_api: SearchAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param search_case: Parametrized test data containing valid query_param
-                            and expected status_code.
-        ","68","Search movies with query params: {'query': 'Superman'}","tests.search","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestSearchMovies","test_movie","",""
-"
-        Verify error response for invalid page parameter.
-
-        Tests the GET /movie/popular endpoint with an invalid page number.
-        Verifies the API returns a 400 Bad Request with appropriate error message.
-        ","2","Get Popular Movies for Invalid Page","tests.contracts","Sun Jul 19 09:57:07 UTC 2026","passed","Sun Jul 19 09:57:07 UTC 2026","TestPopularMovies","test_popular_movies","",""
-"
-        Test updating a list with an invalid list ID.
-
-        Validates that the API returns the expected error status code and
-        message, with a body that conforms to the strict GenericResponse schema.
-
-        :param lists_api: ListsAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param update_list_invalid: Parametrized test data containing invalid
-                                    list_id, payload, expected status_code, and
-                                    expected_message.
-        ","80","Update Description for invalid list ID 9999999999","tests.lists","Sun Jul 19 09:57:41 UTC 2026","passed","Sun Jul 19 09:57:41 UTC 2026","TestUpdate","test_update","",""
+        ","43","Discover movies with no matches for query params: {'with_genres': '28', 'without_genres': '28'}","tests.discover","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestDiscoverMovies","test_movie","",""
+"``test_name`` and ``model`` are removed; other keys are preserved.","0","test_drops_test_name_and_model","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestSanitizeDiagnosis","test_judge","",""
 "Each required per-case field is enforced with a naming ``ValueError``.
 
         :param tmp_path: Pytest temp-dir fixture.
         :param mutate: A function that breaks one field of a valid case in place.
         :param match: Substring expected in the raised ``ValueError``.
-        ","1","test_rejects_invalid_case[<lambda>-missing 'id']","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestLoadDataset","test_dataset","",""
+        ","1","test_rejects_invalid_case[<lambda>-missing 'id']","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestLoadDataset","test_dataset","",""
 "
-        Verify popular movies list response structure.
+        Test fetching person details with an invalid person ID.
 
-        Tests the GET /movie/popular endpoint with pagination.
-        Verifies the response contains proper pagination and movie array.
-        ","3","Get Popular Movies","tests.contracts","Sun Jul 19 09:57:07 UTC 2026","passed","Sun Jul 19 09:57:07 UTC 2026","TestPopularMovies","test_popular_movies","",""
-"The top-level document must be a mapping with a non-empty ``cases`` list.
+        Validates that the API returns the expected error status code and
+        message, with a body that conforms to the strict GenericResponse schema.
 
-        :param tmp_path: Pytest temp-dir fixture.
-        :param payload: A malformed top-level document.
-        :param match: Substring expected in the raised ``ValueError``.
-        ","1","test_rejects_bad_top_level[payload1-cases]","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestLoadDataset","test_dataset","",""
+        :param people_api: PeopleAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_person_details: Parametrized test data containing an
+                                       invalid person_id, expected status_code,
+                                       and expected_message.
+        ","28","Get details for invalid person ID: 9999999999","tests.people","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
 "Two cases sharing an ``id`` raise a duplicate-id error.
 
         :param tmp_path: Pytest temp-dir fixture.
-        ","2","test_rejects_duplicate_id","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestLoadDataset","test_dataset","",""
-"Verify 404 error response structure for non-existent movie ID 99999999. Using matchers to allow flexible type-based matching.","3","Get Invalid Movie Details","tests.contracts","Sun Jul 19 09:57:07 UTC 2026","passed","Sun Jul 19 09:57:07 UTC 2026","TestMovieDetails","test_movie_details","",""
+        ","2","test_rejects_duplicate_id","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestLoadDataset","test_dataset","",""
 "
-        Test updating a list with valid parameters.
-
-        Validates that the list is updated correctly, returning the expected
-        201 success response, correct HTTP metadata, and a body that conforms
-        to the strict GenericResponse schema.
-
-        :param lists_api: ListsAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param update_list: Parametrized test data containing valid list_id,
-                            payload, expected status_code, and expected_message.
-        ","119","Update Description for list ID 8637178","tests.lists","Sun Jul 19 09:57:40 UTC 2026","passed","Sun Jul 19 09:57:41 UTC 2026","TestUpdate","test_update","",""
-"
-        Test discovering movies with each supported filter/sort parameter.
-
-        Validates that a discovery request returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param discover_case: Parametrized test data containing valid query_param
-                              and expected status_code.
-        ","111","Discover movies with query params: {'primary_release_year': '1989'}","tests.discover","Sun Jul 19 09:57:08 UTC 2026","passed","Sun Jul 19 09:57:08 UTC 2026","TestDiscoverMovies","test_movie","",""
-"The live schema drops correctness (no reference answer live).","0","test_live_schema_excludes_correctness","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestOutputSchema","test_judge","",""
-"
-        Test fetching person details with an invalid person ID.
+        Test fetching network details with an invalid network ID.
 
         Validates that the API returns the expected error status code and
         message, with a body that conforms to the strict GenericResponse schema.
-
-        :param people_api: PeopleAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_person_details: Parametrized test data containing an
-                                       invalid person_id, expected status_code,
-                                       and expected_message.
-        ","83","Get details for invalid person ID: 0","tests.people","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
-"
-        Test searching movies with a missing, empty or unmatched query.
-
-        TMDB returns 200 with an empty results page for these requests
-        rather than an error, so the test asserts the empty pagination
-        body directly (the search schema requires at least one result,
-        so it does not apply here).
-
-        :param search_api: SearchAPI client fixture from conftest.py.
-        :param empty_case: Parametrized test data containing a query_param
-                           that yields no matches and expected status_code.
-        ","79","Search movies with no matches for query params: {}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:43 UTC 2026","TestSearchMovies","test_movie","",""
-"
-        Test fetching person details with an invalid person ID.
-
-        Validates that the API returns the expected error status code and
-        message, with a body that conforms to the strict GenericResponse schema.
-
-        :param people_api: PeopleAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_person_details: Parametrized test data containing an
-                                       invalid person_id, expected status_code,
-                                       and expected_message.
-        ","83","Get details for invalid person ID: -1","tests.people","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
-"
-        Test discovering movies with filters that match nothing.
-
-        TMDB returns 200 with an empty results page for these requests
-        rather than an error, so the test asserts the empty pagination
-        body directly (the discover schema requires at least one result,
-        so it does not apply here).
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param empty_case: Parametrized test data containing a query_param
-                           that yields no matches and expected status_code.
-        ","121","Discover movies with no matches for query params: {'vote_count.gte': '100000000'}","tests.discover","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestDiscoverMovies","test_movie","",""
-"
-        Test deleting a movie rating with an invalid movie ID (and, for one
-        case, an invalid session ID).
-
-        Validates that the API returns the expected error status code and
-        message, with a body that conforms to the rating response schema.
-
-        :param movies_api: MoviesAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param delete_invalid_rating: Parametrized test data containing invalid
-                                      movie_id, optional session_id, expected
-                                      status_code, and expected_message.
-        ","74","Delete movie rating for ID: 0","tests.movies","Sun Jul 19 09:57:41 UTC 2026","passed","Sun Jul 19 09:57:41 UTC 2026","TestDeleteRating","test_delete_rating","",""
-"
-        Test discovering movies with each supported filter/sort parameter.
-
-        Validates that a discovery request returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param discover_case: Parametrized test data containing valid query_param
-                              and expected status_code.
-        ","141","Discover movies with query params: {'vote_average.gte': '7'}","tests.discover","Sun Jul 19 09:57:08 UTC 2026","passed","Sun Jul 19 09:57:08 UTC 2026","TestDiscoverMovies","test_movie","",""
-"Verify movie details response structure for movie ID 550 (Fight Club). Using matchers to allow flexible type-based matching.","12","Get Movie Details","tests.contracts","Sun Jul 19 09:57:07 UTC 2026","passed","Sun Jul 19 09:57:07 UTC 2026","TestMovieDetails","test_movie_details","",""
-"Each required per-case field is enforced with a naming ``ValueError``.
-
-        :param tmp_path: Pytest temp-dir fixture.
-        :param mutate: A function that breaks one field of a valid case in place.
-        :param match: Substring expected in the raised ``ValueError``.
-        ","2","test_rejects_invalid_case[<lambda>-expected_root_cause is required]","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestLoadDataset","test_dataset","",""
-"``required`` lists every dimension plus ``overall_verdict`` in order.","0","test_requires_each_dimension_plus_overall","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestOutputSchema","test_judge","",""
-"
-        Test fetching network details with a valid network ID.
-
-        Validates that the response returns the expected 200 status, correct
-        HTTP metadata, the requested network ID echoed in the body, and a
-        body that conforms to the strict NetworkDetails schema.
 
         :param networks_api: NetworksAPI client fixture from conftest.py.
         :param load_schema: Schema loader fixture from conftest.py.
-        :param network_details: Parametrized test data containing a valid
-                                network_id, expected status_code, and reason.
-        ","84","Get details for network ID: 56","tests.networks","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
-"Each required per-case field is enforced with a naming ``ValueError``.
-
-        :param tmp_path: Pytest temp-dir fixture.
-        :param mutate: A function that breaks one field of a valid case in place.
-        :param match: Substring expected in the raised ``ValueError``.
-        ","1","test_rejects_invalid_case[<lambda>-test_name is required0]","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestLoadDataset","test_dataset","",""
-"
-        Test searching movies with invalid parameters.
-
-        Validates that appropriate error responses are returned when
-        invalid query parameters are provided for the search movie endpoint.
-
-        :param search_api: SearchAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_test: Parametrized test data containing invalid query_param,
-                             expected status_code, and expected_message.
-        ","69","Search movies with invalid query params: {'query': 'Avatar', 'page': -1}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:43 UTC 2026","TestSearchMovies","test_movie","",""
-"
-        Test searching movies with each supported query parameter.
-
-        Validates that a matched search returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param search_api: SearchAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param search_case: Parametrized test data containing valid query_param
-                            and expected status_code.
-        ","67","Search movies with query params: {'query': 'Inception', 'language': 'en-US'}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:43 UTC 2026","TestSearchMovies","test_movie","",""
-"
-        Test discovering movies with each supported filter/sort parameter.
-
-        Validates that a discovery request returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param discover_case: Parametrized test data containing valid query_param
-                              and expected status_code.
-        ","75","Discover movies with query params: {'sort_by': 'popularity.desc'}","tests.discover","Sun Jul 19 09:57:08 UTC 2026","passed","Sun Jul 19 09:57:08 UTC 2026","TestDiscoverMovies","test_movie","",""
-"
-        Test discovering movies with each supported filter/sort parameter.
-
-        Validates that a discovery request returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param discover_case: Parametrized test data containing valid query_param
-                              and expected status_code.
-        ","143","Discover movies with query params: {'region': 'US'}","tests.discover","Sun Jul 19 09:57:08 UTC 2026","passed","Sun Jul 19 09:57:08 UTC 2026","TestDiscoverMovies","test_movie","",""
-"
-        Test successful retrieval of movie details for valid movie IDs.
-
-        Validates the response for existing movie IDs, ensuring the
-        expected status code, HTTP metadata, response structure, and
-        Pydantic schema all match for a valid request.
-
-        :param movies_api: MoviesAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param movie_details: Parametrized test data containing valid movie_id,
-                             expected status_code, and expected_message.
-        ","81","Get movie details for ID: 11917","tests.movies","Sun Jul 19 09:57:41 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
-"Each required per-case field is enforced with a naming ``ValueError``.
-
-        :param tmp_path: Pytest temp-dir fixture.
-        :param mutate: A function that breaks one field of a valid case in place.
-        :param match: Substring expected in the raised ``ValueError``.
-        ","1","test_rejects_invalid_case[<lambda>-missing 'expected']","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestLoadDataset","test_dataset","",""
-"
-        Test error handling for invalid movie IDs.
-
-        Validates proper error responses when requesting non-existent
-        or invalid movie IDs, ensuring appropriate status codes and
-        error messages are returned.
-
-        :param movies_api: MoviesAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_test: Parametrized test data containing invalid movie_id,
-                             expected status_code, and expected_message.
-        ","69","Invalid movie ID: 0","tests.movies","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
-"
-        Test adding a movie rating with an invalid rating value.
-
-        Validates that submitting an out-of-range rating value returns the
-        expected 400 Bad Request with one of the accepted validation messages.
-
-        :param movies_api: MoviesAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param add_invalid_rating: Parametrized test data containing movie_id, an
-                                   invalid rating payload, expected status_code,
-                                   and the set of acceptable validation messages.
-        ","74","Add rating 0.1 for movie ID: 23172","tests.movies","Sun Jul 19 09:57:41 UTC 2026","passed","Sun Jul 19 09:57:41 UTC 2026","TestAddRating","test_add_rating","",""
-"A well-formed dataset returns its list of cases unchanged.
-
-        :param tmp_path: Pytest temp-dir fixture for the dataset file.
-        ","2","test_loads_valid_dataset","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestLoadDataset","test_dataset","",""
-"
-        Test discovering movies with invalid parameters.
-
-        Validates that appropriate error responses are returned when
-        invalid query parameters are provided for the discover movie endpoint.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_test: Parametrized test data containing invalid query_param,
-                             expected status_code, and expected_message.
-        ","67","Discover movies with invalid query params: {'page': 501}","tests.discover","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestDiscoverMovies","test_movie","",""
-"
-        Test searching movies with each supported query parameter.
-
-        Validates that a matched search returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param search_api: SearchAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param search_case: Parametrized test data containing valid query_param
-                            and expected status_code.
-        ","73","Search movies with query params: {'query': 'Jurassic Park', 'primary_release_year': '1993'}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:43 UTC 2026","TestSearchMovies","test_movie","",""
-"
-        Test discovering movies with each supported filter/sort parameter.
-
-        Validates that a discovery request returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param discover_case: Parametrized test data containing valid query_param
-                              and expected status_code.
-        ","72","Discover movies with query params: {'with_original_language': 'en'}","tests.discover","Sun Jul 19 09:57:08 UTC 2026","passed","Sun Jul 19 09:57:08 UTC 2026","TestDiscoverMovies","test_movie","",""
-"``test_name`` and ``model`` are removed; other keys are preserved.","1","test_drops_test_name_and_model","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestSanitizeDiagnosis","test_judge","",""
-"
-        Test searching movies with invalid parameters.
-
-        Validates that appropriate error responses are returned when
-        invalid query parameters are provided for the search movie endpoint.
-
-        :param search_api: SearchAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_test: Parametrized test data containing invalid query_param,
-                             expected status_code, and expected_message.
-        ","66","Search movies with invalid query params: {'query': 'Gladiator', 'page': 501}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:44 UTC 2026","TestSearchMovies","test_movie","",""
-"
-        Test discovering movies with each supported filter/sort parameter.
-
-        Validates that a discovery request returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param discover_case: Parametrized test data containing valid query_param
-                              and expected status_code.
-        ","73","Discover movies with query params: {'page': 2}","tests.discover","Sun Jul 19 09:57:07 UTC 2026","passed","Sun Jul 19 09:57:07 UTC 2026","TestDiscoverMovies","test_movie","",""
-"
-        Test discovering movies with each supported filter/sort parameter.
-
-        Validates that a discovery request returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param discover_case: Parametrized test data containing valid query_param
-                              and expected status_code.
-        ","105","Discover movies with query params: {'year': '1989'}","tests.discover","Sun Jul 19 09:57:08 UTC 2026","passed","Sun Jul 19 09:57:08 UTC 2026","TestDiscoverMovies","test_movie","",""
-"
-        Test retrieving popular movies with default parameters.
-
-        Validates that the default page of popular movies is returned
-        correctly, including response structure and content.
-
-        :param movies_api: MoviesAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py
-        :param pop_movies: Parametrized test data containing valid query_param,
-                           expected status_code, and expected_message.
-        ","78","Get popular movies with query params: {'page': 2}","tests.movie_lists","Sun Jul 19 09:57:41 UTC 2026","passed","Sun Jul 19 09:57:41 UTC 2026","TestMoviesAPI","test_popular","",""
-"The original diagnosis dict is not modified; a new dict is returned.","0","test_does_not_mutate_input","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestSanitizeDiagnosis","test_judge","",""
-"
-        Test updating a list with valid parameters.
-
-        Validates that the list is updated correctly, returning the expected
-        201 success response, correct HTTP metadata, and a body that conforms
-        to the strict GenericResponse schema.
-
-        :param lists_api: ListsAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param update_list: Parametrized test data containing valid list_id,
-                            payload, expected status_code, and expected_message.
-        ","10802","Update Description for list ID 8637178","tests.lists","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:20 UTC 2026","TestUpdate","test_update","",""
+        :param invalid_network_details: Parametrized test data containing an
+                                        invalid network_id, expected status_code,
+                                        and expected_message.
+        ","34","Get details for invalid network ID: 0","tests.networks","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
 "
         Test deleting an existing movie rating with a valid session.
 
@@ -592,44 +150,19 @@
         :param load_schema: Schema loader fixture from conftest.py.
         :param delete_valid_rating: Parametrized test data containing the
                                      expected status_code, reason, and message.
-        ","170","Delete movie rating for ID: 20619","tests.movies","Sun Jul 19 09:57:07 UTC 2026","passed","Sun Jul 19 09:57:07 UTC 2026","TestDeleteRating","test_delete_rating","",""
-"A numeric-string ``confidence`` is coerced to ``int``.","0","test_coerces_string_confidence_to_int","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestSanitizeDiagnosis","test_judge","",""
+        ","121","Delete movie rating for ID: 50677","tests.movies","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDeleteRating","test_delete_rating","",""
 "
-        Test adding a movie rating with a valid session.
+        Test fetching person details with an invalid person ID.
 
-        Validates that a valid rating submission returns the expected 201
-        success response, correct HTTP metadata, and a body that conforms
-        to the strict RatingResponse schema.
+        Validates that the API returns the expected error status code and
+        message, with a body that conforms to the strict GenericResponse schema.
 
-        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param people_api: PeopleAPI client fixture from conftest.py.
         :param load_schema: Schema loader fixture from conftest.py.
-        :param add_valid_rating: Parametrized test data containing the rating
-                                 payload, expected status_code, and reason.
-        ","251","Add rating 9.0 for movie ID: 53744","tests.movies","Sun Jul 19 09:57:07 UTC 2026","passed","Sun Jul 19 09:57:07 UTC 2026","TestAddRating","test_add_rating","",""
-"
-        Test error handling for invalid movie IDs.
-
-        Validates proper error responses when requesting non-existent
-        or invalid movie IDs, ensuring appropriate status codes and
-        error messages are returned.
-
-        :param movies_api: MoviesAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_test: Parametrized test data containing invalid movie_id,
-                             expected status_code, and expected_message.
-        ","71","Invalid movie ID: -1","tests.movies","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
-"
-        Test discovering movies with each supported filter/sort parameter.
-
-        Validates that a discovery request returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param discover_case: Parametrized test data containing valid query_param
-                              and expected status_code.
-        ","105","Discover movies with query params: {'language': 'en-US', 'include_adult': 'true', 'include_video': 'true', 'sort_by': 'popularity.desc', 'primary_release_year': '1989', 'region': 'US', 'with_genres': '28', 'with_original_language': 'en', 'vote_average.gte': '7', 'page': 1}","tests.discover","Sun Jul 19 09:57:08 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestDiscoverMovies","test_movie","",""
+        :param invalid_person_details: Parametrized test data containing an
+                                       invalid person_id, expected status_code,
+                                       and expected_message.
+        ","32","Get details for invalid person ID: 0","tests.people","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
 "
         Test fetching network details with an invalid network ID.
 
@@ -641,7 +174,277 @@
         :param invalid_network_details: Parametrized test data containing an
                                         invalid network_id, expected status_code,
                                         and expected_message.
-        ","72","Get details for invalid network ID: 0","tests.networks","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
+        ","29","Get details for invalid network ID: 99999999","tests.networks","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
+"
+        Test discovering movies with invalid parameters.
+
+        Validates that appropriate error responses are returned when
+        invalid query parameters are provided for the discover movie endpoint.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_test: Parametrized test data containing invalid query_param,
+                             expected status_code, and expected_message.
+        ","29","Discover movies with invalid query params: {'page': -1}","tests.discover","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestDiscoverMovies","test_movie","",""
+"
+        Test searching movies with each supported query parameter.
+
+        Validates that a matched search returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param search_api: SearchAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param search_case: Parametrized test data containing valid query_param
+                            and expected status_code.
+        ","27","Search movies with query params: {'query': 'Superman'}","tests.search","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestSearchMovies","test_movie","",""
+"A numeric-string ``confidence`` is coerced to ``int``.","0","test_coerces_string_confidence_to_int","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestSanitizeDiagnosis","test_judge","",""
+"The live schema drops correctness (no reference answer live).","1","test_live_schema_excludes_correctness","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestOutputSchema","test_judge","",""
+"
+        Test retrieving popular movies with invalid parameters.
+
+        Validates that appropriate error responses are returned when
+        invalid query parameters are provided for the popular movies endpoint.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_test: Parametrized test data containing invalid query_param,
+                             expected status_code, and expected_message.
+        ","28","Get invalid popular movies with query params: {'page': -1}","tests.movie_lists","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestMoviesAPI","test_popular","",""
+"
+        Test searching movies with invalid parameters.
+
+        Validates that appropriate error responses are returned when
+        invalid query parameters are provided for the search movie endpoint.
+
+        :param search_api: SearchAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_test: Parametrized test data containing invalid query_param,
+                             expected status_code, and expected_message.
+        ","25","Search movies with invalid query params: {'query': 'Gladiator', 'page': 501}","tests.search","Mon Jul 20 10:21:28 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
+"
+        Test discovering movies with each supported filter/sort parameter.
+
+        Validates that a discovery request returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param discover_case: Parametrized test data containing valid query_param
+                              and expected status_code.
+        ","26","Discover movies with query params: {'region': 'US'}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDiscoverMovies","test_movie","",""
+"Verify 404 error response structure for non-existent movie ID 99999999. Using matchers to allow flexible type-based matching.","2","Get Invalid Movie Details","tests.contracts","Mon Jul 20 10:21:08 UTC 2026","passed","Mon Jul 20 10:21:08 UTC 2026","TestMovieDetails","test_movie_details","",""
+"
+        Test discovering movies with each supported filter/sort parameter.
+
+        Validates that a discovery request returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param discover_case: Parametrized test data containing valid query_param
+                              and expected status_code.
+        ","27","Discover movies with query params: {'sort_by': 'popularity.desc'}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDiscoverMovies","test_movie","",""
+"The original diagnosis dict is not modified; a new dict is returned.","0","test_does_not_mutate_input","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestSanitizeDiagnosis","test_judge","",""
+"
+        Test successful retrieval of movie details for valid movie IDs.
+
+        Validates the response for existing movie IDs, ensuring the
+        expected status code, HTTP metadata, response structure, and
+        Pydantic schema all match for a valid request.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param movie_details: Parametrized test data containing valid movie_id,
+                             expected status_code, and expected_message.
+        ","24","Get movie details for ID: 27727","tests.movies","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
+"
+        Test discovering movies with each supported filter/sort parameter.
+
+        Validates that a discovery request returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param discover_case: Parametrized test data containing valid query_param
+                              and expected status_code.
+        ","47","Discover movies with query params: {'language': 'en-US', 'include_adult': 'true', 'include_video': 'true', 'sort_by': 'popularity.desc', 'primary_release_year': '1989', 'region': 'US', 'with_genres': '28', 'with_original_language': 'en', 'vote_average.gte': '7', 'page': 1}","tests.discover","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestDiscoverMovies","test_movie","",""
+"Each required per-case field is enforced with a naming ``ValueError``.
+
+        :param tmp_path: Pytest temp-dir fixture.
+        :param mutate: A function that breaks one field of a valid case in place.
+        :param match: Substring expected in the raised ``ValueError``.
+        ","1","test_rejects_invalid_case[<lambda>-not in]","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestLoadDataset","test_dataset","",""
+"
+        Test deleting a movie rating with an invalid movie ID (and, for one
+        case, an invalid session ID).
+
+        Validates that the API returns the expected error status code and
+        message, with a body that conforms to the rating response schema.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param delete_invalid_rating: Parametrized test data containing invalid
+                                      movie_id, optional session_id, expected
+                                      status_code, and expected_message.
+        ","28","Delete movie rating for ID: 9999999999","tests.movies","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDeleteRating","test_delete_rating","",""
+"
+        Test updating a list with an invalid list ID.
+
+        Validates that the API returns the expected error status code and
+        message, with a body that conforms to the strict GenericResponse schema.
+
+        :param lists_api: ListsAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param update_list_invalid: Parametrized test data containing invalid
+                                    list_id, payload, expected status_code, and
+                                    expected_message.
+        ","32","Update Description for invalid list ID 0","tests.lists","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestUpdate","test_update","",""
+"
+        Test discovering movies with each supported filter/sort parameter.
+
+        Validates that a discovery request returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param discover_case: Parametrized test data containing valid query_param
+                              and expected status_code.
+        ","28","Discover movies with query params: {'include_adult': 'true'}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDiscoverMovies","test_movie","",""
+"
+        Test discovering movies with invalid parameters.
+
+        Validates that appropriate error responses are returned when
+        invalid query parameters are provided for the discover movie endpoint.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_test: Parametrized test data containing invalid query_param,
+                             expected status_code, and expected_message.
+        ","27","Discover movies with invalid query params: {'page': 501}","tests.discover","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestDiscoverMovies","test_movie","",""
+"The top-level document must be a mapping with a non-empty ``cases`` list.
+
+        :param tmp_path: Pytest temp-dir fixture.
+        :param payload: A malformed top-level document.
+        :param match: Substring expected in the raised ``ValueError``.
+        ","1","test_rejects_bad_top_level[payload1-cases]","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestLoadDataset","test_dataset","",""
+"Each required per-case field is enforced with a naming ``ValueError``.
+
+        :param tmp_path: Pytest temp-dir fixture.
+        :param mutate: A function that breaks one field of a valid case in place.
+        :param match: Substring expected in the raised ``ValueError``.
+        ","1","test_rejects_invalid_case[<lambda>-test_name is required0]","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestLoadDataset","test_dataset","",""
+"
+        Test retrieving popular movies with default parameters.
+
+        Validates that the default page of popular movies is returned
+        correctly, including response structure and content.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py
+        :param pop_movies: Parametrized test data containing valid query_param,
+                           expected status_code, and expected_message.
+        ","27","Get popular movies with query params: {'page': 2}","tests.movie_lists","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestMoviesAPI","test_popular","",""
+"Each required per-case field is enforced with a naming ``ValueError``.
+
+        :param tmp_path: Pytest temp-dir fixture.
+        :param mutate: A function that breaks one field of a valid case in place.
+        :param match: Substring expected in the raised ``ValueError``.
+        ","1","test_rejects_invalid_case[<lambda>-expected_root_cause is required]","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestLoadDataset","test_dataset","",""
+"
+        Test updating a list with an invalid list ID.
+
+        Validates that the API returns the expected error status code and
+        message, with a body that conforms to the strict GenericResponse schema.
+
+        :param lists_api: ListsAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param update_list_invalid: Parametrized test data containing invalid
+                                    list_id, payload, expected status_code, and
+                                    expected_message.
+        ","32","Update Description for invalid list ID 9999999999","tests.lists","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestUpdate","test_update","",""
+"
+        Test successful retrieval of movie details for valid movie IDs.
+
+        Validates the response for existing movie IDs, ensuring the
+        expected status code, HTTP metadata, response structure, and
+        Pydantic schema all match for a valid request.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param movie_details: Parametrized test data containing valid movie_id,
+                             expected status_code, and expected_message.
+        ","25","Get movie details for ID: 6615","tests.movies","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
+"
+        Verify popular movies list response structure.
+
+        Tests the GET /movie/popular endpoint with pagination.
+        Verifies the response contains proper pagination and movie array.
+        ","3","Get Popular Movies","tests.contracts","Mon Jul 20 10:21:08 UTC 2026","passed","Mon Jul 20 10:21:08 UTC 2026","TestPopularMovies","test_popular_movies","",""
+"
+        Test discovering movies with each supported filter/sort parameter.
+
+        Validates that a discovery request returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param discover_case: Parametrized test data containing valid query_param
+                              and expected status_code.
+        ","65","Discover movies with query params: {'year': '1989'}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDiscoverMovies","test_movie","",""
+"
+        Test adding a movie rating with an invalid rating value.
+
+        Validates that submitting an out-of-range rating value returns the
+        expected 400 Bad Request with one of the accepted validation messages.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param add_invalid_rating: Parametrized test data containing movie_id, an
+                                   invalid rating payload, expected status_code,
+                                   and the set of acceptable validation messages.
+        ","29","Add rating 13.8 for movie ID: 52772","tests.movies","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestAddRating","test_add_rating","",""
+"
+        Test successful retrieval of movie details for valid movie IDs.
+
+        Validates the response for existing movie IDs, ensuring the
+        expected status code, HTTP metadata, response structure, and
+        Pydantic schema all match for a valid request.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param movie_details: Parametrized test data containing valid movie_id,
+                             expected status_code, and expected_message.
+        ","26","Get movie details for ID: 18029","tests.movies","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
+"
+        Test fetching network details with a valid network ID.
+
+        Validates that the response returns the expected 200 status, correct
+        HTTP metadata, the requested network ID echoed in the body, and a
+        body that conforms to the strict NetworkDetails schema.
+
+        :param networks_api: NetworksAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param network_details: Parametrized test data containing a valid
+                                network_id, expected status_code, and reason.
+        ","35","Get details for network ID: 71","tests.networks","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
+"
+        Test searching movies with each supported query parameter.
+
+        Validates that a matched search returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param search_api: SearchAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param search_case: Parametrized test data containing valid query_param
+                            and expected status_code.
+        ","539","Search movies with query params: {'query': 'Spider-Man', 'page': 2}","tests.search","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
 "
         Test searching movies with a missing, empty or unmatched query.
 
@@ -653,61 +456,7 @@
         :param search_api: SearchAPI client fixture from conftest.py.
         :param empty_case: Parametrized test data containing a query_param
                            that yields no matches and expected status_code.
-        ","74","Search movies with no matches for query params: {'query': ''}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:43 UTC 2026","TestSearchMovies","test_movie","",""
-"A non-numeric ``confidence`` is left untouched (the judge tolerates it).","0","test_leaves_unparseable_confidence","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestSanitizeDiagnosis","test_judge","",""
-"
-        Test discovering movies with invalid parameters.
-
-        Validates that appropriate error responses are returned when
-        invalid query parameters are provided for the discover movie endpoint.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_test: Parametrized test data containing invalid query_param,
-                             expected status_code, and expected_message.
-        ","84","Discover movies with invalid query params: {'page': -1}","tests.discover","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestDiscoverMovies","test_movie","",""
-"
-        Test fetching network details with an invalid network ID.
-
-        Validates that the API returns the expected error status code and
-        message, with a body that conforms to the strict GenericResponse schema.
-
-        :param networks_api: NetworksAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param invalid_network_details: Parametrized test data containing an
-                                        invalid network_id, expected status_code,
-                                        and expected_message.
-        ","75","Get details for invalid network ID: 99999999","tests.networks","Sun Jul 19 09:57:42 UTC 2026","passed","Sun Jul 19 09:57:42 UTC 2026","TestDetails","test_details","",""
-"
-        Test discovering movies with each supported filter/sort parameter.
-
-        Validates that a discovery request returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param discover_case: Parametrized test data containing valid query_param
-                              and expected status_code.
-        ","145","Discover movies with query params: {'include_video': 'true'}","tests.discover","Sun Jul 19 09:57:08 UTC 2026","passed","Sun Jul 19 09:57:08 UTC 2026","TestDiscoverMovies","test_movie","",""
-"
-        Test discovering movies with each supported filter/sort parameter.
-
-        Validates that a discovery request returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
-
-        :param discover_api: DiscoverAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
-        :param discover_case: Parametrized test data containing valid query_param
-                              and expected status_code.
-        ","69","Discover movies with query params: {'language': 'en-US'}","tests.discover","Sun Jul 19 09:57:07 UTC 2026","passed","Sun Jul 19 09:57:08 UTC 2026","TestDiscoverMovies","test_movie","",""
-"The top-level document must be a mapping with a non-empty ``cases`` list.
-
-        :param tmp_path: Pytest temp-dir fixture.
-        :param payload: A malformed top-level document.
-        :param match: Substring expected in the raised ``ValueError``.
-        ","0","test_rejects_bad_top_level[payload0-cases]","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestLoadDataset","test_dataset","",""
+        ","35","Search movies with no matches for query params: {}","tests.search","Mon Jul 20 10:21:28 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
 "
         Test retrieving popular movies with default parameters.
 
@@ -718,7 +467,7 @@
         :param load_schema: Schema loader fixture from conftest.py
         :param pop_movies: Parametrized test data containing valid query_param,
                            expected status_code, and expected_message.
-        ","114","Get popular movies with query params: {'language': 'en-US'}","tests.movie_lists","Sun Jul 19 09:57:41 UTC 2026","passed","Sun Jul 19 09:57:41 UTC 2026","TestMoviesAPI","test_popular","",""
+        ","27","Get popular movies with query params: {'language': 'en-US'}","tests.movie_lists","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestMoviesAPI","test_popular","",""
 "
         Test searching movies with each supported query parameter.
 
@@ -730,19 +479,19 @@
         :param load_schema: Schema loader fixture from conftest.py.
         :param search_case: Parametrized test data containing valid query_param
                             and expected status_code.
-        ","78","Search movies with query params: {'query': 'Spider-Man', 'page': 2}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:43 UTC 2026","TestSearchMovies","test_movie","",""
+        ","25","Search movies with query params: {'query': 'The Matrix', 'year': '1999'}","tests.search","Mon Jul 20 10:21:28 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
 "
-        Test searching movies with each supported query parameter.
+        Test updating a list with valid parameters.
 
-        Validates that a matched search returns the paginated results
-        correctly, including response structure and content. The client
-        defaults the page parameter to 1 when not supplied.
+        Validates that the list is updated correctly, returning the expected
+        201 success response, correct HTTP metadata, and a body that conforms
+        to the strict GenericResponse schema.
 
-        :param search_api: SearchAPI client fixture from conftest.py.
+        :param lists_api: ListsAPI client fixture from conftest.py.
         :param load_schema: Schema loader fixture from conftest.py.
-        :param search_case: Parametrized test data containing valid query_param
-                            and expected status_code.
-        ","85","Search movies with query params: {'query': 'The Matrix', 'year': '1999'}","tests.search","Sun Jul 19 09:57:43 UTC 2026","passed","Sun Jul 19 09:57:43 UTC 2026","TestSearchMovies","test_movie","",""
+        :param update_list: Parametrized test data containing valid list_id,
+                            payload, expected status_code, and expected_message.
+        ","8468","Update Description for list ID 8637178","tests.lists","Mon Jul 20 10:21:18 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestUpdate","test_update","",""
 "
         Test discovering movies with each supported filter/sort parameter.
 
@@ -754,10 +503,261 @@
         :param load_schema: Schema loader fixture from conftest.py.
         :param discover_case: Parametrized test data containing valid query_param
                               and expected status_code.
-        ","77","Discover movies with query params: {'with_genres': '28'}","tests.discover","Sun Jul 19 09:57:08 UTC 2026","passed","Sun Jul 19 09:57:08 UTC 2026","TestDiscoverMovies","test_movie","",""
+        ","29","Discover movies with query params: {'primary_release_year': '1989'}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDiscoverMovies","test_movie","",""
+"
+        Test adding a movie rating with a valid session.
+
+        Validates that a valid rating submission returns the expected 201
+        success response, correct HTTP metadata, and a body that conforms
+        to the strict RatingResponse schema.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param add_valid_rating: Parametrized test data containing the rating
+                                 payload, expected status_code, and reason.
+        ","177","Add rating 6.0 for movie ID: 67457","tests.movies","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestAddRating","test_add_rating","",""
+"
+        Test fetching person details with a valid person ID.
+
+        Validates that the response returns the expected 200 status, correct
+        HTTP metadata, and a body that conforms to the strict PersonDetails
+        schema.
+
+        :param people_api: PeopleAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param person_details: Parametrized test data containing a valid
+                               person_id, expected status_code, and reason.
+        ","24","Get details for person ID: 8","tests.people","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
+"
+        Test searching movies with each supported query parameter.
+
+        Validates that a matched search returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param search_api: SearchAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param search_case: Parametrized test data containing valid query_param
+                            and expected status_code.
+        ","42","Search movies with query params: {'query': 'Terminator', 'language': 'en-US', 'include_adult': 'true', 'region': 'US', 'year': '1984', 'primary_release_year': '1984', 'page': 1}","tests.search","Mon Jul 20 10:21:28 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
+"
+        Test discovering movies with filters that match nothing.
+
+        TMDB returns 200 with an empty results page for these requests
+        rather than an error, so the test asserts the empty pagination
+        body directly (the discover schema requires at least one result,
+        so it does not apply here).
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param empty_case: Parametrized test data containing a query_param
+                           that yields no matches and expected status_code.
+        ","42","Discover movies with no matches for query params: {'vote_count.gte': '100000000'}","tests.discover","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestDiscoverMovies","test_movie","",""
+"
+        Test searching movies with each supported query parameter.
+
+        Validates that a matched search returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param search_api: SearchAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param search_case: Parametrized test data containing valid query_param
+                            and expected status_code.
+        ","29","Search movies with query params: {'query': 'Titanic', 'region': 'US'}","tests.search","Mon Jul 20 10:21:28 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
+"A well-formed dataset returns its list of cases unchanged.
+
+        :param tmp_path: Pytest temp-dir fixture for the dataset file.
+        ","1","test_loads_valid_dataset","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestLoadDataset","test_dataset","",""
+"
+        Verify error response for invalid page parameter.
+
+        Tests the GET /movie/popular endpoint with an invalid page number.
+        Verifies the API returns a 400 Bad Request with appropriate error message.
+        ","2","Get Popular Movies for Invalid Page","tests.contracts","Mon Jul 20 10:21:08 UTC 2026","passed","Mon Jul 20 10:21:08 UTC 2026","TestPopularMovies","test_popular_movies","",""
+"
+        Test discovering movies with each supported filter/sort parameter.
+
+        Validates that a discovery request returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param discover_case: Parametrized test data containing valid query_param
+                              and expected status_code.
+        ","93","Discover movies with query params: {'vote_average.gte': '7'}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestDiscoverMovies","test_movie","",""
 "The top-level document must be a mapping with a non-empty ``cases`` list.
 
         :param tmp_path: Pytest temp-dir fixture.
         :param payload: A malformed top-level document.
         :param match: Substring expected in the raised ``ValueError``.
-        ","1","test_rejects_bad_top_level[payload2-no cases]","tests.evals","Sun Jul 19 09:57:09 UTC 2026","passed","Sun Jul 19 09:57:09 UTC 2026","TestLoadDataset","test_dataset","",""
+        ","1","test_rejects_bad_top_level[payload2-no cases]","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestLoadDataset","test_dataset","",""
+"
+        Test discovering movies with each supported filter/sort parameter.
+
+        Validates that a discovery request returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param discover_case: Parametrized test data containing valid query_param
+                              and expected status_code.
+        ","31","Discover movies with query params: {'with_genres': '28'}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDiscoverMovies","test_movie","",""
+"
+        Test error handling for invalid movie IDs.
+
+        Validates proper error responses when requesting non-existent
+        or invalid movie IDs, ensuring appropriate status codes and
+        error messages are returned.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_test: Parametrized test data containing invalid movie_id,
+                             expected status_code, and expected_message.
+        ","31","Invalid movie ID: 9999999999","tests.movies","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
+"
+        Test searching movies with invalid parameters.
+
+        Validates that appropriate error responses are returned when
+        invalid query parameters are provided for the search movie endpoint.
+
+        :param search_api: SearchAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_test: Parametrized test data containing invalid query_param,
+                             expected status_code, and expected_message.
+        ","28","Search movies with invalid query params: {'query': 'Avatar', 'page': -1}","tests.search","Mon Jul 20 10:21:28 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
+"The top-level document must be a mapping with a non-empty ``cases`` list.
+
+        :param tmp_path: Pytest temp-dir fixture.
+        :param payload: A malformed top-level document.
+        :param match: Substring expected in the raised ``ValueError``.
+        ","0","test_rejects_bad_top_level[payload0-cases]","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestLoadDataset","test_dataset","",""
+"
+        Test discovering movies with each supported filter/sort parameter.
+
+        Validates that a discovery request returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param discover_case: Parametrized test data containing valid query_param
+                              and expected status_code.
+        ","27","Discover movies with query params: {'with_original_language': 'en'}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDiscoverMovies","test_movie","",""
+"
+        Test updating a list with valid parameters.
+
+        Validates that the list is updated correctly, returning the expected
+        201 success response, correct HTTP metadata, and a body that conforms
+        to the strict GenericResponse schema.
+
+        :param lists_api: ListsAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param update_list: Parametrized test data containing valid list_id,
+                            payload, expected status_code, and expected_message.
+        ","8393","Update Description for list ID 8637178","tests.lists","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:18 UTC 2026","TestUpdate","test_update","",""
+"
+        Test discovering movies with each supported filter/sort parameter.
+
+        Validates that a discovery request returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param discover_case: Parametrized test data containing valid query_param
+                              and expected status_code.
+        ","93","Discover movies with query params: {'include_video': 'true'}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDiscoverMovies","test_movie","",""
+"
+        Test discovering movies with each supported filter/sort parameter.
+
+        Validates that a discovery request returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param discover_api: DiscoverAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param discover_case: Parametrized test data containing valid query_param
+                              and expected status_code.
+        ","30","Discover movies with query params: {'language': 'en-US'}","tests.discover","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestDiscoverMovies","test_movie","",""
+"
+        Test fetching person details with an invalid person ID.
+
+        Validates that the API returns the expected error status code and
+        message, with a body that conforms to the strict GenericResponse schema.
+
+        :param people_api: PeopleAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_person_details: Parametrized test data containing an
+                                       invalid person_id, expected status_code,
+                                       and expected_message.
+        ","29","Get details for invalid person ID: -1","tests.people","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
+"
+        Test searching movies with a missing, empty or unmatched query.
+
+        TMDB returns 200 with an empty results page for these requests
+        rather than an error, so the test asserts the empty pagination
+        body directly (the search schema requires at least one result,
+        so it does not apply here).
+
+        :param search_api: SearchAPI client fixture from conftest.py.
+        :param empty_case: Parametrized test data containing a query_param
+                           that yields no matches and expected status_code.
+        ","26","Search movies with no matches for query params: {'query': ''}","tests.search","Mon Jul 20 10:21:28 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
+"The offline schema scores all four dimensions.","0","test_offline_schema_has_four_dimensions","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestOutputSchema","test_judge","",""
+"
+        Test error handling for invalid movie IDs.
+
+        Validates proper error responses when requesting non-existent
+        or invalid movie IDs, ensuring appropriate status codes and
+        error messages are returned.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param invalid_test: Parametrized test data containing invalid movie_id,
+                             expected status_code, and expected_message.
+        ","28","Invalid movie ID: -1","tests.movies","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestDetails","test_details","",""
+"``required`` lists every dimension plus ``overall_verdict`` in order.","0","test_requires_each_dimension_plus_overall","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestOutputSchema","test_judge","",""
+"Each required per-case field is enforced with a naming ``ValueError``.
+
+        :param tmp_path: Pytest temp-dir fixture.
+        :param mutate: A function that breaks one field of a valid case in place.
+        :param match: Substring expected in the raised ``ValueError``.
+        ","1","test_rejects_invalid_case[<lambda>-missing 'expected']","tests.evals","Mon Jul 20 10:21:10 UTC 2026","passed","Mon Jul 20 10:21:10 UTC 2026","TestLoadDataset","test_dataset","",""
+"
+        Test adding a movie rating with a valid session.
+
+        Validates that a valid rating submission returns the expected 201
+        success response, correct HTTP metadata, and a body that conforms
+        to the strict RatingResponse schema.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param add_valid_rating: Parametrized test data containing the rating
+                                 payload, expected status_code, and reason.
+        ","38","Add rating 8.0 for movie ID: 56902","tests.movies","Mon Jul 20 10:21:09 UTC 2026","passed","Mon Jul 20 10:21:09 UTC 2026","TestAddRating","test_add_rating","",""
+"
+        Test searching movies with each supported query parameter.
+
+        Validates that a matched search returns the paginated results
+        correctly, including response structure and content. The client
+        defaults the page parameter to 1 when not supplied.
+
+        :param search_api: SearchAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param search_case: Parametrized test data containing valid query_param
+                            and expected status_code.
+        ","26","Search movies with query params: {'query': 'Inception', 'language': 'en-US'}","tests.search","Mon Jul 20 10:21:28 UTC 2026","passed","Mon Jul 20 10:21:28 UTC 2026","TestSearchMovies","test_movie","",""
+"
+        Test adding a movie rating with an invalid rating value.
+
+        Validates that submitting an out-of-range rating value returns the
+        expected 400 Bad Request with one of the accepted validation messages.
+
+        :param movies_api: MoviesAPI client fixture from conftest.py.
+        :param load_schema: Schema loader fixture from conftest.py.
+        :param add_invalid_rating: Parametrized test data containing movie_id, an
+                                   invalid rating payload, expected status_code,
+                                   and the set of acceptable validation messages.
+        ","24","Add rating -2.7 for movie ID: 32083","tests.movies","Mon Jul 20 10:21:27 UTC 2026","passed","Mon Jul 20 10:21:27 UTC 2026","TestAddRating","test_add_rating","",""
