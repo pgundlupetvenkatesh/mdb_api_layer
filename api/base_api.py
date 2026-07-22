@@ -9,6 +9,8 @@ This module provides the foundation for all API interactions with the Movie Data
    :no-index:
 """
 
+import re
+
 import requests
 from dataclasses import dataclass
 from typing import Any, Optional
@@ -55,10 +57,56 @@ class BaseAPI:
         }
         self.session = requests.Session()
 
+    # Credential query params whose values must never surface in logs, test
+    # failure reprs, or report attachments.
+    _SECRET_QUERY_PARAMS = ("session_id",)
+
+    @staticmethod
+    def _redact_params(params):
+        """
+        Return a copy of ``params`` with credential values masked.
+
+        Non-dict values (including ``None``) are returned unchanged.
+
+        :param params: Query parameters sent with the request.
+        :type params: dict, optional
+        :returns: Params with any :data:`_SECRET_QUERY_PARAMS` value replaced
+                  by ``<hidden>``.
+        :rtype: dict or the original value
+        """
+        if not isinstance(params, dict):
+            return params
+        return {
+            # comprehensions: expression-first, loop-last. Inverted execution order.
+            # Reading rule: for clause first, then read the leading expression.
+            key: "<hidden>" if key in BaseAPI._SECRET_QUERY_PARAMS else value
+            for key, value in params.items()
+        }
+
+    @staticmethod
+    def _redact_url(url):
+        """
+        Mask credential query-param values inside a URL string.
+
+        :param url: Full request URL, possibly containing secret query params.
+        :type url: str
+        :returns: URL with any :data:`_SECRET_QUERY_PARAMS` value replaced by
+                  ``<hidden>``.
+        :rtype: str
+        """
+        pattern = rf"\b({'|'.join(BaseAPI._SECRET_QUERY_PARAMS)})=[^&]+"
+        return re.sub(pattern, r"\1=<hidden>", url)
+
     @staticmethod
     def _build_response(response, params=None, payload=None):
         """
+        Adapter that turns a raw requests.Response into the repo's own APIResponse dataclass.
         Build a standardized APIResponse from a raw requests Response object.
+
+        Credential query params (see :data:`_SECRET_QUERY_PARAMS`) are masked
+        in both ``url`` and ``request_params``, so an APIResponse can be
+        logged, printed in a failing assertion, or attached to a report
+        without leaking a secret.
 
         :param response: Raw response from the requests library.
         :type response: requests.Response
@@ -72,14 +120,14 @@ class BaseAPI:
         return APIResponse(
             data=response.json(),
             status_code=response.status_code,
-            url=response.url,
+            url=BaseAPI._redact_url(response.url),
             headers=response.headers,
             cookies=response.cookies,
             encoding=response.encoding,
             elapsed_seconds=response.elapsed.total_seconds(),
             reason=response.reason,
             request=str(response.request.method),
-            request_params=params,
+            request_params=BaseAPI._redact_params(params),
             request_payload=payload
         )
 
@@ -147,6 +195,6 @@ class BaseAPI:
         :rtype: APIResponse
         """
         url = f"{self.base_url}/{self.api_version}/{endpoint}"
-        response = self.session.delete(url, headers=self.headers, data=data, timeout=Config.TIMEOUT)
+        response = self.session.delete(url, headers=self.headers, params=params, data=data, timeout=Config.TIMEOUT)
 
         return self._build_response(response, params=params, payload=data)

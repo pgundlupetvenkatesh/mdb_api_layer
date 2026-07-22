@@ -2,6 +2,12 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
+# Importing locust monkey-patches ssl via gevent, which breaks inside Sphinx
+# (ssl is already imported) with a RecursionError. Docs only need the module
+# importable, not patched, so skip the patching when autodoc imports
+# performance.locustfile.
+os.environ.setdefault("LOCUST_SKIP_MONKEY_PATCH", "1")
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
