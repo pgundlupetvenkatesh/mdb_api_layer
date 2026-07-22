@@ -41,6 +41,8 @@
 <span class="sd">   :no-index:</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
@@ -92,10 +94,56 @@
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
 
+    <span class="c1"># Credential query params whose values must never surface in logs, test</span>
+    <span class="c1"># failure reprs, or report attachments.</span>
+    <span class="n">_SECRET_QUERY_PARAMS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;session_id&quot;</span><span class="p">,)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_redact_params</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a copy of ``params`` with credential values masked.</span>
+
+<span class="sd">        Non-dict values (including ``None``) are returned unchanged.</span>
+
+<span class="sd">        :param params: Query parameters sent with the request.</span>
+<span class="sd">        :type params: dict, optional</span>
+<span class="sd">        :returns: Params with any :data:`_SECRET_QUERY_PARAMS` value replaced</span>
+<span class="sd">                  by ``&lt;hidden&gt;``.</span>
+<span class="sd">        :rtype: dict or the original value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">params</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="c1"># comprehensions: expression-first, loop-last. Inverted execution order.</span>
+            <span class="c1"># Reading rule: for clause first, then read the leading expression.</span>
+            <span class="n">key</span><span class="p">:</span> <span class="s2">&quot;&lt;hidden&gt;&quot;</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">BaseAPI</span><span class="o">.</span><span class="n">_SECRET_QUERY_PARAMS</span> <span class="k">else</span> <span class="n">value</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_redact_url</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mask credential query-param values inside a URL string.</span>
+
+<span class="sd">        :param url: Full request URL, possibly containing secret query params.</span>
+<span class="sd">        :type url: str</span>
+<span class="sd">        :returns: URL with any :data:`_SECRET_QUERY_PARAMS` value replaced by</span>
+<span class="sd">                  ``&lt;hidden&gt;``.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;\b(</span><span class="si">{</span><span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BaseAPI</span><span class="o">.</span><span class="n">_SECRET_QUERY_PARAMS</span><span class="p">)</span><span class="si">}</span><span class="s2">)=[^&amp;]+&quot;</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\1=&lt;hidden&gt;&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_response</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adapter that turns a raw requests.Response into the repo&#39;s own APIResponse dataclass.</span>
 <span class="sd">        Build a standardized APIResponse from a raw requests Response object.</span>
+
+<span class="sd">        Credential query params (see :data:`_SECRET_QUERY_PARAMS`) are masked</span>
+<span class="sd">        in both ``url`` and ``request_params``, so an APIResponse can be</span>
+<span class="sd">        logged, printed in a failing assertion, or attached to a report</span>
+<span class="sd">        without leaking a secret.</span>
 
 <span class="sd">        :param response: Raw response from the requests library.</span>
 <span class="sd">        :type response: requests.Response</span>
@@ -109,14 +157,14 @@
         <span class="k">return</span> <span class="n">APIResponse</span><span class="p">(</span>
             <span class="n">data</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">(),</span>
             <span class="n">status_code</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
-            <span class="n">url</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+            <span class="n">url</span><span class="o">=</span><span class="n">BaseAPI</span><span class="o">.</span><span class="n">_redact_url</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">url</span><span class="p">),</span>
             <span class="n">headers</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
             <span class="n">cookies</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">cookies</span><span class="p">,</span>
             <span class="n">encoding</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">encoding</span><span class="p">,</span>
             <span class="n">elapsed_seconds</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">(),</span>
             <span class="n">reason</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
             <span class="n">request</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">),</span>
-            <span class="n">request_params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+            <span class="n">request_params</span><span class="o">=</span><span class="n">BaseAPI</span><span class="o">.</span><span class="n">_redact_params</span><span class="p">(</span><span class="n">params</span><span class="p">),</span>
             <span class="n">request_payload</span><span class="o">=</span><span class="n">payload</span>
         <span class="p">)</span>
 
@@ -195,7 +243,7 @@
 <span class="sd">        :rtype: APIResponse</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">api_version</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">Config</span><span class="o">.</span><span class="n">TIMEOUT</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">Config</span><span class="o">.</span><span class="n">TIMEOUT</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_response</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">data</span><span class="p">)</span></div>
 </div>
@@ -223,6 +271,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../api.html">API Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../config.html">Config Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance.html">Performance Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../k8s.html">Kubernetes Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../evals.html">Evaluation Harness (evals)</a></li>

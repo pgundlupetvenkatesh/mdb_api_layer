@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>performance.locustfile &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for performance.locustfile</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Locust load-test scenarios for the TMDB movies endpoints.</span>
+
+<span class="sd">Two user models, selectable by class name on the CLI (running without a class</span>
+<span class="sd">name spawns both 50/50.</span>
+
+<span class="sd">- ``MoviesUser`` — endpoint traffic mix: weighted, independent read-only</span>
+<span class="sd">  requests mirroring ``api/movies_api.py``. The original baselining model.</span>
+<span class="sd">- ``JourneyUser`` — realistic user journeys: four ``SequentialTaskSet``</span>
+<span class="sd">  flows (browse &amp; drill down, search-driven, filtered discovery, cast</span>
+<span class="sd">  exploration) where later steps chain ids taken from earlier responses.</span>
+
+<span class="sd">Both use Locust&#39;s own ``self.client`` (not the API classes) so every</span>
+<span class="sd">request is instrumented for the stats report; auth and URLs are still</span>
+<span class="sd">single-sourced from ``config.config.Config`` / ``.env``.</span>
+
+<span class="sd">Target is the live TMDB API — keep the load gentle (see performance/README.md).</span>
+
+<span class="sd">Run from the repo root:</span>
+<span class="sd">    poetry run locust -f performance/locustfile.py JourneyUser            # web UI at :8089</span>
+<span class="sd">    poetry run locust -f performance/locustfile.py MoviesUser --headless -u 3 -r 1 -t 30s</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">locust</span><span class="w"> </span><span class="kn">import</span> <span class="n">HttpUser</span><span class="p">,</span> <span class="n">SequentialTaskSet</span><span class="p">,</span> <span class="n">between</span><span class="p">,</span> <span class="n">task</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">config.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tests.data.data_loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_test_data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tests.helpers.test_data_generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">pick_random_movie_id</span>
+
+<span class="n">API</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">Config</span><span class="o">.</span><span class="n">API_VERSION</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="c1"># Rotating search queries, single-sourced from the integration suite&#39;s data so</span>
+<span class="c1"># perf and functional tests exercise the same known-good query set.</span>
+<span class="n">SEARCH_QUERIES</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span>
+    <span class="k">case</span><span class="p">[</span><span class="s2">&quot;query_param&quot;</span><span class="p">][</span><span class="s2">&quot;query&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">load_test_data</span><span class="p">(</span><span class="s2">&quot;test_data.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;search_movies&quot;</span><span class="p">)[</span><span class="s2">&quot;search_movies&quot;</span><span class="p">][</span><span class="s2">&quot;valid&quot;</span><span class="p">]</span>
+<span class="p">})</span>
+
+<span class="c1"># Filter combinations for the discovery journey (genre ids: action, comedy,</span>
+<span class="c1"># sci-fi). Values are strings — requests would serialize Python bools/ints</span>
+<span class="c1"># in forms TMDB only tolerates undocumented.</span>
+<span class="n">DISCOVER_FILTERS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">{</span><span class="s2">&quot;with_genres&quot;</span><span class="p">:</span> <span class="s2">&quot;28&quot;</span><span class="p">,</span> <span class="s2">&quot;sort_by&quot;</span><span class="p">:</span> <span class="s2">&quot;popularity.desc&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;with_genres&quot;</span><span class="p">:</span> <span class="s2">&quot;35&quot;</span><span class="p">,</span> <span class="s2">&quot;primary_release_year&quot;</span><span class="p">:</span> <span class="s2">&quot;2020&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;with_genres&quot;</span><span class="p">:</span> <span class="s2">&quot;878&quot;</span><span class="p">,</span> <span class="s2">&quot;sort_by&quot;</span><span class="p">:</span> <span class="s2">&quot;vote_average.desc&quot;</span><span class="p">,</span> <span class="s2">&quot;vote_count.gte&quot;</span><span class="p">:</span> <span class="s2">&quot;1000&quot;</span><span class="p">},</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_auth_headers</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the default headers for every simulated user&#39;s session.</span>
+
+<span class="sd">    Also fail-fast validates the credential, so a missing ``TMDB_AUTH_TOKEN``</span>
+<span class="sd">    aborts at user spawn instead of surfacing as per-request 401 failures.</span>
+<span class="sd">    (Validation is deliberately not at module import time: Sphinx imports this</span>
+<span class="sd">    module to render docs and must not require a configured ``.env``.)</span>
+
+<span class="sd">    :returns: Headers with Bearer authorization and JSON content type.</span>
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    :raises RuntimeError: If ``TMDB_AUTH_TOKEN`` is not configured.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">Config</span><span class="o">.</span><span class="n">validate</span><span class="p">([</span><span class="s2">&quot;AUTH_TOKEN&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="n">Config</span><span class="o">.</span><span class="n">AUTH_TOKEN</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pick_result_id</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">&quot;results&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pull a random item id out of a paginated response.</span>
+
+<span class="sd">    Used to chain journey steps: the id picked from one step&#39;s response</span>
+<span class="sd">    becomes the path parameter of the next step&#39;s request.</span>
+
+<span class="sd">    :param response: Response from an instrumented ``self.client`` call.</span>
+<span class="sd">    :type response: requests.Response</span>
+<span class="sd">    :param key: Body key holding the list of items to pick from.</span>
+<span class="sd">    :type key: str</span>
+<span class="sd">    :returns: A random item&#39;s ``id``, or ``None`` when the request failed or</span>
+<span class="sd">              the list is missing/empty (callers skip their step on ``None``).</span>
+<span class="sd">    :rtype: int or None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">ok</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">items</span><span class="p">)[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">items</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="BrowseAndDrillDown">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.BrowseAndDrillDown">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BrowseAndDrillDown</span><span class="p">(</span><span class="n">SequentialTaskSet</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Casual visitor: popular list → details of a listed movie → its alt titles.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BrowseAndDrillDown.popular_page">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.BrowseAndDrillDown.popular_page">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">popular_page</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch page 1 of popular movies and remember a random listed id.&quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/popular&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span> <span class="o">=</span> <span class="n">_pick_result_id</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BrowseAndDrillDown.movie_details">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.BrowseAndDrillDown.movie_details">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">movie_details</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Open the details of the movie picked from the popular list.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/[id]&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BrowseAndDrillDown.alternative_titles">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.BrowseAndDrillDown.alternative_titles">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">alternative_titles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch the picked movie&#39;s alternative titles, then end the journey.</span>
+
+<span class="sd">        :raises locust.exception.InterruptTaskSet: Always, via</span>
+<span class="sd">            ``self.interrupt()``, returning control to the user class so its</span>
+<span class="sd">            next journey can be scheduled.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">/alternative_titles&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/[id]/alternative_titles&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interrupt</span><span class="p">()</span> <span class="c1"># Ends the journey and helps to put the execution back to the user class to pick the next one.</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SearchDriven">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.SearchDriven">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SearchDriven</span><span class="p">(</span><span class="n">SequentialTaskSet</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Searcher: query page 1 → page 2 of the same query → details of a result.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SearchDriven.search_first_page">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.SearchDriven.search_first_page">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">search_first_page</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Search a rotating query and remember a random matched movie id.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">SEARCH_QUERIES</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/search/movie&quot;</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/search/movie&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span> <span class="o">=</span> <span class="n">_pick_result_id</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SearchDriven.search_second_page">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.SearchDriven.search_second_page">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">search_second_page</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Paginate to page 2 of the same query, like a user scanning on.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/search/movie&quot;</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/search/movie&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SearchDriven.movie_details">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.SearchDriven.movie_details">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">movie_details</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Open the details of the picked search result, then end the journey.</span>
+
+<span class="sd">        :raises locust.exception.InterruptTaskSet: Always, via</span>
+<span class="sd">            ``self.interrupt()``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/[id]&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interrupt</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FilteredDiscovery">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.FilteredDiscovery">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FilteredDiscovery</span><span class="p">(</span><span class="n">SequentialTaskSet</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Undecided browser: filtered discover → two more pages → details of a hit.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="FilteredDiscovery.discover_first_page">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.FilteredDiscovery.discover_first_page">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">discover_first_page</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run a random filter combination and remember a random hit&#39;s id.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filters</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">DISCOVER_FILTERS</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/discover/movie&quot;</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">,</span> <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/discover/movie&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span> <span class="o">=</span> <span class="n">_pick_result_id</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FilteredDiscovery.discover_more_pages">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.FilteredDiscovery.discover_more_pages">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">discover_more_pages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Page through results 2–3 with the same filters, back-to-back.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/discover/movie&quot;</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filters</span><span class="p">,</span> <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="n">page</span><span class="p">},</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/discover/movie&quot;</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FilteredDiscovery.movie_details">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.FilteredDiscovery.movie_details">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">movie_details</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Open the details of the picked discover hit, then end the journey.</span>
+
+<span class="sd">        :raises locust.exception.InterruptTaskSet: Always, via</span>
+<span class="sd">            ``self.interrupt()``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/[id]&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interrupt</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CastExploration">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.CastExploration">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CastExploration</span><span class="p">(</span><span class="n">SequentialTaskSet</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rabbit-hole user: movie details → its credits → a cast member&#39;s details.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CastExploration.movie_details">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.CastExploration.movie_details">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">movie_details</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Open a random movie&#39;s details (id drawn from movie_ids.txt).&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span> <span class="o">=</span> <span class="n">pick_random_movie_id</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/[id]&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CastExploration.movie_credits">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.CastExploration.movie_credits">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">movie_credits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch the movie&#39;s credits and remember a random cast member&#39;s id.&quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">/credits&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/[id]/credits&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">person_id</span> <span class="o">=</span> <span class="n">_pick_result_id</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">&quot;cast&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CastExploration.person_details">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.CastExploration.person_details">[docs]</a>
+    <span class="nd">@task</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">person_details</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Open the picked cast member&#39;s person details, then end the journey.</span>
+
+<span class="sd">        :raises locust.exception.InterruptTaskSet: Always, via</span>
+<span class="sd">            ``self.interrupt()``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">person_id</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/person/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">person_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/person/[id]&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interrupt</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="JourneyUser">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.JourneyUser">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">JourneyUser</span><span class="p">(</span><span class="n">HttpUser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simulated visitor running complete browse sessions.</span>
+
+<span class="sd">    Each iteration picks one journey by weight (~50/25/15/10 user mix) and</span>
+<span class="sd">    runs its steps in order with think-time between them; ids for later steps</span>
+<span class="sd">    come from earlier responses, so the traffic is correlated like a real</span>
+<span class="sd">    client&#39;s. Write endpoints stay excluded — no mutation load on the live API.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">host</span> <span class="o">=</span> <span class="n">Config</span><span class="o">.</span><span class="n">BASE_URL</span>
+    <span class="n">wait_time</span> <span class="o">=</span> <span class="n">between</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># seconds of think-time between journey steps</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">BrowseAndDrillDown</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">SearchDriven</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="n">FilteredDiscovery</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="n">CastExploration</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="JourneyUser.on_start">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.JourneyUser.on_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach auth headers to this user&#39;s session once, at spawn time.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_auth_headers</span><span class="p">())</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MoviesUser">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.MoviesUser">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MoviesUser</span><span class="p">(</span><span class="n">HttpUser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simulated TMDB API consumer issuing independent movie requests.</span>
+
+<span class="sd">    Task weights approximate real read traffic: movie details requested most,</span>
+<span class="sd">    list endpoints less often. Write endpoints (rating add/delete) are</span>
+<span class="sd">    deliberately excluded — no mutation load on the live API.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">host</span> <span class="o">=</span> <span class="n">Config</span><span class="o">.</span><span class="n">BASE_URL</span>
+    <span class="n">wait_time</span> <span class="o">=</span> <span class="n">between</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># seconds of think-time between each user&#39;s tasks</span>
+
+<div class="viewcode-block" id="MoviesUser.on_start">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.MoviesUser.on_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach auth headers to this user&#39;s session once, at spawn time.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_auth_headers</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="MoviesUser.movie_details">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.MoviesUser.movie_details">[docs]</a>
+    <span class="nd">@task</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">movie_details</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch details of a random movie (weight 3: the dominant request).&quot;&quot;&quot;</span>
+        <span class="c1"># Random ids from tests/data/movie_ids.txt bust server-side caches;</span>
+        <span class="c1"># `name=` groups all of them under one row in the stats table.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/</span><span class="si">{</span><span class="n">pick_random_movie_id</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/[id]&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MoviesUser.popular_movies">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.MoviesUser.popular_movies">[docs]</a>
+    <span class="nd">@task</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">popular_movies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch page 1 of popular movies, with custom pass/fail judgment.</span>
+
+<span class="sd">        Demonstrates ``catch_response``: a 200 whose body has no ``results``</span>
+<span class="sd">        is marked a failure even though the status code alone would pass.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/popular&quot;</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+            <span class="n">catch_response</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">ok</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;results&quot;</span><span class="p">):</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">failure</span><span class="p">(</span><span class="s2">&quot;200 OK but &#39;results&#39; is missing or empty&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MoviesUser.top_rated_movies">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.MoviesUser.top_rated_movies">[docs]</a>
+    <span class="nd">@task</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">top_rated_movies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch page 1 of top-rated movies.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/top_rated&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="MoviesUser.alternative_titles">
+<a class="viewcode-back" href="../../performance.html#performance.locustfile.MoviesUser.alternative_titles">[docs]</a>
+    <span class="nd">@task</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">alternative_titles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch alternative titles for the fixed ``Config.MOVIE_ID`` movie.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/</span><span class="si">{</span><span class="n">Config</span><span class="o">.</span><span class="n">MOVIE_ID</span><span class="si">}</span><span class="s2">/alternative_titles&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">API</span><span class="si">}</span><span class="s2">/movie/[id]/alternative_titles&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance.html">Performance Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../evals.html">Evaluation Harness (evals)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

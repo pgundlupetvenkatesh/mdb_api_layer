@@ -18,6 +18,7 @@ documentation for details.
    api
    config
    tests
+   performance
    k8s
    failure_mcp
    evals

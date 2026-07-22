@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Performance Module &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Kubernetes Jobs" href="k8s.html" />
+    <link rel="prev" title="Test Data Generators" href="helpers_test_data_generators.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="performance-module">
+<h1>Performance Module<a class="headerlink" href="#performance-module" title="Link to this heading">¶</a></h1>
+<section id="locust-load-tests">
+<h2>Locust Load Tests<a class="headerlink" href="#locust-load-tests" title="Link to this heading">¶</a></h2>
+<p>Locust load-test scenarios for the TMDB movies endpoints.</p>
+<p>Two user models, selectable by class name on the CLI (running without a class
+name spawns both 50/50.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">MoviesUser</span></code> — endpoint traffic mix: weighted, independent read-only
+requests mirroring <code class="docutils literal notranslate"><span class="pre">api/movies_api.py</span></code>. The original baselining model.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">JourneyUser</span></code> — realistic user journeys: four <code class="docutils literal notranslate"><span class="pre">SequentialTaskSet</span></code>
+flows (browse &amp; drill down, search-driven, filtered discovery, cast
+exploration) where later steps chain ids taken from earlier responses.</p></li>
+</ul>
+<p>Both use Locust’s own <code class="docutils literal notranslate"><span class="pre">self.client</span></code> (not the API classes) so every
+request is instrumented for the stats report; auth and URLs are still
+single-sourced from <code class="docutils literal notranslate"><span class="pre">config.config.Config</span></code> / <code class="docutils literal notranslate"><span class="pre">.env</span></code>.</p>
+<p>Target is the live TMDB API — keep the load gentle (see performance/README.md).</p>
+<dl class="simple">
+<dt>Run from the repo root:</dt><dd><p>poetry run locust -f performance/locustfile.py JourneyUser            # web UI at :8089
+poetry run locust -f performance/locustfile.py MoviesUser –headless -u 3 -r 1 -t 30s</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">performance.locustfile.</span></span><span class="sig-name descname"><span class="pre">BrowseAndDrillDown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#BrowseAndDrillDown"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SequentialTaskSet</span></code></p>
+<p>Casual visitor: popular list → details of a listed movie → its alt titles.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">alternative_titles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#BrowseAndDrillDown.alternative_titles"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Fetch the picked movie’s alternative titles, then end the journey.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>locust.exception.InterruptTaskSet</strong> – Always, via
+<code class="docutils literal notranslate"><span class="pre">self.interrupt()</span></code>, returning control to the user class so its
+next journey can be scheduled.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">movie_details</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#BrowseAndDrillDown.movie_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Open the details of the movie picked from the popular list.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">popular_page</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#BrowseAndDrillDown.popular_page"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Fetch page 1 of popular movies and remember a random listed id.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">tasks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">TaskSet</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;function</span> <span class="pre">BrowseAndDrillDown.popular_page&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">BrowseAndDrillDown.movie_details&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">BrowseAndDrillDown.alternative_titles&gt;]</span></em></dt>
+<dd><p>Collection of python callables and/or TaskSet classes that the User(s) will run.</p>
+<p>If tasks is a list, the task to be performed will be picked randomly.</p>
+<p>If tasks is a <em>(callable,int)</em> list of two-tuples, or a {callable:int} dict,
+the task to be performed will be picked randomly, but each task will be weighted
+according to its corresponding int value. So in the following case, <em>ThreadPage</em> will
+be fifteen times more likely to be picked than <em>write_post</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ForumPage</span><span class="p">(</span><span class="n">TaskSet</span><span class="p">):</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">{</span><span class="n">ThreadPage</span><span class="p">:</span><span class="mi">15</span><span class="p">,</span> <span class="n">write_post</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">performance.locustfile.</span></span><span class="sig-name descname"><span class="pre">CastExploration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#CastExploration"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SequentialTaskSet</span></code></p>
+<p>Rabbit-hole user: movie details → its credits → a cast member’s details.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">movie_credits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#CastExploration.movie_credits"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Fetch the movie’s credits and remember a random cast member’s id.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">movie_details</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#CastExploration.movie_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Open a random movie’s details (id drawn from movie_ids.txt).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">person_details</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#CastExploration.person_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Open the picked cast member’s person details, then end the journey.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>locust.exception.InterruptTaskSet</strong> – Always, via
+<code class="docutils literal notranslate"><span class="pre">self.interrupt()</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">tasks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">TaskSet</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;function</span> <span class="pre">CastExploration.movie_details&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">CastExploration.movie_credits&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">CastExploration.person_details&gt;]</span></em></dt>
+<dd><p>Collection of python callables and/or TaskSet classes that the User(s) will run.</p>
+<p>If tasks is a list, the task to be performed will be picked randomly.</p>
+<p>If tasks is a <em>(callable,int)</em> list of two-tuples, or a {callable:int} dict,
+the task to be performed will be picked randomly, but each task will be weighted
+according to its corresponding int value. So in the following case, <em>ThreadPage</em> will
+be fifteen times more likely to be picked than <em>write_post</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ForumPage</span><span class="p">(</span><span class="n">TaskSet</span><span class="p">):</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">{</span><span class="n">ThreadPage</span><span class="p">:</span><span class="mi">15</span><span class="p">,</span> <span class="n">write_post</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">performance.locustfile.</span></span><span class="sig-name descname"><span class="pre">FilteredDiscovery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#FilteredDiscovery"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SequentialTaskSet</span></code></p>
+<p>Undecided browser: filtered discover → two more pages → details of a hit.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">discover_first_page</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#FilteredDiscovery.discover_first_page"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Run a random filter combination and remember a random hit’s id.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">discover_more_pages</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#FilteredDiscovery.discover_more_pages"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Page through results 2–3 with the same filters, back-to-back.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">movie_details</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#FilteredDiscovery.movie_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Open the details of the picked discover hit, then end the journey.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>locust.exception.InterruptTaskSet</strong> – Always, via
+<code class="docutils literal notranslate"><span class="pre">self.interrupt()</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">tasks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">TaskSet</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;function</span> <span class="pre">FilteredDiscovery.discover_first_page&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">FilteredDiscovery.discover_more_pages&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">FilteredDiscovery.movie_details&gt;]</span></em></dt>
+<dd><p>Collection of python callables and/or TaskSet classes that the User(s) will run.</p>
+<p>If tasks is a list, the task to be performed will be picked randomly.</p>
+<p>If tasks is a <em>(callable,int)</em> list of two-tuples, or a {callable:int} dict,
+the task to be performed will be picked randomly, but each task will be weighted
+according to its corresponding int value. So in the following case, <em>ThreadPage</em> will
+be fifteen times more likely to be picked than <em>write_post</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ForumPage</span><span class="p">(</span><span class="n">TaskSet</span><span class="p">):</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">{</span><span class="n">ThreadPage</span><span class="p">:</span><span class="mi">15</span><span class="p">,</span> <span class="n">write_post</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">performance.locustfile.</span></span><span class="sig-name descname"><span class="pre">JourneyUser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#JourneyUser"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">HttpUser</span></code></p>
+<p>A simulated visitor running complete browse sessions.</p>
+<p>Each iteration picks one journey by weight (~50/25/15/10 user mix) and
+runs its steps in order with think-time between them; ids for later steps
+come from earlier responses, so the traffic is correlated like a real
+client’s. Write endpoints stay excluded — no mutation load on the live API.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">abstract</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em></dt>
+<dd><p>If abstract is True, the class is meant to be subclassed, and users will not choose this locust during a test</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">host</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://api.themoviedb.org'</span></em></dt>
+<dd><p>Base hostname to swarm. i.e: <a class="reference external" href="http://127.0.0.1:1234">http://127.0.0.1:1234</a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">on_start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#JourneyUser.on_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Attach auth headers to this user’s session once, at spawn time.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">tasks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">TaskSet</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'performance.locustfile.BrowseAndDrillDown'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.BrowseAndDrillDown'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.BrowseAndDrillDown'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.BrowseAndDrillDown'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.BrowseAndDrillDown'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.BrowseAndDrillDown'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.BrowseAndDrillDown'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.BrowseAndDrillDown'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.BrowseAndDrillDown'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.BrowseAndDrillDown'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.SearchDriven'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.SearchDriven'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.SearchDriven'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.SearchDriven'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.SearchDriven'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.FilteredDiscovery'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.FilteredDiscovery'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.FilteredDiscovery'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.CastExploration'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'performance.locustfile.CastExploration'&gt;]</span></em></dt>
+<dd><p>Collection of python callables and/or TaskSet classes that the Locust user(s) will run.</p>
+<p>If tasks is a list, the task to be performed will be picked randomly.</p>
+<p>If tasks is a <em>(callable,int)</em> list of two-tuples, or a {callable:int} dict,
+the task to be performed will be picked randomly, but each task will be weighted
+according to its corresponding int value. So in the following case, <em>ThreadPage</em> will
+be fifteen times more likely to be picked than <em>write_post</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ForumPage</span><span class="p">(</span><span class="n">TaskSet</span><span class="p">):</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">{</span><span class="n">ThreadPage</span><span class="p">:</span><span class="mi">15</span><span class="p">,</span> <span class="n">write_post</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">wait_time</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">performance.locustfile.</span></span><span class="sig-name descname"><span class="pre">MoviesUser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#MoviesUser"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">HttpUser</span></code></p>
+<p>A simulated TMDB API consumer issuing independent movie requests.</p>
+<p>Task weights approximate real read traffic: movie details requested most,
+list endpoints less often. Write endpoints (rating add/delete) are
+deliberately excluded — no mutation load on the live API.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">abstract</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em></dt>
+<dd><p>If abstract is True, the class is meant to be subclassed, and users will not choose this locust during a test</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">alternative_titles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#MoviesUser.alternative_titles"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Fetch alternative titles for the fixed <code class="docutils literal notranslate"><span class="pre">Config.MOVIE_ID</span></code> movie.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">host</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://api.themoviedb.org'</span></em></dt>
+<dd><p>Base hostname to swarm. i.e: <a class="reference external" href="http://127.0.0.1:1234">http://127.0.0.1:1234</a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">movie_details</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#MoviesUser.movie_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Fetch details of a random movie (weight 3: the dominant request).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">on_start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#MoviesUser.on_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Attach auth headers to this user’s session once, at spawn time.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">popular_movies</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#MoviesUser.popular_movies"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Fetch page 1 of popular movies, with custom pass/fail judgment.</p>
+<p>Demonstrates <code class="docutils literal notranslate"><span class="pre">catch_response</span></code>: a 200 whose body has no <code class="docutils literal notranslate"><span class="pre">results</span></code>
+is marked a failure even though the status code alone would pass.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">tasks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">TaskSet</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;function</span> <span class="pre">MoviesUser.movie_details&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">MoviesUser.movie_details&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">MoviesUser.movie_details&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">MoviesUser.popular_movies&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">MoviesUser.popular_movies&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">MoviesUser.top_rated_movies&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">MoviesUser.alternative_titles&gt;]</span></em></dt>
+<dd><p>Collection of python callables and/or TaskSet classes that the Locust user(s) will run.</p>
+<p>If tasks is a list, the task to be performed will be picked randomly.</p>
+<p>If tasks is a <em>(callable,int)</em> list of two-tuples, or a {callable:int} dict,
+the task to be performed will be picked randomly, but each task will be weighted
+according to its corresponding int value. So in the following case, <em>ThreadPage</em> will
+be fifteen times more likely to be picked than <em>write_post</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ForumPage</span><span class="p">(</span><span class="n">TaskSet</span><span class="p">):</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">{</span><span class="n">ThreadPage</span><span class="p">:</span><span class="mi">15</span><span class="p">,</span> <span class="n">write_post</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">top_rated_movies</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#MoviesUser.top_rated_movies"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Fetch page 1 of top-rated movies.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">wait_time</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">performance.locustfile.</span></span><span class="sig-name descname"><span class="pre">SearchDriven</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#SearchDriven"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SequentialTaskSet</span></code></p>
+<p>Searcher: query page 1 → page 2 of the same query → details of a result.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">movie_details</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#SearchDriven.movie_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Open the details of the picked search result, then end the journey.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>locust.exception.InterruptTaskSet</strong> – Always, via
+<code class="docutils literal notranslate"><span class="pre">self.interrupt()</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">search_first_page</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#SearchDriven.search_first_page"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Search a rotating query and remember a random matched movie id.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">search_second_page</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/performance/locustfile.html#SearchDriven.search_second_page"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Paginate to page 2 of the same query, like a user scanning on.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">tasks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">TaskSet</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;function</span> <span class="pre">SearchDriven.search_first_page&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">SearchDriven.search_second_page&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">SearchDriven.movie_details&gt;]</span></em></dt>
+<dd><p>Collection of python callables and/or TaskSet classes that the User(s) will run.</p>
+<p>If tasks is a list, the task to be performed will be picked randomly.</p>
+<p>If tasks is a <em>(callable,int)</em> list of two-tuples, or a {callable:int} dict,
+the task to be performed will be picked randomly, but each task will be weighted
+according to its corresponding int value. So in the following case, <em>ThreadPage</em> will
+be fifteen times more likely to be picked than <em>write_post</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ForumPage</span><span class="p">(</span><span class="n">TaskSet</span><span class="p">):</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">{</span><span class="n">ThreadPage</span><span class="p">:</span><span class="mi">15</span><span class="p">,</span> <span class="n">write_post</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests.html">Tests Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Performance Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#locust-load-tests">Locust Load Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="failure_mcp.html">MCP Server (failure_mcp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evals.html">Evaluation Harness (evals)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="helpers_test_data_generators.html" title="previous chapter">Test Data Generators</a></li>
+      <li>Next: <a href="k8s.html" title="next chapter">Kubernetes Jobs</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/performance.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
