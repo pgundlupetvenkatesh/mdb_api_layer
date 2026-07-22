@@ -100,6 +100,7 @@ class BaseAPI:
     @staticmethod
     def _build_response(response, params=None, payload=None):
         """
+        Adapter that turns a raw requests.Response into the repo's own APIResponse dataclass.
         Build a standardized APIResponse from a raw requests Response object.
 
         Credential query params (see :data:`_SECRET_QUERY_PARAMS`) are masked

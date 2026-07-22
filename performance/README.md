@@ -84,3 +84,7 @@ via `name=`, e.g. `/3/movie/[id]`):
 
 A run "passes" when failures stay at 0 and percentiles stay near your baseline;
 compare CSV exports between runs to spot regressions.
+
+For the transferable concepts behind all this (why percentiles over averages, how
+Locust isolates per-journey state, `name=` grouping, load ≈ users ÷ think-time),
+see [../INSIGHTS.md](../INSIGHTS.md).

@@ -116,7 +116,7 @@ class BrowseAndDrillDown(SequentialTaskSet):
                 f"{API}/movie/{self.movie_id}/alternative_titles",
                 name=f"{API}/movie/[id]/alternative_titles",
             )
-        self.interrupt()
+        self.interrupt() # Ends the journey and helps to put the execution back to the user class to pick the next one.
 
 
 class SearchDriven(SequentialTaskSet):
