@@ -53,3 +53,43 @@ run a thing, this repo's specific conventions) live in the relevant `README.md`
   iteration and the head expression is evaluated once per item. Reading rule:
   find the `for` first, then read the leading expression as "what's produced per
   item."
+
+## Python & pytest
+
+- **A lambda body must be a single *expression*.** Statements (notably assignment
+  `=`) aren't expressions, so `lambda c: c["k"] = v` is a **syntax error**. Work
+  around it with the dunder the sugar maps to: `d[k] = v` is
+  `d.__setitem__(k, v)`, and a method call *is* an expression — legal in a lambda.
+- **Lambdas as parametrize data.** A row like `(lambda c: c.pop("id"), "missing 'id'")`
+  stores *"how to break the case"* + *"the error it should raise"* as data. The
+  test calls `mutate(case)`; the lambda's **return value is discarded** — it works
+  by side effect, because dicts are mutable and passed by reference, so mutating
+  the arg changes the caller's object. Two different mutations can hit the same
+  error via different code paths (e.g. removing a nested key vs. removing its whole
+  parent block).
+
+## Claude Code tooling
+
+- **The three review commands target different things.** `/review <PR>` reviews a
+  **remote GitHub PR** (fetches via `gh`, posts inline comments back) — for
+  someone else's PR or one already pushed. `/code-review` reviews the **local
+  working diff**, prints to terminal (`--comment` posts to a PR, `--fix` applies
+  fixes) — for pre-push self-review. `/review-tests` is this repo's
+  **project-convention** pass on local changes. Built-in command prompts are
+  compiled into the binary, not on-disk files.
+
+## Design principles
+
+- **Separate "run the feature" from "evaluate the feature."** If a feature call
+  and a meta-evaluation call are bundled behind one switch, the common case
+  (just run it) silently pays for the rare case (grade it) — cost that scales with
+  usage, plus log/report noise. Give evaluation its own flag, kept *subordinate*
+  (it does nothing without the feature flag). Example here: `--failure-analysis`
+  vs. the judge switch.
+- **Freeze the input to isolate the variable.** When tuning one non-deterministic
+  stage (e.g. an LLM judge prompt), re-running the *upstream* non-deterministic
+  stage each time adds a confound — you can't tell if the output changed because
+  of your edit or upstream noise. Caching/reusing the upstream output (what
+  `--reuse-diagnoses` did) freezes it so you measure only what you changed. Trade-
+  off: frozen inputs aren't honest *end-to-end* numbers — use a fresh full pass
+  for those.
