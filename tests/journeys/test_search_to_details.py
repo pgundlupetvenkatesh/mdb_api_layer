@@ -53,16 +53,14 @@ class TestSearchToDetails(FieldAssertions):
         """
         Search for a movie, then fetch the top result's full details.
 
-        Mirrors the perf 'search-driven' journey: the id returned by
-        ``search/movie`` is fed into ``movie/{id}`` and the response is
-        asserted to describe the same movie, exercising the cross-endpoint
-        contract that single-endpoint tests do not cover.
+        The id returned by ``search/movie`` is fed into ``movie/{id}`` and the response is
+        asserted to describe the same movie.
 
-        :param search_api: SearchAPI client fixture from conftest.py.
-        :param movies_api: MoviesAPI client fixture from conftest.py.
-        :param load_schema: Schema loader fixture from conftest.py.
+        :param search_api: SearchAPI client fixture.
+        :param movies_api: MoviesAPI client fixture.
+        :param load_schema: Schema loader fixture.
         :param search_case: Parametrized search case supplying the query
-                            (reused from the search_movies valid data).
+                            (from the search_movies valid data).
         """
         query = search_case['query_param']['query']
         allure.dynamic.title(f"Journey: search '{query}' -> movie details")
