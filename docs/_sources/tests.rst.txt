@@ -43,6 +43,13 @@ Evals
    :undoc-members:
    :show-inheritance:
 
+Journeys
+--------
+.. automodule:: tests.journeys.test_search_to_details
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Helpers
 -------
 
