@@ -315,6 +315,8 @@ mdb_api_layer/
 │   │   └── test_movie.py       # Movie search integration tests
 │   ├── discover/
 │   │   └── test_movie.py       # Movie discovery integration tests
+│   ├── journeys/
+│   │   └── test_search_to_details.py  # Multi-endpoint journey tests (chain search → details)
 │   ├── networks/
 │   │   └── test_details.py     # Network details integration tests
 │   ├── pacts/
