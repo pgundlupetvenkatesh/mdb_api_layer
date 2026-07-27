@@ -64,3 +64,11 @@ Search API
    :members:
    :undoc-members:
    :show-inheritance:
+
+Trending API
+------------
+.. automodule:: api.trending_api
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:

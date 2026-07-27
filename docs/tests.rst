@@ -133,6 +133,13 @@ Discover
    :undoc-members:
    :show-inheritance:
 
+Trending
+--------
+.. automodule:: tests.trending.test_movie
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Schema
 ~~~~~~
 .. automodule:: tests.schemas.models

@@ -166,6 +166,25 @@ class PopularMoviesResponse(BaseModel):
     total_pages: StrictInt = Field(ge=0)
     total_results: StrictInt = Field(ge=0)
 
+class TrendingMoviesResponse(BaseModel):
+    """
+    Schema for trending movies list response from
+    ``GET /3/trending/movie/{time_window}``.
+
+    Validates the paginated response structure containing the movies trending
+    over the requested time window (``day`` or ``week``). Result items use the
+    shared ``MovieListItem`` model.
+
+    :param page: Current page number in the paginated results.
+    :param results: List of trending movie items for this page.
+    :param total_pages: Total number of available pages.
+    :param total_results: Total number of trending movies across all pages.
+    """
+    page: StrictInt = Field(ge=1)
+    results: list[MovieListItem] = Field(min_length=1)
+    total_pages: StrictInt = Field(ge=1)
+    total_results: StrictInt = Field(ge=1)
+
 class SearchMoviesResponse(BaseModel):
     """
     Schema for movie search response from ``GET /3/search/movie``.
