@@ -10,7 +10,7 @@ Each model corresponds to a former .json schema in tests/schemas/.
 """
 
 from typing import Optional
-from pydantic import BaseModel, Field, StrictBool, StrictFloat, StrictInt, StrictStr
+from pydantic import BaseModel, Field, StrictBool, StrictFloat, StrictInt, StrictStr, create_model
 
 class GenericResponse(BaseModel):
     """
@@ -147,26 +147,42 @@ class MovieListItem(BaseModel):
 
     model_config = {"extra": "allow"}
 
-class PopularMoviesResponse(BaseModel):
+def paginated_movie_list(ge=1):
+    """
+    Build the base model for a paginated movie-list response.
+
+    TMDB's list-style movie endpoints (popular, search, discover, trending)
+    share one envelope: a ``page`` number, a ``results`` array of
+    ``MovieListItem`` (required non-empty here — endpoints whose empty-result
+    case is valid assert it directly in the test instead), and
+    ``total_pages`` / ``total_results`` counts. Each endpoint subclasses the
+    returned base so it keeps a distinct, individually-registered model name
+    while sharing this field definition.
+
+    :param ge: Lower bound applied to the integer pagination fields
+               (``page``, ``total_pages``, ``total_results``). Defaults to 1;
+               popular passes 0 for its looser contract.
+    :return: A Pydantic base model class with the shared paginated fields.
+    """
+    return create_model(
+        "PaginatedMovieList",
+        page=(StrictInt, Field(ge=ge)),
+        results=(list[MovieListItem], Field(min_length=1)),
+        total_pages=(StrictInt, Field(ge=ge)),
+        total_results=(StrictInt, Field(ge=ge)),
+    )
+
+class PopularMoviesResponse(paginated_movie_list(ge=0)):
     """
     Schema for popular movies list response from ``GET /3/movie/popular``.
 
     Validates the paginated response structure containing a list of
-    popular movies.
+    popular movies. Result items use the shared ``MovieListItem`` model.
 
     Replaces: ``popular_movies_schema.json``
-
-    :param page: Current page number in the paginated results.
-    :param results: List of popular movie items for this page.
-    :param total_pages: Total number of available pages.
-    :param total_results: Total number of popular movies across all pages.
     """
-    page: StrictInt = Field(ge=0)
-    results: list[MovieListItem] = Field(min_length=1)
-    total_pages: StrictInt = Field(ge=0)
-    total_results: StrictInt = Field(ge=0)
 
-class TrendingMoviesResponse(BaseModel):
+class TrendingMoviesResponse(paginated_movie_list()):
     """
     Schema for trending movies list response from
     ``GET /3/trending/movie/{time_window}``.
@@ -174,18 +190,9 @@ class TrendingMoviesResponse(BaseModel):
     Validates the paginated response structure containing the movies trending
     over the requested time window (``day`` or ``week``). Result items use the
     shared ``MovieListItem`` model.
-
-    :param page: Current page number in the paginated results.
-    :param results: List of trending movie items for this page.
-    :param total_pages: Total number of available pages.
-    :param total_results: Total number of trending movies across all pages.
     """
-    page: StrictInt = Field(ge=1)
-    results: list[MovieListItem] = Field(min_length=1)
-    total_pages: StrictInt = Field(ge=1)
-    total_results: StrictInt = Field(ge=1)
 
-class SearchMoviesResponse(BaseModel):
+class SearchMoviesResponse(paginated_movie_list()):
     """
     Schema for movie search response from ``GET /3/search/movie``.
 
@@ -194,18 +201,9 @@ class SearchMoviesResponse(BaseModel):
     model. ``results`` requires at least one item — searches expected to
     return no matches are asserted directly in the test instead of via
     this schema.
-
-    :param page: Current page number in the paginated results.
-    :param results: List of matching movie items for this page.
-    :param total_pages: Total number of available pages.
-    :param total_results: Total number of matches across all pages.
     """
-    page: StrictInt = Field(ge=1)
-    results: list[MovieListItem] = Field(min_length=1)
-    total_pages: StrictInt = Field(ge=1)
-    total_results: StrictInt = Field(ge=1)
 
-class DiscoverMoviesResponse(BaseModel):
+class DiscoverMoviesResponse(paginated_movie_list()):
     """
     Schema for movie discovery response from ``GET /3/discover/movie``.
 
@@ -214,16 +212,7 @@ class DiscoverMoviesResponse(BaseModel):
     ``MovieListItem`` model. ``results`` requires at least one item —
     filter combinations expected to match nothing are asserted directly
     in the test instead of via this schema.
-
-    :param page: Current page number in the paginated results.
-    :param results: List of matching movie items for this page.
-    :param total_pages: Total number of available pages.
-    :param total_results: Total number of matches across all pages.
     """
-    page: StrictInt = Field(ge=1)
-    results: list[MovieListItem] = Field(min_length=1)
-    total_pages: StrictInt = Field(ge=1)
-    total_results: StrictInt = Field(ge=1)
 
 class PersonDetails(BaseModel):
     """
