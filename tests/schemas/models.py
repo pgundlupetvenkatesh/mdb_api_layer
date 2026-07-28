@@ -279,3 +279,57 @@ class NetworkDetails(BaseModel):
     origin_country: StrictStr                                  # empty for some networks
 
     model_config = {"extra": "forbid"}
+
+# Nested model for a review's author
+class AuthorDetails(BaseModel):
+    """
+    Nested model for the ``author_details`` block of a review.
+
+    :param name: Author's display name, may be empty.
+    :param username: Author's TMDB username.
+    :param avatar_path: Path to the author's avatar, or None. Unlike other
+                        ``*_path`` fields this is NOT constrained to an image
+                        extension — TMDB may store a gravatar URL here
+                        (e.g. ``/https://secure.gravatar.com/...``).
+    :param rating: The author's rating for the media (0–10), or None.
+    """
+    name: StrictStr                                            # may be empty
+    username: StrictStr = Field(min_length=1)
+    avatar_path: Optional[str] = None                         # may be a gravatar URL, not just an image path
+    rating: Optional[float] = Field(default=None, ge=0, le=10)
+
+    model_config = {"extra": "forbid"}
+
+class ReviewDetails(BaseModel):
+    """
+    Schema for review details response from ``GET /3/review/{review_id}``.
+
+    Validates the response structure for the TMDB review details endpoint.
+    The body is small and fully enumerated, so ``extra = "forbid"`` keeps
+    the contract strict.
+
+    :param id: Unique TMDB review identifier (24-character hex string).
+    :param author: Author's display name.
+    :param author_details: Nested author metadata (name, username, avatar, rating).
+    :param content: The review text.
+    :param created_at: Creation timestamp (ISO 8601).
+    :param iso_639_1: ISO 639-1 language code of the review.
+    :param media_id: TMDB id of the reviewed media.
+    :param media_title: Title of the reviewed media.
+    :param media_type: Media type of the reviewed item (e.g. ``movie``).
+    :param updated_at: Last-updated timestamp (ISO 8601).
+    :param url: Public URL of the review on themoviedb.org.
+    """
+    id: StrictStr = Field(min_length=1)
+    author: StrictStr = Field(min_length=1)
+    author_details: AuthorDetails
+    content: StrictStr = Field(min_length=1)
+    created_at: StrictStr = Field(min_length=1)
+    iso_639_1: StrictStr = Field(min_length=1)
+    media_id: StrictInt = Field(ge=0)
+    media_title: StrictStr = Field(min_length=1)
+    media_type: StrictStr = Field(min_length=1)
+    updated_at: StrictStr = Field(min_length=1)
+    url: StrictStr = Field(min_length=1)
+
+    model_config = {"extra": "forbid"}

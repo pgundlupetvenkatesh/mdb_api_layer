@@ -140,6 +140,13 @@ Trending
    :undoc-members:
    :show-inheritance:
 
+Reviews
+-------
+.. automodule:: tests.reviews.test_details
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Schema
 ~~~~~~
 .. automodule:: tests.schemas.models

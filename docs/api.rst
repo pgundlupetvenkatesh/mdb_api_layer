@@ -57,6 +57,14 @@ People API
    :undoc-members:
    :show-inheritance:
 
+Reviews API
+-----------
+.. automodule:: api.reviews_api
+   :no-index:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Search API
 ----------
 .. automodule:: api.search_api

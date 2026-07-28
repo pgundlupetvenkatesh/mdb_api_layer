@@ -75,6 +75,30 @@ def pick_random_network_id() -> int:
     """
     return random.choice(NETWORK_IDS)
 
+def pick_random_review_id(max_attempts: int = 25) -> str:
+    """
+    Return a random review ID harvested from a random movie's reviews.
+
+    Reuses :func:`pick_random_movie_id`, then fetches that movie's reviews via
+    ``GET /3/movie/{id}/reviews``. Most movies in ``movie_ids.txt`` have no
+    reviews, so it retries random movies until one has at least one review, then
+    returns a random review's id. ``MoviesAPI`` is imported lazily to avoid an
+    import cycle (``api`` imports would otherwise load during test-data import).
+
+    :param max_attempts: Maximum random movies to try before giving up.
+    :return: A TMDB review ID (24-character hex string).
+    :raises ValueError: If no reviews are found within ``max_attempts`` tries.
+    """
+    from api.movies_api import MoviesAPI
+
+    movies_api = MoviesAPI()
+    for _ in range(max_attempts):
+        results = movies_api.get_movie_reviews(pick_random_movie_id()).data.get('results', [])
+        if results:
+            return random.choice(results)['id']
+
+    raise ValueError(f"No reviews found after {max_attempts} random movies.")
+
 def pick_random_rated_movie_id(acc_id, session_id) -> int:
     """
     Fetches rated movies from the account and returns a random movie ID.

@@ -216,6 +216,22 @@ get_network_details:
     - network_id: 99999999
       expected_message: "The resource you requested could not be found."
 
+get_review_details:
+  defaults:
+    valid:
+      status_code: 200
+      reason: 'OK'
+    invalid:
+      status_code: 404
+      reason: 'Not Found'
+  valid:
+    - review_id: "$random_review_id" # harvested live from a random movie's reviews
+  invalid:
+    - review_id: "0"
+      expected_message: "The resource you requested could not be found."
+    - review_id: "deadbeefdeadbeefdeadbeef"
+      expected_message: "The resource you requested could not be found."
+
 update_list:
   defaults:
     valid:
