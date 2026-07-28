@@ -93,6 +93,17 @@ run a thing, this repo's specific conventions) live in the relevant `README.md`
 
 ## Design principles
 
+- **Each response attribute is checked exactly once, by the layer that owns it.**
+  Three layers with non-overlapping jobs: `assert_get_metadata` checks the HTTP
+  envelope (status/method/content-type/elapsed/url); a strict Pydantic model
+  (`model_validate`, `extra="forbid"`) checks the *entire* body's shape, types,
+  and field constraints; and the test itself asserts only what neither can — that
+  the returned resource is *the one requested* (`res_body['id'] == requested_id`,
+  a request/response **correlation** check). Re-asserting individual body fields
+  in the test would just duplicate the schema. Corollary: when the lookup key is
+  **randomly generated** (e.g. a review id harvested live), the id echo is the
+  *only* value assertion possible — the test can't know the author/content ahead
+  of time, so there's nothing else concrete to compare against without hardcoding.
 - **Separate "run the feature" from "evaluate the feature."** If a feature call
   and a meta-evaluation call are bundled behind one switch, the common case
   (just run it) silently pays for the rare case (grade it) — cost that scales with
