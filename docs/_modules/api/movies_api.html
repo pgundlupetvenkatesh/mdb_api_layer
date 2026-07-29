@@ -109,6 +109,20 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/top_rated&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="MoviesAPI.get_movie_reviews">
+<a class="viewcode-back" href="../../api.html#api.movies_api.MoviesAPI.get_movie_reviews">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_movie_reviews</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movie_id</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve user reviews for a specific movie.</span>
+
+<span class="sd">        :param movie_id: TMDB movie ID.</span>
+<span class="sd">        :param query_params: Optional dict of query parameters (e.g., page).</span>
+<span class="sd">        :return: Response object with a paginated list of user reviews.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;query_params: </span><span class="si">{</span><span class="n">query_params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">/reviews&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="MoviesAPI.get_alt_title">
 <a class="viewcode-back" href="../../api.html#api.movies_api.MoviesAPI.get_alt_title">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_alt_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movie_id</span><span class="p">):</span>

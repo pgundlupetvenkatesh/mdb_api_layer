@@ -37,6 +37,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
 <div class="viewcode-block" id="random_rating">
 <a class="viewcode-back" href="../../../helpers_test_data_generators.html#tests.helpers.test_data_generators.random_rating">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">random_rating</span><span class="p">(</span><span class="n">min_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">max_val</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -117,6 +119,40 @@
 <span class="sd">    :return: Random network ID</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">NETWORK_IDS</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="pick_random_review_id">
+<a class="viewcode-back" href="../../../helpers_test_data_generators.html#tests.helpers.test_data_generators.pick_random_review_id">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pick_random_review_id</span><span class="p">(</span><span class="n">max_attempts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">25</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a random review ID harvested from a random movie&#39;s reviews.</span>
+
+<span class="sd">    Reuses :func:`pick_random_movie_id`, then fetches that movie&#39;s reviews via</span>
+<span class="sd">    ``GET /3/movie/{id}/reviews``. Most movies in ``movie_ids.txt`` have no</span>
+<span class="sd">    reviews, so it retries random movies until one has at least one review, then</span>
+<span class="sd">    returns a random review&#39;s id. ``MoviesAPI`` is imported lazily to avoid an</span>
+<span class="sd">    import cycle (``api`` imports would otherwise load during test-data import).</span>
+
+<span class="sd">    :param max_attempts: Maximum random movies to try before giving up.</span>
+<span class="sd">    :return: A TMDB review ID (24-character hex string).</span>
+<span class="sd">    :raises ValueError: If no reviews are found within ``max_attempts`` tries.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">api.movies_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">MoviesAPI</span>
+
+    <span class="n">movies_api</span> <span class="o">=</span> <span class="n">MoviesAPI</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_attempts</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">movie_id</span> <span class="o">=</span> <span class="n">pick_random_movie_id</span><span class="p">()</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="n">movies_api</span><span class="o">.</span><span class="n">get_movie_reviews</span><span class="p">(</span><span class="n">movie_id</span><span class="p">)</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;results&#39;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="n">results</span><span class="p">:</span>
+            <span class="n">review_id</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">results</span><span class="p">)[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Picked review_id </span><span class="si">{</span><span class="n">review_id</span><span class="si">}</span><span class="s2"> from movie_id </span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2"> reviews) on attempt </span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">review_id</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No reviews for movie_id </span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2"> (attempt </span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2">), retrying&quot;</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No reviews found after </span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2"> random movies.&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pick_random_rated_movie_id">

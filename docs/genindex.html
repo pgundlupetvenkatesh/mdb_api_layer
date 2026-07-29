@@ -106,12 +106,12 @@
 </li>
       <li><a href="failure_mcp.html#failure_mcp.server.app">app (in module failure_mcp.server)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions.assert_bool_field">assert_bool_field() (tests.helpers.field_assertions.FieldAssertions method)</a>
 </li>
       <li><a href="helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions.assert_float_field">assert_float_field() (tests.helpers.field_assertions.FieldAssertions method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="helpers_response_assertions.html#tests.helpers.response_assertions.assert_get_metadata">assert_get_metadata() (in module tests.helpers.response_assertions)</a>
 </li>
       <li><a href="helpers_response_assertions.html#tests.helpers.response_assertions.assert_http_response">assert_http_response() (in module tests.helpers.response_assertions)</a>
@@ -125,6 +125,14 @@
       <li><a href="helpers_field_assertions.html#tests.helpers.field_assertions.FieldAssertions.assert_str_field">assert_str_field() (tests.helpers.field_assertions.FieldAssertions method)</a>
 </li>
       <li><a href="config.html#config.config.Config.AUTH_TOKEN">AUTH_TOKEN (config.config.Config attribute)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.ReviewDetails.author">author (tests.schemas.models.ReviewDetails attribute)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.ReviewDetails.author_details">author_details (tests.schemas.models.ReviewDetails attribute)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.AuthorDetails">AuthorDetails (class in tests.schemas.models)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.AuthorDetails.avatar_path">avatar_path (tests.schemas.models.AuthorDetails attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -154,8 +162,6 @@
 </li>
       <li><a href="config.html#config.config.Config">Config (class in config.config)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     config.config
 
@@ -163,7 +169,13 @@
         <li><a href="config.html#module-config.config">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="config.html#config.config.configure_logging">configure_logging() (in module config.config)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.ReviewDetails.content">content (tests.schemas.models.ReviewDetails attribute)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.ReviewDetails.created_at">created_at (tests.schemas.models.ReviewDetails attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -291,10 +303,14 @@
 </li>
         <li><a href="tests.html#tests.schemas.models.ProductionCompany.id">(tests.schemas.models.ProductionCompany attribute)</a>
 </li>
+        <li><a href="tests.html#tests.schemas.models.ReviewDetails.id">(tests.schemas.models.ReviewDetails attribute)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="tests.html#tests.schemas.models.PersonDetails.imdb_id">imdb_id (tests.schemas.models.PersonDetails attribute)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.ReviewDetails.iso_639_1">iso_639_1 (tests.schemas.models.ReviewDetails attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -348,9 +364,17 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="evals.html#evals.__main__.main">main() (in module evals.__main__)</a>
 </li>
-      <li><a href="tests.html#tests.schemas.models.DiscoverMoviesResponse.model_config">model_config (tests.schemas.models.DiscoverMoviesResponse attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.ReviewDetails.media_id">media_id (tests.schemas.models.ReviewDetails attribute)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.ReviewDetails.media_title">media_title (tests.schemas.models.ReviewDetails attribute)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.ReviewDetails.media_type">media_type (tests.schemas.models.ReviewDetails attribute)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.AuthorDetails.model_config">model_config (tests.schemas.models.AuthorDetails attribute)</a>
 
       <ul>
+        <li><a href="tests.html#tests.schemas.models.DiscoverMoviesResponse.model_config">(tests.schemas.models.DiscoverMoviesResponse attribute)</a>
+</li>
         <li><a href="tests.html#tests.schemas.models.GenericResponse.model_config">(tests.schemas.models.GenericResponse attribute)</a>
 </li>
         <li><a href="tests.html#tests.schemas.models.Genre.model_config">(tests.schemas.models.Genre attribute)</a>
@@ -369,7 +393,11 @@
 </li>
         <li><a href="tests.html#tests.schemas.models.RatingResponse.model_config">(tests.schemas.models.RatingResponse attribute)</a>
 </li>
+        <li><a href="tests.html#tests.schemas.models.ReviewDetails.model_config">(tests.schemas.models.ReviewDetails attribute)</a>
+</li>
         <li><a href="tests.html#tests.schemas.models.SearchMoviesResponse.model_config">(tests.schemas.models.SearchMoviesResponse attribute)</a>
+</li>
+        <li><a href="tests.html#tests.schemas.models.TrendingMoviesResponse.model_config">(tests.schemas.models.TrendingMoviesResponse attribute)</a>
 </li>
       </ul></li>
       <li>
@@ -432,6 +460,8 @@
 </li>
         <li><a href="tests.html#module-tests.search.test_movie">tests.search.test_movie</a>
 </li>
+        <li><a href="tests.html#module-tests.trending.test_movie">tests.trending.test_movie</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -451,9 +481,11 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="tests.html#tests.schemas.models.Genre.name">name (tests.schemas.models.Genre attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.AuthorDetails.name">name (tests.schemas.models.AuthorDetails attribute)</a>
 
       <ul>
+        <li><a href="tests.html#tests.schemas.models.Genre.name">(tests.schemas.models.Genre attribute)</a>
+</li>
         <li><a href="tests.html#tests.schemas.models.NetworkDetails.name">(tests.schemas.models.NetworkDetails attribute)</a>
 </li>
         <li><a href="tests.html#tests.schemas.models.PersonDetails.name">(tests.schemas.models.PersonDetails attribute)</a>
@@ -509,14 +541,8 @@
 </li>
       <li><a href="tests.html#tests.contracts.conftest.pact_movies_api">pact_movies_api() (in module tests.contracts.conftest)</a>
 </li>
-      <li><a href="tests.html#tests.schemas.models.DiscoverMoviesResponse.page">page (tests.schemas.models.DiscoverMoviesResponse attribute)</a>
-
-      <ul>
-        <li><a href="tests.html#tests.schemas.models.PopularMoviesResponse.page">(tests.schemas.models.PopularMoviesResponse attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.paginated_movie_list">paginated_movie_list() (in module tests.schemas.models)</a>
 </li>
-        <li><a href="tests.html#tests.schemas.models.SearchMoviesResponse.page">(tests.schemas.models.SearchMoviesResponse attribute)</a>
-</li>
-      </ul></li>
       <li><a href="tests.html#tests.conftest.people_api">people_api() (in module tests.conftest)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.PersonDetails">PersonDetails (class in tests.schemas.models)</a>
@@ -526,6 +552,8 @@
       <li><a href="helpers_test_data_generators.html#tests.helpers.test_data_generators.pick_random_network_id">pick_random_network_id() (in module tests.helpers.test_data_generators)</a>
 </li>
       <li><a href="helpers_test_data_generators.html#tests.helpers.test_data_generators.pick_random_rated_movie_id">pick_random_rated_movie_id() (in module tests.helpers.test_data_generators)</a>
+</li>
+      <li><a href="helpers_test_data_generators.html#tests.helpers.test_data_generators.pick_random_review_id">pick_random_review_id() (in module tests.helpers.test_data_generators)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.PersonDetails.place_of_birth">place_of_birth (tests.schemas.models.PersonDetails attribute)</a>
 </li>
@@ -577,6 +605,8 @@
 </li>
       <li><a href="helpers_test_data_generators.html#tests.helpers.test_data_generators.random_rating">random_rating() (in module tests.helpers.test_data_generators)</a>
 </li>
+      <li><a href="tests.html#tests.schemas.models.AuthorDetails.rating">rating (tests.schemas.models.AuthorDetails attribute)</a>
+</li>
       <li><a href="tests.html#tests.schemas.models.RatingResponse">RatingResponse (class in tests.schemas.models)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.MovieDetails.release_date">release_date (tests.schemas.models.MovieDetails attribute)</a>
@@ -590,15 +620,11 @@
       <li><a href="config.html#config.config.Config.REQUEST_TOKEN">REQUEST_TOKEN (config.config.Config attribute)</a>
 </li>
       <li><a href="helpers_failure_analyzer.html#tests.helpers.failure_analyzer.FailureAnalyzer.results">results (tests.helpers.failure_analyzer.FailureAnalyzer property)</a>
-
-      <ul>
-        <li><a href="tests.html#tests.schemas.models.DiscoverMoviesResponse.results">(tests.schemas.models.DiscoverMoviesResponse attribute)</a>
 </li>
-        <li><a href="tests.html#tests.schemas.models.PopularMoviesResponse.results">(tests.schemas.models.PopularMoviesResponse attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.ReviewDetails">ReviewDetails (class in tests.schemas.models)</a>
 </li>
-        <li><a href="tests.html#tests.schemas.models.SearchMoviesResponse.results">(tests.schemas.models.SearchMoviesResponse attribute)</a>
+      <li><a href="tests.html#tests.conftest.reviews_api">reviews_api() (in module tests.conftest)</a>
 </li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -659,6 +685,8 @@
         <li><a href="tests.html#tests.people.test_details.TEST_DATA">(in module tests.people.test_details)</a>
 </li>
         <li><a href="tests.html#tests.search.test_movie.TEST_DATA">(in module tests.search.test_movie)</a>
+</li>
+        <li><a href="tests.html#tests.trending.test_movie.TEST_DATA">(in module tests.trending.test_movie)</a>
 </li>
       </ul></li>
       <li>
@@ -817,6 +845,13 @@
         <li><a href="tests.html#module-tests.search.test_movie">module</a>
 </li>
       </ul></li>
+      <li>
+    tests.trending.test_movie
+
+      <ul>
+        <li><a href="tests.html#module-tests.trending.test_movie">module</a>
+</li>
+      </ul></li>
       <li><a href="config.html#config.config.Config.TIMEOUT">TIMEOUT (config.config.Config attribute)</a>
 </li>
       <li><a href="tests.html#tests.schemas.models.MovieDetails.title">title (tests.schemas.models.MovieDetails attribute)</a>
@@ -827,29 +862,25 @@
       </ul></li>
       <li><a href="failure_mcp.html#failure_mcp.tools.analyze_test_failure.TOOLS">TOOLS (in module failure_mcp.tools.analyze_test_failure)</a>
 </li>
-      <li><a href="tests.html#tests.schemas.models.DiscoverMoviesResponse.total_pages">total_pages (tests.schemas.models.DiscoverMoviesResponse attribute)</a>
-
-      <ul>
-        <li><a href="tests.html#tests.schemas.models.PopularMoviesResponse.total_pages">(tests.schemas.models.PopularMoviesResponse attribute)</a>
+      <li><a href="tests.html#tests.conftest.trending_api">trending_api() (in module tests.conftest)</a>
 </li>
-        <li><a href="tests.html#tests.schemas.models.SearchMoviesResponse.total_pages">(tests.schemas.models.SearchMoviesResponse attribute)</a>
+      <li><a href="tests.html#tests.schemas.models.TrendingMoviesResponse">TrendingMoviesResponse (class in tests.schemas.models)</a>
 </li>
-      </ul></li>
-      <li><a href="tests.html#tests.schemas.models.DiscoverMoviesResponse.total_results">total_results (tests.schemas.models.DiscoverMoviesResponse attribute)</a>
-
-      <ul>
-        <li><a href="tests.html#tests.schemas.models.PopularMoviesResponse.total_results">(tests.schemas.models.PopularMoviesResponse attribute)</a>
-</li>
-        <li><a href="tests.html#tests.schemas.models.SearchMoviesResponse.total_results">(tests.schemas.models.SearchMoviesResponse attribute)</a>
-</li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="tests.html#tests.schemas.models.ReviewDetails.updated_at">updated_at (tests.schemas.models.ReviewDetails attribute)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.ReviewDetails.url">url (tests.schemas.models.ReviewDetails attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="config.html#config.config.Config.USER_ACCESS_TOKEN">USER_ACCESS_TOKEN (config.config.Config attribute)</a>
+</li>
+      <li><a href="tests.html#tests.schemas.models.AuthorDetails.username">username (tests.schemas.models.AuthorDetails attribute)</a>
 </li>
   </ul></td>
 </tr></table>

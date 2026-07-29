@@ -42,7 +42,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">StrictBool</span><span class="p">,</span> <span class="n">StrictFloat</span><span class="p">,</span> <span class="n">StrictInt</span><span class="p">,</span> <span class="n">StrictStr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">StrictBool</span><span class="p">,</span> <span class="n">StrictFloat</span><span class="p">,</span> <span class="n">StrictInt</span><span class="p">,</span> <span class="n">StrictStr</span><span class="p">,</span> <span class="n">create_model</span>
 
 <div class="viewcode-block" id="GenericResponse">
 <a class="viewcode-back" href="../../../tests.html#tests.schemas.models.GenericResponse">[docs]</a>
@@ -197,31 +197,63 @@
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">}</span></div>
 
 
+<div class="viewcode-block" id="paginated_movie_list">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.paginated_movie_list">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">paginated_movie_list</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the base model for a paginated movie-list response.</span>
+
+<span class="sd">    TMDB&#39;s list-style movie endpoints (popular, search, discover, trending)</span>
+<span class="sd">    share one envelope: a ``page`` number, a ``results`` array of</span>
+<span class="sd">    ``MovieListItem`` (required non-empty here — endpoints whose empty-result</span>
+<span class="sd">    case is valid assert it directly in the test instead), and</span>
+<span class="sd">    ``total_pages`` / ``total_results`` counts. Each endpoint subclasses the</span>
+<span class="sd">    returned base so it keeps a distinct, individually-registered model name</span>
+<span class="sd">    while sharing this field definition.</span>
+
+<span class="sd">    :param ge: Lower bound applied to the integer pagination fields</span>
+<span class="sd">               (``page``, ``total_pages``, ``total_results``). Defaults to 1;</span>
+<span class="sd">               popular passes 0 for its looser contract.</span>
+<span class="sd">    :return: A Pydantic base model class with the shared paginated fields.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">create_model</span><span class="p">(</span>
+        <span class="s2">&quot;PaginatedMovieList&quot;</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="p">(</span><span class="n">StrictInt</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="n">ge</span><span class="p">)),</span>
+        <span class="n">results</span><span class="o">=</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">MovieListItem</span><span class="p">],</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)),</span>
+        <span class="n">total_pages</span><span class="o">=</span><span class="p">(</span><span class="n">StrictInt</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="n">ge</span><span class="p">)),</span>
+        <span class="n">total_results</span><span class="o">=</span><span class="p">(</span><span class="n">StrictInt</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="n">ge</span><span class="p">)),</span>
+    <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="PopularMoviesResponse">
 <a class="viewcode-back" href="../../../tests.html#tests.schemas.models.PopularMoviesResponse">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">PopularMoviesResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PopularMoviesResponse</span><span class="p">(</span><span class="n">paginated_movie_list</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Schema for popular movies list response from ``GET /3/movie/popular``.</span>
 
 <span class="sd">    Validates the paginated response structure containing a list of</span>
-<span class="sd">    popular movies.</span>
+<span class="sd">    popular movies. Result items use the shared ``MovieListItem`` model.</span>
 
 <span class="sd">    Replaces: ``popular_movies_schema.json``</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
 
-<span class="sd">    :param page: Current page number in the paginated results.</span>
-<span class="sd">    :param results: List of popular movie items for this page.</span>
-<span class="sd">    :param total_pages: Total number of available pages.</span>
-<span class="sd">    :param total_results: Total number of popular movies across all pages.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">page</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MovieListItem</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">total_pages</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">total_results</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TrendingMoviesResponse">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.TrendingMoviesResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TrendingMoviesResponse</span><span class="p">(</span><span class="n">paginated_movie_list</span><span class="p">()):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schema for trending movies list response from</span>
+<span class="sd">    ``GET /3/trending/movie/{time_window}``.</span>
+
+<span class="sd">    Validates the paginated response structure containing the movies trending</span>
+<span class="sd">    over the requested time window (``day`` or ``week``). Result items use the</span>
+<span class="sd">    shared ``MovieListItem`` model.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="SearchMoviesResponse">
 <a class="viewcode-back" href="../../../tests.html#tests.schemas.models.SearchMoviesResponse">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SearchMoviesResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SearchMoviesResponse</span><span class="p">(</span><span class="n">paginated_movie_list</span><span class="p">()):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Schema for movie search response from ``GET /3/search/movie``.</span>
 
@@ -230,21 +262,12 @@
 <span class="sd">    model. ``results`` requires at least one item — searches expected to</span>
 <span class="sd">    return no matches are asserted directly in the test instead of via</span>
 <span class="sd">    this schema.</span>
-
-<span class="sd">    :param page: Current page number in the paginated results.</span>
-<span class="sd">    :param results: List of matching movie items for this page.</span>
-<span class="sd">    :param total_pages: Total number of available pages.</span>
-<span class="sd">    :param total_results: Total number of matches across all pages.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">page</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MovieListItem</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">total_pages</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">total_results</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+<span class="sd">    &quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="DiscoverMoviesResponse">
 <a class="viewcode-back" href="../../../tests.html#tests.schemas.models.DiscoverMoviesResponse">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">DiscoverMoviesResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscoverMoviesResponse</span><span class="p">(</span><span class="n">paginated_movie_list</span><span class="p">()):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Schema for movie discovery response from ``GET /3/discover/movie``.</span>
 
@@ -253,16 +276,7 @@
 <span class="sd">    ``MovieListItem`` model. ``results`` requires at least one item —</span>
 <span class="sd">    filter combinations expected to match nothing are asserted directly</span>
 <span class="sd">    in the test instead of via this schema.</span>
-
-<span class="sd">    :param page: Current page number in the paginated results.</span>
-<span class="sd">    :param results: List of matching movie items for this page.</span>
-<span class="sd">    :param total_pages: Total number of available pages.</span>
-<span class="sd">    :param total_results: Total number of matches across all pages.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">page</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MovieListItem</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">total_pages</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">total_results</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+<span class="sd">    &quot;&quot;&quot;</span></div>
 
 
 <div class="viewcode-block" id="PersonDetails">
@@ -333,6 +347,66 @@
     <span class="n">logo_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;.*\.(png|jpg)$&quot;</span><span class="p">)</span>
     <span class="n">name</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">origin_country</span><span class="p">:</span> <span class="n">StrictStr</span>                                  <span class="c1"># empty for some networks</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;forbid&quot;</span><span class="p">}</span></div>
+
+
+<span class="c1"># Nested model for a review&#39;s author</span>
+<div class="viewcode-block" id="AuthorDetails">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.AuthorDetails">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AuthorDetails</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Nested model for the ``author_details`` block of a review.</span>
+
+<span class="sd">    :param name: Author&#39;s display name, may be empty.</span>
+<span class="sd">    :param username: Author&#39;s TMDB username.</span>
+<span class="sd">    :param avatar_path: Path to the author&#39;s avatar, or None. Unlike other</span>
+<span class="sd">                        ``*_path`` fields this is NOT constrained to an image</span>
+<span class="sd">                        extension — TMDB may store a gravatar URL here</span>
+<span class="sd">                        (e.g. ``/https://secure.gravatar.com/...``).</span>
+<span class="sd">    :param rating: The author&#39;s rating for the media (0–10), or None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">StrictStr</span>                                            <span class="c1"># may be empty</span>
+    <span class="n">username</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">avatar_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>                         <span class="c1"># may be a gravatar URL, not just an image path</span>
+    <span class="n">rating</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;forbid&quot;</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="ReviewDetails">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.ReviewDetails">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReviewDetails</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schema for review details response from ``GET /3/review/{review_id}``.</span>
+
+<span class="sd">    Validates the response structure for the TMDB review details endpoint.</span>
+<span class="sd">    The body is small and fully enumerated, so ``extra = &quot;forbid&quot;`` keeps</span>
+<span class="sd">    the contract strict.</span>
+
+<span class="sd">    :param id: Unique TMDB review identifier (24-character hex string).</span>
+<span class="sd">    :param author: Author&#39;s display name.</span>
+<span class="sd">    :param author_details: Nested author metadata (name, username, avatar, rating).</span>
+<span class="sd">    :param content: The review text.</span>
+<span class="sd">    :param created_at: Creation timestamp (ISO 8601).</span>
+<span class="sd">    :param iso_639_1: ISO 639-1 language code of the review.</span>
+<span class="sd">    :param media_id: TMDB id of the reviewed media.</span>
+<span class="sd">    :param media_title: Title of the reviewed media.</span>
+<span class="sd">    :param media_type: Media type of the reviewed item (e.g. ``movie``).</span>
+<span class="sd">    :param updated_at: Last-updated timestamp (ISO 8601).</span>
+<span class="sd">    :param url: Public URL of the review on themoviedb.org.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">author</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">author_details</span><span class="p">:</span> <span class="n">AuthorDetails</span>
+    <span class="n">content</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">iso_639_1</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">media_id</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">media_title</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">media_type</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">url</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;forbid&quot;</span><span class="p">}</span></div>
 

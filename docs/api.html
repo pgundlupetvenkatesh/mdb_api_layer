@@ -404,6 +404,23 @@ genres, production companies, and release info.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_movie_reviews</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">movie_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/movies_api.html#MoviesAPI.get_movie_reviews"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Retrieve user reviews for a specific movie.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>movie_id</strong> – TMDB movie ID.</p></li>
+<li><p><strong>query_params</strong> – Optional dict of query parameters (e.g., page).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Response object with a paginated list of user reviews.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">get_popular_movies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/movies_api.html#MoviesAPI.get_popular_movies"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Retrieve a paginated list of currently popular movies.</p>
 <dl class="field-list simple">
@@ -498,6 +515,50 @@ biography, known for movies, and birth info.</p>
 </dd></dl>
 
 </section>
+<section id="reviews-api">
+<h2>Reviews API<a class="headerlink" href="#reviews-api" title="Link to this heading">¶</a></h2>
+<p>Reviews API client for The Movie Database (TMDB) endpoints.</p>
+<p>This module provides a high-level interface for interacting with review-related
+TMDB API endpoints. It extends BaseAPI to inherit authentication, request
+handling, and response parsing functionality.</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>api = ReviewsAPI()
+response = api.get_review_details(“5b1c13b9c3a36848f2026384”)
+logger.info(response.data[‘author’])</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">api.reviews_api.</span></span><span class="sig-name descname"><span class="pre">ReviewsAPI</span></span><a class="reference internal" href="_modules/api/reviews_api.html#ReviewsAPI"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAPI</span></code></p>
+<p>Client for TMDB Reviews API endpoints.</p>
+<p>Provides methods for retrieving a single user review by its id. All methods
+return a response object containing status code, headers, and parsed data.</p>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>_sub_path (str): Base path segment for review endpoints.</p>
+</dd>
+<dt>Example:</dt><dd><p>api = ReviewsAPI()
+review = api.get_review_details(“5b1c13b9c3a36848f2026384”)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_review_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">review_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/reviews_api.html#ReviewsAPI.get_review_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Retrieve detailed information for a specific review.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>review_id</strong> – TMDB review ID (a 24-character hex string).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Response object with review details including author,
+content, media reference, and timestamps.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 <section id="search-api">
 <h2>Search API<a class="headerlink" href="#search-api" title="Link to this heading">¶</a></h2>
 <p>Search API client for The Movie Database (TMDB) endpoints.</p>
@@ -545,6 +606,54 @@ Defaults to page 1 if not specified.</p>
 </dd></dl>
 
 </section>
+<section id="trending-api">
+<h2>Trending API<a class="headerlink" href="#trending-api" title="Link to this heading">¶</a></h2>
+<p>Trending API client for The Movie Database (TMDB) endpoints.</p>
+<p>This module provides a high-level interface for interacting with trending-related
+TMDB API endpoints. It extends BaseAPI to inherit authentication, request
+handling, and response parsing functionality.</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>api = TrendingAPI()
+response = api.get_trending_movies(‘day’)
+logger.info(response.data[‘total_results’])</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">api.trending_api.</span></span><span class="sig-name descname"><span class="pre">TrendingAPI</span></span><a class="reference internal" href="_modules/api/trending_api.html#TrendingAPI"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAPI</span></code></p>
+<p>Client for TMDB Trending API endpoints.</p>
+<p>Provides methods for retrieving the movies trending over a given time
+window. All methods return a response object containing status code,
+headers, and parsed data.</p>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>_sub_path (str): Base path segment for trending endpoints.</p>
+</dd>
+<dt>Example:</dt><dd><p>api = TrendingAPI()
+trending = api.get_trending_movies(‘week’)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_trending_movies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_window</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/trending_api.html#TrendingAPI.get_trending_movies"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Retrieve the movies trending over a given time window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time_window</strong> – Trending window, either <code class="docutils literal notranslate"><span class="pre">'day'</span></code> or <code class="docutils literal notranslate"><span class="pre">'week'</span></code>.</p></li>
+<li><p><strong>query_params</strong> – Optional dict of query parameters.
+Defaults to page 1 if not specified.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Response object with paginated list of trending movies.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 </section>
 
 
@@ -577,7 +686,9 @@ Defaults to page 1 if not specified.</p>
 <li class="toctree-l2"><a class="reference internal" href="#movies-api">Movies API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#networks-api">Networks API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#people-api">People API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reviews-api">Reviews API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#search-api">Search API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#trending-api">Trending API</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="config.html">Config Module</a></li>
