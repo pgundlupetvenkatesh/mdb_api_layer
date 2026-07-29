@@ -5,6 +5,8 @@ import random
 from functools import lru_cache
 from pathlib import Path
 
+from loguru import logger
+
 def random_rating(min_val: float = 0.5, max_val: float = 10.0) -> float:
     """
     Generate a random valid movie rating in 0.5 increments.
@@ -92,10 +94,17 @@ def pick_random_review_id(max_attempts: int = 25) -> str:
     from api.movies_api import MoviesAPI
 
     movies_api = MoviesAPI()
-    for _ in range(max_attempts):
-        results = movies_api.get_movie_reviews(pick_random_movie_id()).data.get('results', [])
+    for attempt in range(1, max_attempts + 1):
+        movie_id = pick_random_movie_id()
+        results = movies_api.get_movie_reviews(movie_id).data.get('results', [])
         if results:
-            return random.choice(results)['id']
+            review_id = random.choice(results)['id']
+            logger.info(
+                f"Picked review_id {review_id} from movie_id {movie_id} "
+                f"({len(results)} reviews) on attempt {attempt}/{max_attempts}"
+            )
+            return review_id
+        logger.debug(f"No reviews for movie_id {movie_id} (attempt {attempt}/{max_attempts}), retrying")
 
     raise ValueError(f"No reviews found after {max_attempts} random movies.")
 

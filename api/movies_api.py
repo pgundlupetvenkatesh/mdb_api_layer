@@ -74,6 +74,7 @@ class MoviesAPI(BaseAPI):
         :param query_params: Optional dict of query parameters (e.g., page).
         :return: Response object with a paginated list of user reviews.
         """
+        logger.debug(f"query_params: {query_params}")
         return self.get(f"{self._sub_path}/{movie_id}/reviews", params=query_params)
 
     def get_alt_title(self, movie_id):

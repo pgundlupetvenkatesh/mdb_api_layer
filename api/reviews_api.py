@@ -11,6 +11,7 @@ Usage:
     logger.info(response.data['author'])
 """
 
+from loguru import logger
 from api.base_api import BaseAPI
 
 class ReviewsAPI(BaseAPI):
@@ -38,4 +39,5 @@ class ReviewsAPI(BaseAPI):
         :return: Response object with review details including author,
                  content, media reference, and timestamps.
         """
+        logger.info(f"Fetching review details for review_id: {review_id}")
         return self.get(f"{self._sub_path}/{review_id}")
