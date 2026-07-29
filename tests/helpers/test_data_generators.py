@@ -5,6 +5,8 @@ import random
 from functools import lru_cache
 from pathlib import Path
 
+from loguru import logger
+
 def random_rating(min_val: float = 0.5, max_val: float = 10.0) -> float:
     """
     Generate a random valid movie rating in 0.5 increments.
@@ -74,6 +76,37 @@ def pick_random_network_id() -> int:
     :return: Random network ID
     """
     return random.choice(NETWORK_IDS)
+
+def pick_random_review_id(max_attempts: int = 25) -> str:
+    """
+    Return a random review ID harvested from a random movie's reviews.
+
+    Reuses :func:`pick_random_movie_id`, then fetches that movie's reviews via
+    ``GET /3/movie/{id}/reviews``. Most movies in ``movie_ids.txt`` have no
+    reviews, so it retries random movies until one has at least one review, then
+    returns a random review's id. ``MoviesAPI`` is imported lazily to avoid an
+    import cycle (``api`` imports would otherwise load during test-data import).
+
+    :param max_attempts: Maximum random movies to try before giving up.
+    :return: A TMDB review ID (24-character hex string).
+    :raises ValueError: If no reviews are found within ``max_attempts`` tries.
+    """
+    from api.movies_api import MoviesAPI
+
+    movies_api = MoviesAPI()
+    for attempt in range(1, max_attempts + 1):
+        movie_id = pick_random_movie_id()
+        results = movies_api.get_movie_reviews(movie_id).data.get('results', [])
+        if results:
+            review_id = random.choice(results)['id']
+            logger.info(
+                f"Picked review_id {review_id} from movie_id {movie_id} "
+                f"({len(results)} reviews) on attempt {attempt}/{max_attempts}"
+            )
+            return review_id
+        logger.debug(f"No reviews for movie_id {movie_id} (attempt {attempt}/{max_attempts}), retrying")
+
+    raise ValueError(f"No reviews found after {max_attempts} random movies.")
 
 def pick_random_rated_movie_id(acc_id, session_id) -> int:
     """

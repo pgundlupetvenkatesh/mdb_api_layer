@@ -119,6 +119,26 @@ discover_movies:
     - query_param: { "page": 501 }
       expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
 
+trending_movies:
+  defaults:
+    valid:
+      status_code: 200
+      reason: 'OK'
+      exp_page: 1 # client defaults page to 1; cases that send a page override this
+    invalid:
+      status_code: 400
+      reason: 'Bad Request'
+  valid: # time_window is a path segment ('day'/'week'); page defaults to 1 in the client
+    - time_window: "day"
+    - time_window: "week"
+    - time_window: "day"
+      query_param: { "page": 2 }
+      exp_page: 2
+  invalid:
+    - time_window: "day"
+      query_param: { "page": -1 }
+      expected_message: "Invalid page: Pages start at 1 and max at 500. They are expected to be an integer."
+
 add_rating:
   defaults:
     valid:
@@ -194,6 +214,22 @@ get_network_details:
     - network_id: 0
       expected_message: "Invalid id: The pre-requisite id is invalid or not found."
     - network_id: 99999999
+      expected_message: "The resource you requested could not be found."
+
+get_review_details:
+  defaults:
+    valid:
+      status_code: 200
+      reason: 'OK'
+    invalid:
+      status_code: 404
+      reason: 'Not Found'
+  valid:
+    - review_id: "$random_review_id" # harvested live from a random movie's reviews
+  invalid:
+    - review_id: "0"
+      expected_message: "The resource you requested could not be found."
+    - review_id: "deadbeefdeadbeefdeadbeef"
       expected_message: "The resource you requested could not be found."
 
 update_list:

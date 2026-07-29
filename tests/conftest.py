@@ -116,6 +116,8 @@ from api.lists_api import ListsAPI
 from api.search_api import SearchAPI
 from api.discover_api import DiscoverAPI
 from api.networks_api import NetworksAPI
+from api.trending_api import TrendingAPI
+from api.reviews_api import ReviewsAPI
 
 @pytest.fixture(autouse=True)
 def _store_test_name(request):
@@ -217,10 +219,37 @@ def networks_api() -> NetworksAPI:
     """
     return NetworksAPI()
 
+@pytest.fixture
+def trending_api() -> TrendingAPI:
+    """
+    Provide a fresh ``TrendingAPI`` client for a test.
+
+    Dedicated, type-annotated alternative to ``get_api_instance('trending_api')``
+    — the dependency is declared in the test signature, typo-checked at
+    collection time, and gives editor autocomplete for trending endpoints.
+
+    :return: A configured ``TrendingAPI`` instance.
+    """
+    return TrendingAPI()
+
+@pytest.fixture
+def reviews_api() -> ReviewsAPI:
+    """
+    Provide a fresh ``ReviewsAPI`` client for a test.
+
+    Dedicated, type-annotated alternative to ``get_api_instance('reviews_api')``
+    — the dependency is declared in the test signature, typo-checked at
+    collection time, and gives editor autocomplete for review endpoints.
+
+    :return: A configured ``ReviewsAPI`` instance.
+    """
+    return ReviewsAPI()
+
 from tests.schemas.models import (
     GenericResponse, RatingResponse, MovieDetails,
     PopularMoviesResponse, PersonDetails, SearchMoviesResponse,
-    DiscoverMoviesResponse, NetworkDetails
+    DiscoverMoviesResponse, NetworkDetails, TrendingMoviesResponse,
+    ReviewDetails
 )
 
 @pytest.fixture
@@ -239,6 +268,8 @@ def load_schema():
         'search_movies_schema': SearchMoviesResponse,
         'discover_movies_schema': DiscoverMoviesResponse,
         'network_details_schema': NetworkDetails,
+        'trending_movies_schema': TrendingMoviesResponse,
+        'review_details_schema': ReviewDetails,
     }
 
     def _load(name):

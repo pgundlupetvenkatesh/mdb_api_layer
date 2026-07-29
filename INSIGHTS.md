@@ -68,6 +68,19 @@ run a thing, this repo's specific conventions) live in the relevant `README.md`
   error via different code paths (e.g. removing a nested key vs. removing its whole
   parent block).
 
+- **A model *factory* shares a body while keeping distinct model names.** When
+  several Pydantic models share one field layout but must stay separately named
+  (e.g. `tests/schemas/models.py`'s paginated list responses — one per endpoint
+  for `load_schema` registration and endpoint-specific validation-error names),
+  a `def paginated_movie_list(ge=1): return create_model("PaginatedMovieList",
+  page=(StrictInt, Field(ge=ge)), ...)` factory returns a *fresh base class* per
+  call, and each endpoint does `class SearchMoviesResponse(paginated_movie_list())`.
+  A function (not a plain base class) is what lets one axis vary — here the `ge`
+  bound (popular passes `ge=0`, the rest default to `1`) — without duplicating the
+  field list. `create_model(name, field=(type, Field(...)))` is the programmatic
+  equivalent of a `class` body; the leaf class name wins, so the shared
+  `"PaginatedMovieList"` base name only ever appears in the Method Resolution Order(MRO).
+
 ## Claude Code tooling
 
 - **The three review commands target different things.** `/review <PR>` reviews a
@@ -80,6 +93,17 @@ run a thing, this repo's specific conventions) live in the relevant `README.md`
 
 ## Design principles
 
+- **Each response attribute is checked exactly once, by the layer that owns it.**
+  Three layers with non-overlapping jobs: `assert_get_metadata` checks the HTTP
+  envelope (status/method/content-type/elapsed/url); a strict Pydantic model
+  (`model_validate`, `extra="forbid"`) checks the *entire* body's shape, types,
+  and field constraints; and the test itself asserts only what neither can — that
+  the returned resource is *the one requested* (`res_body['id'] == requested_id`,
+  a request/response **correlation** check). Re-asserting individual body fields
+  in the test would just duplicate the schema. Corollary: when the lookup key is
+  **randomly generated** (e.g. a review id harvested live), the id echo is the
+  *only* value assertion possible — the test can't know the author/content ahead
+  of time, so there's nothing else concrete to compare against without hardcoding.
 - **Separate "run the feature" from "evaluate the feature."** If a feature call
   and a meta-evaluation call are bundled behind one switch, the common case
   (just run it) silently pays for the rare case (grade it) — cost that scales with

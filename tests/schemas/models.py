@@ -10,7 +10,7 @@ Each model corresponds to a former .json schema in tests/schemas/.
 """
 
 from typing import Optional
-from pydantic import BaseModel, Field, StrictBool, StrictFloat, StrictInt, StrictStr
+from pydantic import BaseModel, Field, StrictBool, StrictFloat, StrictInt, StrictStr, create_model
 
 class GenericResponse(BaseModel):
     """
@@ -147,26 +147,52 @@ class MovieListItem(BaseModel):
 
     model_config = {"extra": "allow"}
 
-class PopularMoviesResponse(BaseModel):
+def paginated_movie_list(ge=1):
+    """
+    Build the base model for a paginated movie-list response.
+
+    TMDB's list-style movie endpoints (popular, search, discover, trending)
+    share one envelope: a ``page`` number, a ``results`` array of
+    ``MovieListItem`` (required non-empty here — endpoints whose empty-result
+    case is valid assert it directly in the test instead), and
+    ``total_pages`` / ``total_results`` counts. Each endpoint subclasses the
+    returned base so it keeps a distinct, individually-registered model name
+    while sharing this field definition.
+
+    :param ge: Lower bound applied to the integer pagination fields
+               (``page``, ``total_pages``, ``total_results``). Defaults to 1;
+               popular passes 0 for its looser contract.
+    :return: A Pydantic base model class with the shared paginated fields.
+    """
+    return create_model(
+        "PaginatedMovieList",
+        page=(StrictInt, Field(ge=ge)),
+        results=(list[MovieListItem], Field(min_length=1)),
+        total_pages=(StrictInt, Field(ge=ge)),
+        total_results=(StrictInt, Field(ge=ge)),
+    )
+
+class PopularMoviesResponse(paginated_movie_list(ge=0)):
     """
     Schema for popular movies list response from ``GET /3/movie/popular``.
 
     Validates the paginated response structure containing a list of
-    popular movies.
+    popular movies. Result items use the shared ``MovieListItem`` model.
 
     Replaces: ``popular_movies_schema.json``
-
-    :param page: Current page number in the paginated results.
-    :param results: List of popular movie items for this page.
-    :param total_pages: Total number of available pages.
-    :param total_results: Total number of popular movies across all pages.
     """
-    page: StrictInt = Field(ge=0)
-    results: list[MovieListItem] = Field(min_length=1)
-    total_pages: StrictInt = Field(ge=0)
-    total_results: StrictInt = Field(ge=0)
 
-class SearchMoviesResponse(BaseModel):
+class TrendingMoviesResponse(paginated_movie_list()):
+    """
+    Schema for trending movies list response from
+    ``GET /3/trending/movie/{time_window}``.
+
+    Validates the paginated response structure containing the movies trending
+    over the requested time window (``day`` or ``week``). Result items use the
+    shared ``MovieListItem`` model.
+    """
+
+class SearchMoviesResponse(paginated_movie_list()):
     """
     Schema for movie search response from ``GET /3/search/movie``.
 
@@ -175,18 +201,9 @@ class SearchMoviesResponse(BaseModel):
     model. ``results`` requires at least one item — searches expected to
     return no matches are asserted directly in the test instead of via
     this schema.
-
-    :param page: Current page number in the paginated results.
-    :param results: List of matching movie items for this page.
-    :param total_pages: Total number of available pages.
-    :param total_results: Total number of matches across all pages.
     """
-    page: StrictInt = Field(ge=1)
-    results: list[MovieListItem] = Field(min_length=1)
-    total_pages: StrictInt = Field(ge=1)
-    total_results: StrictInt = Field(ge=1)
 
-class DiscoverMoviesResponse(BaseModel):
+class DiscoverMoviesResponse(paginated_movie_list()):
     """
     Schema for movie discovery response from ``GET /3/discover/movie``.
 
@@ -195,16 +212,7 @@ class DiscoverMoviesResponse(BaseModel):
     ``MovieListItem`` model. ``results`` requires at least one item —
     filter combinations expected to match nothing are asserted directly
     in the test instead of via this schema.
-
-    :param page: Current page number in the paginated results.
-    :param results: List of matching movie items for this page.
-    :param total_pages: Total number of available pages.
-    :param total_results: Total number of matches across all pages.
     """
-    page: StrictInt = Field(ge=1)
-    results: list[MovieListItem] = Field(min_length=1)
-    total_pages: StrictInt = Field(ge=1)
-    total_results: StrictInt = Field(ge=1)
 
 class PersonDetails(BaseModel):
     """
@@ -269,5 +277,59 @@ class NetworkDetails(BaseModel):
     logo_path: Optional[str] = Field(default=None, pattern=r".*\.(png|jpg)$")
     name: StrictStr = Field(min_length=1)
     origin_country: StrictStr                                  # empty for some networks
+
+    model_config = {"extra": "forbid"}
+
+# Nested model for a review's author
+class AuthorDetails(BaseModel):
+    """
+    Nested model for the ``author_details`` block of a review.
+
+    :param name: Author's display name, may be empty.
+    :param username: Author's TMDB username.
+    :param avatar_path: Path to the author's avatar, or None. Unlike other
+                        ``*_path`` fields this is NOT constrained to an image
+                        extension — TMDB may store a gravatar URL here
+                        (e.g. ``/https://secure.gravatar.com/...``).
+    :param rating: The author's rating for the media (0–10), or None.
+    """
+    name: StrictStr                                            # may be empty
+    username: StrictStr = Field(min_length=1)
+    avatar_path: Optional[str] = None                         # may be a gravatar URL, not just an image path
+    rating: Optional[float] = Field(default=None, ge=0, le=10)
+
+    model_config = {"extra": "forbid"}
+
+class ReviewDetails(BaseModel):
+    """
+    Schema for review details response from ``GET /3/review/{review_id}``.
+
+    Validates the response structure for the TMDB review details endpoint.
+    The body is small and fully enumerated, so ``extra = "forbid"`` keeps
+    the contract strict.
+
+    :param id: Unique TMDB review identifier (24-character hex string).
+    :param author: Author's display name.
+    :param author_details: Nested author metadata (name, username, avatar, rating).
+    :param content: The review text.
+    :param created_at: Creation timestamp (ISO 8601).
+    :param iso_639_1: ISO 639-1 language code of the review.
+    :param media_id: TMDB id of the reviewed media.
+    :param media_title: Title of the reviewed media.
+    :param media_type: Media type of the reviewed item (e.g. ``movie``).
+    :param updated_at: Last-updated timestamp (ISO 8601).
+    :param url: Public URL of the review on themoviedb.org.
+    """
+    id: StrictStr = Field(min_length=1)
+    author: StrictStr = Field(min_length=1)
+    author_details: AuthorDetails
+    content: StrictStr = Field(min_length=1)
+    created_at: StrictStr = Field(min_length=1)
+    iso_639_1: StrictStr = Field(min_length=1)
+    media_id: StrictInt = Field(ge=0)
+    media_title: StrictStr = Field(min_length=1)
+    media_type: StrictStr = Field(min_length=1)
+    updated_at: StrictStr = Field(min_length=1)
+    url: StrictStr = Field(min_length=1)
 
     model_config = {"extra": "forbid"}

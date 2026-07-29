@@ -66,6 +66,17 @@ class MoviesAPI(BaseAPI):
         query_params ={ 'page': 1 , **(query_params or {})}
         return self.get(f"{self._sub_path}/top_rated", params=query_params)
 
+    def get_movie_reviews(self, movie_id, query_params=None):
+        """
+        Retrieve user reviews for a specific movie.
+
+        :param movie_id: TMDB movie ID.
+        :param query_params: Optional dict of query parameters (e.g., page).
+        :return: Response object with a paginated list of user reviews.
+        """
+        logger.debug(f"query_params: {query_params}")
+        return self.get(f"{self._sub_path}/{movie_id}/reviews", params=query_params)
+
     def get_alt_title(self, movie_id):
         """
         Retrieve alternative titles for a specific movie.
