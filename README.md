@@ -32,7 +32,7 @@ reports and Sphinx docs to GitHub Pages.
 ### Features
 
 - RESTful API client with session management (GET, POST, PUT, DELETE)
-- Multiple API clients: Movies, People, Lists, Account, Search, Discover, Networks
+- Multiple API clients: Movies, People, Lists, Account, Search, Discover, Networks, Trending, Reviews
 - Strict Pydantic model validation for response structure (single source of truth)
 - Consumer-driven contract testing with Pact
 - Data-driven testing with per-section YAML test data and cached dynamic generators
@@ -322,7 +322,8 @@ mdb_api_layer/
 │   ├── reviews/
 │   │   └── test_details.py     # Review details integration tests
 │   ├── journeys/
-│   │   └── test_search_to_details.py  # Multi-endpoint journey tests (chain search → details)
+│   │   ├── test_search_to_details.py   # Multi-endpoint journey test (chain search → details)
+│   │   └── test_trending_to_review.py  # Multi-endpoint journey test (chain trending → reviews → review details)
 │   ├── networks/
 │   │   └── test_details.py     # Network details integration tests
 │   ├── pacts/
