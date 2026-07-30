@@ -249,7 +249,7 @@ from tests.schemas.models import (
     GenericResponse, RatingResponse, MovieDetails,
     PopularMoviesResponse, PersonDetails, SearchMoviesResponse,
     DiscoverMoviesResponse, NetworkDetails, TrendingMoviesResponse,
-    ReviewDetails
+    ReviewDetails, MovieReviewsResponse
 )
 
 @pytest.fixture
@@ -270,6 +270,7 @@ def load_schema():
         'network_details_schema': NetworkDetails,
         'trending_movies_schema': TrendingMoviesResponse,
         'review_details_schema': ReviewDetails,
+        'movie_reviews_schema': MovieReviewsResponse,
     }
 
     def _load(name):
