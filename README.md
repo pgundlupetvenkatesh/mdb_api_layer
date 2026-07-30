@@ -4,7 +4,7 @@
 [![Docs](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml)</br>
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=yellow)
 ![pytest](https://img.shields.io/badge/Pytest-9.0%2B-orange?logo=pytest&logoColor=blue)
-![Loguru](https://img.shields.io/badge/Loguru-0.7%2B-green?logo=loguru&logoColor=white)
+![Locust](https://img.shields.io/badge/Locust-2.45%2B-green?logo=locust&logoColor=white)
 ![Pact](https://img.shields.io/badge/Pact-3.0%2B-red?logo=pact&logoColor=white)
 ![pydantic](https://img.shields.io/badge/Pydantic-2.12%2B-cyan?logo=pydantic&logoColor=red)
 ![Docker](https://img.shields.io/badge/Docker-29.2%2B-blue?logo=docker&logoColor=white)
