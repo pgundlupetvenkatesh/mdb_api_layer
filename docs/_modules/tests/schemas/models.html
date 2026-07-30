@@ -410,6 +410,66 @@
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;forbid&quot;</span><span class="p">}</span></div>
 
+
+<span class="c1"># Nested model for a review in a movie&#39;s reviews list</span>
+<div class="viewcode-block" id="ReviewListItem">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.ReviewListItem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReviewListItem</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Nested model for one item of the ``movie/{id}/reviews`` ``results`` array.</span>
+
+<span class="sd">    A list item is the subset of :class:`ReviewDetails` the reviews-list</span>
+<span class="sd">    endpoint returns — it omits the ``media_id`` / ``media_title`` /</span>
+<span class="sd">    ``media_type`` fields that only the standalone ``review/{id}`` detail</span>
+<span class="sd">    endpoint carries. The nested ``author_details`` block is identical, so it</span>
+<span class="sd">    reuses :class:`AuthorDetails`.</span>
+
+<span class="sd">    :param author: Author&#39;s display name.</span>
+<span class="sd">    :param author_details: Nested author metadata (name, username, avatar, rating).</span>
+<span class="sd">    :param content: The review text.</span>
+<span class="sd">    :param created_at: Creation timestamp (ISO 8601).</span>
+<span class="sd">    :param id: Unique TMDB review identifier (24-character hex string).</span>
+<span class="sd">    :param updated_at: Last-updated timestamp (ISO 8601).</span>
+<span class="sd">    :param url: Public URL of the review on themoviedb.org.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">author</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">author_details</span><span class="p">:</span> <span class="n">AuthorDetails</span>
+    <span class="n">content</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">url</span><span class="p">:</span> <span class="n">StrictStr</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;forbid&quot;</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="MovieReviewsResponse">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.MovieReviewsResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MovieReviewsResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Schema for a movie&#39;s reviews list from ``GET /3/movie/{movie_id}/reviews``.</span>
+
+<span class="sd">    Unlike the paginated *movie*-list endpoints, this envelope also carries a</span>
+<span class="sd">    top-level ``id`` (the movie whose reviews these are) alongside the usual</span>
+<span class="sd">    ``page`` / ``results`` / ``total_pages`` / ``total_results`` fields, and its</span>
+<span class="sd">    ``results`` are reviews, not movies. That distinct result type is why this</span>
+<span class="sd">    is a standalone model and does **not** subclass</span>
+<span class="sd">    :func:`paginated_movie_list`. ``results`` requires at least one item — the</span>
+<span class="sd">    reviews journey only validates against this schema for a movie that actually</span>
+<span class="sd">    has reviews, asserting the empty case directly instead.</span>
+
+<span class="sd">    :param id: TMDB id of the movie the reviews belong to.</span>
+<span class="sd">    :param page: Current page number.</span>
+<span class="sd">    :param results: List of reviews on this page.</span>
+<span class="sd">    :param total_pages: Total number of review pages.</span>
+<span class="sd">    :param total_results: Total number of reviews across all pages.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">page</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReviewListItem</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">total_pages</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">total_results</span><span class="p">:</span> <span class="n">StrictInt</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
 </pre></div>
 
           </div>
