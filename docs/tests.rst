@@ -50,6 +50,11 @@ Journeys
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: tests.journeys.test_trending_to_review
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Helpers
 -------
 

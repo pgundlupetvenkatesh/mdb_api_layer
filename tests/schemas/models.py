@@ -333,3 +333,57 @@ class ReviewDetails(BaseModel):
     url: StrictStr = Field(min_length=1)
 
     model_config = {"extra": "forbid"}
+
+# Nested model for a review in a movie's reviews list
+class ReviewListItem(BaseModel):
+    """
+    Nested model for one item of the ``movie/{id}/reviews`` ``results`` array.
+
+    A list item is the subset of :class:`ReviewDetails` the reviews-list
+    endpoint returns — it omits the ``media_id`` / ``media_title`` /
+    ``media_type`` fields that only the standalone ``review/{id}`` detail
+    endpoint carries. The nested ``author_details`` block is identical, so it
+    reuses :class:`AuthorDetails`.
+
+    :param author: Author's display name.
+    :param author_details: Nested author metadata (name, username, avatar, rating).
+    :param content: The review text.
+    :param created_at: Creation timestamp (ISO 8601).
+    :param id: Unique TMDB review identifier (24-character hex string).
+    :param updated_at: Last-updated timestamp (ISO 8601).
+    :param url: Public URL of the review on themoviedb.org.
+    """
+    author: StrictStr = Field(min_length=1)
+    author_details: AuthorDetails
+    content: StrictStr = Field(min_length=1)
+    created_at: StrictStr = Field(min_length=1)
+    id: StrictStr = Field(min_length=1)
+    updated_at: StrictStr = Field(min_length=1)
+    url: StrictStr = Field(min_length=1)
+
+    model_config = {"extra": "forbid"}
+
+class MovieReviewsResponse(BaseModel):
+    """
+    Schema for a movie's reviews list from ``GET /3/movie/{movie_id}/reviews``.
+
+    Unlike the paginated *movie*-list endpoints, this envelope also carries a
+    top-level ``id`` (the movie whose reviews these are) alongside the usual
+    ``page`` / ``results`` / ``total_pages`` / ``total_results`` fields, and its
+    ``results`` are reviews, not movies. That distinct result type is why this
+    is a standalone model and does **not** subclass
+    :func:`paginated_movie_list`. ``results`` requires at least one item — the
+    reviews journey only validates against this schema for a movie that actually
+    has reviews, asserting the empty case directly instead.
+
+    :param id: TMDB id of the movie the reviews belong to.
+    :param page: Current page number.
+    :param results: List of reviews on this page.
+    :param total_pages: Total number of review pages.
+    :param total_results: Total number of reviews across all pages.
+    """
+    id: StrictInt = Field(ge=0)
+    page: StrictInt = Field(ge=1)
+    results: list[ReviewListItem] = Field(min_length=1)
+    total_pages: StrictInt = Field(ge=1)
+    total_results: StrictInt = Field(ge=1)
