@@ -20,7 +20,7 @@ from pathlib import Path
 from loguru import logger
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from tests.helpers.failure_analyzer import analyzer
+from tests.helpers.failure_analyzer import analyzer, refine_until_confident
 
 # Registering logger configuration options and setup before any test runs
 def pytest_addoption(parser):
@@ -257,7 +257,12 @@ def load_schema():
     """
     Fixture that provides a Pydantic model loader for response validation.
 
-    Returns a callable that maps schema names to Pydantic model classes.
+    :return: A callable ``_load(name)`` that maps a registered schema name to
+        its Pydantic model class, raising ``ValueError`` for an unknown name.
+        Example use::
+
+            model = load_schema("movie_schema")   # -> <class 'MovieDetails'>
+            model.model_validate(response.data)
     """
     schema_map = {
         'generic_schema': GenericResponse,
@@ -388,58 +393,66 @@ def pytest_runtest_makereport(item, call):
                 failure_context["response_body"] = resp.data
 
     diagnosis = analyzer.analyze(failure_context)
+    if not diagnosis:
+        return
 
-    # Attach analysis to Allure report
-    if diagnosis:
-        confidence = diagnosis.get("confidence", 0)
+    # When judging is enabled (--judge-diagnosis sets AI_JUDGE_ENABLED=true in
+    # pytest_configure; Docker/K8s/CI set it via .env), run an agentic refine
+    # loop: an independent judge critiques the diagnosis and the analyzer
+    # improves it until the judge passes and confidence clears the target, or
+    # AI_REFINE_MAX_ITERS is hit. A normal triage run skips this entirely, so it
+    # pays for the diagnosis but not the extra judge/refine calls.
+    judgement = None
+    if os.getenv("AI_JUDGE_ENABLED", "false").lower() == "true":
+        from evals.judge import DEFAULT_JUDGE_MODEL, judge_live
+        judge_model = os.getenv("AI_JUDGE_MODEL", DEFAULT_JUDGE_MODEL)
+        api_key = os.getenv("GROQ_API_KEY")
+        diagnosis, judgement = refine_until_confident(
+            analyzer,
+            failure_context,
+            diagnosis,
+            judge_fn=lambda ctx, diag: judge_live(ctx, diag, model=judge_model, api_key=api_key),
+            max_iterations=int(os.getenv("AI_REFINE_MAX_ITERS", "2")),
+            confidence_target=int(os.getenv("AI_REFINE_CONFIDENCE_TARGET", "90")),
+        )
 
-        if confidence >= 80:
-            logger.info(f"🤖 High confidence [{confidence}%] - {diagnosis['root_cause']}")
-        elif confidence >= 50:
-            logger.warning(f"🤖 Medium confidence [{confidence}%] - {diagnosis['root_cause']}")
-        else:
-            logger.debug(f"🤖 Low confidence [{confidence}%] - treat with caution: {diagnosis['root_cause']}")
+    # Log + attach the FINAL diagnosis (after any refinement).
+    confidence = diagnosis.get("confidence", 0)
+    if confidence >= 80:
+        logger.info(f"🤖 High confidence [{confidence}%] - {diagnosis['root_cause']}")
+    elif confidence >= 50:
+        logger.warning(f"🤖 Medium confidence [{confidence}%] - {diagnosis['root_cause']}")
+    else:
+        logger.debug(f"🤖 Low confidence [{confidence}%] - treat with caution: {diagnosis['root_cause']}")
 
+    try:
+        import allure
+        allure.attach(
+            json.dumps(diagnosis, indent=2),
+            name="🤖 AI Failure Analysis",
+            attachment_type=allure.attachment_type.JSON
+        )
+    except Exception:
+        pass  # Allure not available
+
+    # Attach the final judge verdict (groundedness + completeness + actionability,
+    # everything except correctness — a live failure has no reference answer).
+    if judgement:
+        logger.info(
+            f"⚖️ Diagnosis quality [{judgement['overall_verdict']}] — "
+            f"groundedness: {judgement['groundedness']['verdict']}, "
+            f"completeness: {judgement['completeness']['verdict']}, "
+            f"actionability: {judgement['actionability']['verdict']}"
+        )
         try:
             import allure
             allure.attach(
-                json.dumps(diagnosis, indent=2),
-                name="🤖 AI Failure Analysis",
+                json.dumps(judgement, indent=2),
+                name="⚖️ Diagnosis Quality (LLM-as-a-judge)",
                 attachment_type=allure.attachment_type.JSON
             )
         except Exception:
             pass  # Allure not available
-
-        # Judge the diagnosis's quality (groundedness + completeness + actionability,
-        # everything except correctness — a live failure has no reference answer).
-        # Opt-in and subordinate to analysis: skip unless judging is enabled
-        # (--judge-diagnosis sets AI_JUDGE_ENABLED=true in pytest_configure;
-        # Docker/K8s/CI set it via .env), so a normal triage run pays for
-        # diagnosis but not the extra judge call.
-        if os.getenv("AI_JUDGE_ENABLED", "false").lower() == "true":
-            from evals.judge import DEFAULT_JUDGE_MODEL, judge_live
-            judgement = judge_live(
-                failure_context,
-                diagnosis,
-                model=os.getenv("AI_JUDGE_MODEL", DEFAULT_JUDGE_MODEL),
-                api_key=os.getenv("GROQ_API_KEY"),
-            )
-            if judgement:
-                logger.info(
-                    f"⚖️ Diagnosis quality [{judgement['overall_verdict']}] — "
-                    f"groundedness: {judgement['groundedness']['verdict']}, "
-                    f"completeness: {judgement['completeness']['verdict']}, "
-                    f"actionability: {judgement['actionability']['verdict']}"
-                )
-                try:
-                    import allure
-                    allure.attach(
-                        json.dumps(judgement, indent=2),
-                        name="⚖️ Diagnosis Quality (LLM-as-a-judge)",
-                        attachment_type=allure.attachment_type.JSON
-                    )
-                except Exception:
-                    pass  # Allure not available
 
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
     """

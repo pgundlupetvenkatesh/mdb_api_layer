@@ -66,7 +66,13 @@ async def list_tools():
 
     :returns: List of :class:`mcp.types.Tool` objects — one entry per
         exposed capability (``analyze_failure``, ``get_results``,
-        ``save_results``).
+        ``save_results``). Example return::
+
+            [
+                Tool(name="analyze_failure", description="Send a test failure...", inputSchema={...}),
+                Tool(name="get_results", description="Return all diagnosis results...", inputSchema={...}),
+                Tool(name="save_results", description="Flush all accumulated results...", inputSchema={...}),
+            ]
     """
     return TOOLS
 
@@ -87,6 +93,9 @@ async def call_tool(name: str, arguments: dict):
         JSON Schema advertised in :func:`list_tools`.
     :returns: List of :class:`mcp.types.TextContent` with the JSON result,
         as returned by :func:`~failure_mcp.tools.analyze_test_failure.handle_call`.
+        Example return::
+
+            [TextContent(type="text", text='{"saved": 3, "path": "ai_analysis/failure_analysis.json"}')]
     :raises ValueError: Propagated from ``handle_call`` if ``name`` is unknown.
     """
     return await handle_call(name, arguments)

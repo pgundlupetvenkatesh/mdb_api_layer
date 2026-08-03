@@ -40,6 +40,17 @@ class TrendingAPI(BaseAPI):
         :param query_params: Optional dict of query parameters.
                              Defaults to page 1 if not specified.
         :return: Response object with paginated list of trending movies.
+                 Example ``response.data``::
+
+                     {
+                         "page": 1,
+                         "results": [
+                             {"id": 1061474, "title": "Superman", "original_language": "en",
+                              "release_date": "2025-07-09", "vote_average": 7.5}
+                         ],
+                         "total_pages": 1000,
+                         "total_results": 20000
+                     }
         """
         query_params = {'page': 1, **(query_params or {})}
         logger.debug(f"query_params: {query_params}")

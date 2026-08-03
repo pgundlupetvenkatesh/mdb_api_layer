@@ -13,7 +13,7 @@ def random_rating(min_val: float = 0.5, max_val: float = 10.0) -> float:
 
     :param min_val: Minimum rating value (default: 0.5)
     :param max_val: Maximum rating value (default: 10.0)
-    :return: Random rating rounded to 1 decimal place
+    :return: Random rating in 0.5 increments, e.g. ``7.5``.
     """
     steps = int((max_val - min_val) / 0.5) + 1
     return min_val + random.randrange(steps) * 0.5
@@ -23,7 +23,7 @@ def random_invalid_rating() -> float:
     """
     Generate a random invalid movie rating (outside 0.5-10.0 range).
 
-    :return: Random invalid rating
+    :return: Random invalid rating, e.g. ``-3.5`` or ``14.2``.
     """
     if random.choice([True, False]):
         return round(random.uniform(-10.0, 0.4), 1)  # Too low
@@ -38,7 +38,7 @@ def _load_movie_ids() -> tuple:
     return the cached tuple, so repeated ``pick_random_movie_id`` calls don't
     re-read the file.
 
-    :return: Tuple of movie IDs.
+    :return: Tuple of movie IDs, e.g. ``(27205, 157336, 19995, ...)``.
     :raises FileNotFoundError: If movie_ids.txt doesn't exist.
     :raises ValueError: If the file is empty or contains no valid numbers.
     """
@@ -59,7 +59,7 @@ def pick_random_movie_id() -> int:
     The file is read once via :func:`_load_movie_ids`; each call only performs an
     in-memory random choice.
 
-    :return: Random movie ID
+    :return: Random movie ID, e.g. ``27205``.
     :raises FileNotFoundError: If movie_ids.txt doesn't exist
     :raises ValueError: If file is empty or contains invalid data
     """
@@ -73,7 +73,7 @@ def pick_random_network_id() -> int:
     """
     Return a random TMDB network ID from the hardcoded :data:`NETWORK_IDS` list.
 
-    :return: Random network ID
+    :return: Random network ID, e.g. ``213`` (Netflix).
     """
     return random.choice(NETWORK_IDS)
 
@@ -88,7 +88,8 @@ def pick_random_review_id(max_attempts: int = 25) -> str:
     import cycle (``api`` imports would otherwise load during test-data import).
 
     :param max_attempts: Maximum random movies to try before giving up.
-    :return: A TMDB review ID (24-character hex string).
+    :return: A TMDB review ID (24-character hex string), e.g.
+        ``"58a231c592514111d5001a2f"``.
     :raises ValueError: If no reviews are found within ``max_attempts`` tries.
     """
     from api.movies_api import MoviesAPI
@@ -112,7 +113,7 @@ def pick_random_rated_movie_id(acc_id, session_id) -> int:
     """
     Fetches rated movies from the account and returns a random movie ID.
 
-    :return: Random rated movie ID
+    :return: Random rated movie ID, e.g. ``27205``.
     :raises ValueError: If no rated movies are found
     """
     from api.account_api import AccountAPI

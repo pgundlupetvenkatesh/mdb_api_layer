@@ -22,5 +22,20 @@ class PeopleAPI(BaseAPI):
         :param person_id: TMDB person ID (e.g., 287 for Brad Pitt).
         :return: Response object with person details including name,
                  biography, known for movies, and birth info.
+                 Example ``response.data``::
+
+                     {
+                         "adult": false,
+                         "id": 287,
+                         "name": "Brad Pitt",
+                         "gender": 2,
+                         "known_for_department": "Acting",
+                         "birthday": "1963-12-18",
+                         "place_of_birth": "Shawnee, Oklahoma, USA",
+                         "also_known_as": ["William Bradley Pitt"],
+                         "biography": "William Bradley Pitt is an American actor...",
+                         "imdb_id": "nm0000093",
+                         "profile_path": "/cckcYc2v0yh5tnZTdZk6bnywnBv.png"
+                     }
         """
         return self.get(f"{self._sub_path}/{person_id}")

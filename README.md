@@ -2,8 +2,8 @@
 
 [![Tests](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/tmdb_test.yml)
 [![Docs](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml/badge.svg)](https://github.com/pgundlupetvenkatesh/mdb_api_layer/actions/workflows/build_docs.yml)</br>
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=yellow)
-![pytest](https://img.shields.io/badge/Pytest-9.0%2B-orange?logo=pytest&logoColor=blue)
+![Python](https://img.shields.io/badge/Python-3.14%2B-blue?logo=python&logoColor=yellow)
+![pytest](https://img.shields.io/badge/Pytest-9.1%2B-orange?logo=pytest&logoColor=blue)
 ![Locust](https://img.shields.io/badge/Locust-2.45%2B-green?logo=locust&logoColor=white)
 ![Pact](https://img.shields.io/badge/Pact-3.0%2B-red?logo=pact&logoColor=white)
 ![pydantic](https://img.shields.io/badge/Pydantic-2.12%2B-cyan?logo=pydantic&logoColor=red)
@@ -244,9 +244,10 @@ Almost every test in this project is an **integration test** that exercises the
 live TMDB API — that's the framework's whole purpose. The one exception is a
 small set of **offline unit tests** under `tests/evals/` that cover the pure
 logic of the AI-evaluation harness (`evals/`): golden-dataset validation
-(`load_dataset`), diagnosis sanitizing (`sanitize_diagnosis`), and the judge
-output-schema builder (`_output_schema`). These make **no** network calls and
-need **no** `GROQ_API_KEY`, so they run in a fraction of a second.
+(`load_dataset`), diagnosis sanitizing (`sanitize_diagnosis`), the judge
+output-schema builder (`_output_schema`), and the agentic refine loop
+(`refine_until_confident`, with the judge mocked). These make **no** network
+calls and need **no** `GROQ_API_KEY`, so they run in a fraction of a second.
 
 To keep `pytest tests/` meaning "run the TMDB API suite," these tests are marked
 `@pytest.mark.unit` and excluded from the default run via
@@ -548,7 +549,12 @@ FailureAnalyzer sends context to Groq API (Llama 3.3 70B)
 LLM returns structured JSON diagnosis:
   { root_cause, category, suggested_fix, confidence, explanation, evidence }
   ↓
-Diagnosis is:
+(judging on) Agentic refine loop: an independent judge critiques the
+  diagnosis; failed-dimension issues are fed back and the diagnosis is
+  re-generated + re-judged until it passes and confidence ≥ target
+  (or AI_REFINE_MAX_ITERS is hit)
+  ↓
+Diagnosis (final, refined) is:
   • Logged to console (🤖 emoji prefix)
   • Summarized in a console section at the end of the run
   • Attached to Allure report as JSON
@@ -652,6 +658,8 @@ attached to the Allure report deployed to GitHub Pages.
 | `GROQ_API_KEY`         | Groq API key for LLM access               | If enabled | -                                            |
 | `AI_MODEL`             | Analyzer (diagnosis) model on Groq        | No         | `llama-3.3-70b-versatile`                    |
 | `AI_JUDGE_MODEL`       | Judge model on Groq for live judging      | No         | `openai/gpt-oss-120b`                        |
+| `AI_REFINE_MAX_ITERS`  | Max agentic refine passes (judging on)    | No         | `2`                                          |
+| `AI_REFINE_CONFIDENCE_TARGET` | Confidence the refined diagnosis must reach | No  | `90`                                         |
 
 > **Note:** Groq free tier has rate limits. For large test suites with many failures, analysis may be throttled.
 > The analyzer gracefully handles errors — if an LLM call fails, the test result is unaffected.
@@ -670,6 +678,16 @@ live because a real failure has no reference answer. The verdict is logged
 call per failed test — leave it off for normal triage runs and turn it on when
 you're evaluating the analyzer itself. To measure correctness too, run the
 offline eval below.
+
+Enabling judging also makes the pipeline **agentic**: the judge doubles as a
+critic. When a diagnosis fails any dimension or falls short of the confidence
+target, its failed-dimension issues are fed back to the analyzer, which produces
+an improved diagnosis that is re-judged — looping until the judge passes and
+confidence ≥ `AI_REFINE_CONFIDENCE_TARGET` (default 90) or `AI_REFINE_MAX_ITERS`
+(default 2) is hit. The *final* refined diagnosis is what gets logged, attached,
+and saved. Because an independent judge (a different model family) drives the
+loop, "improve" means better-grounded — not the model simply inflating its own
+confidence. Normal `--failure-analysis`-only runs are single-shot and unaffected.
 
 | Dimension     | Failure mode it catches                                                   |
 |---------------|---------------------------------------------------------------------------|

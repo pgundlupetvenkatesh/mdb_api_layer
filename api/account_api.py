@@ -12,6 +12,17 @@ class AccountAPI(BaseAPI):
         :param query_params: Optional dict of query parameters.
                              Defaults to page 1 if not specified.
         :return: Response object with paginated list of rated movies.
+                 Example ``response.data``::
+
+                     {
+                         "page": 1,
+                         "results": [
+                             {"id": 550, "title": "Fight Club",
+                              "vote_average": 8.4, "vote_count": 26280}
+                         ],
+                         "total_pages": 3,
+                         "total_results": 42
+                     }
         """
         query_params = {'page': 1, **(query_params or {})}
         logger.debug(f"get_rated_movies query_params: {query_params}")

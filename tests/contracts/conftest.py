@@ -35,6 +35,9 @@ def pact():
     test's interactions merge into the same contract file on write.
 
     :yields: Configured Pact instance ready for interaction definition.
+        Example yield::
+
+            Pact("mdb_api_layer", "api_pvd")
     """
     pact = Pact(PACT_CONSUMER, PACT_PROVIDER)
     yield pact
@@ -51,11 +54,22 @@ def pact_movies_api():
     Returns the client with its default (real TMDB) base URL. Each test
     repoints ``base_url`` at the Pact mock server *after* ``pact.serve()``
     starts, because the mock server's URL/port aren't known until then.
+
+    :returns: A fresh :class:`~api.movies_api.MoviesAPI` client with its
+        default TMDB ``base_url``. Example return::
+
+            MoviesAPI()  # base_url="https://api.themoviedb.org" until repointed at the mock
     """
     return MoviesAPI()
 
 
 @pytest.fixture
 def pact_address():
-    """Return the ``(host, port)`` the Pact mock server should bind to."""
+    """Return the ``(host, port)`` the Pact mock server should bind to.
+
+    :returns: A ``(host, port)`` tuple; port ``0`` lets the OS pick a free
+        port. Example return::
+
+            ("localhost", 0)
+    """
     return PACT_MOCK_HOST, PACT_MOCK_PORT

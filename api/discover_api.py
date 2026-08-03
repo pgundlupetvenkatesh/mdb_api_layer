@@ -45,6 +45,18 @@ class DiscoverAPI(BaseAPI):
         :param query_params: Optional dict of query parameters.
                              Defaults to page 1 if not specified.
         :return: Response object with paginated list of matching movies.
+                 Example ``response.data``::
+
+                     {
+                         "page": 1,
+                         "results": [
+                             {"id": 27205, "title": "Inception", "original_language": "en",
+                              "genre_ids": [28, 878, 12], "vote_average": 8.4,
+                              "release_date": "2010-07-15"}
+                         ],
+                         "total_pages": 500,
+                         "total_results": 10000
+                     }
         """
         query_params = {'page': 1, **(query_params or {})}
         logger.debug(f"query_params: {query_params}")

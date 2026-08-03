@@ -71,7 +71,9 @@ class BaseAPI:
         :param params: Query parameters sent with the request.
         :type params: dict, optional
         :returns: Params with any :data:`_SECRET_QUERY_PARAMS` value replaced
-                  by ``<hidden>``.
+                  by ``<hidden>``. Example::
+
+                      {"page": 1, "session_id": "<hidden>"}
         :rtype: dict or the original value
         """
         if not isinstance(params, dict):
@@ -91,7 +93,9 @@ class BaseAPI:
         :param url: Full request URL, possibly containing secret query params.
         :type url: str
         :returns: URL with any :data:`_SECRET_QUERY_PARAMS` value replaced by
-                  ``<hidden>``.
+                  ``<hidden>``. Example::
+
+                      "https://api.themoviedb.org/3/account/42/rated/movies?session_id=<hidden>"
         :rtype: str
         """
         pattern = rf"\b({'|'.join(BaseAPI._SECRET_QUERY_PARAMS)})=[^&]+"
@@ -115,6 +119,22 @@ class BaseAPI:
         :param payload: JSON payload sent with the request body.
         :type payload: dict, optional
         :returns: Standardized API response with data, status code, and metadata.
+                  ``data`` holds the parsed JSON body; credentials in ``url`` /
+                  ``request_params`` are masked. Example return::
+
+                      APIResponse(
+                          data={"id": 550, "title": "Fight Club"},
+                          status_code=200,
+                          url="https://api.themoviedb.org/3/movie/550",
+                          headers={"Content-Type": "application/json;charset=utf-8"},
+                          cookies=<RequestsCookieJar>,
+                          encoding="utf-8",
+                          elapsed_seconds=0.12,
+                          reason="OK",
+                          request="GET",
+                          request_params={"page": 1},
+                          request_payload=None,
+                      )
         :rtype: APIResponse
         """
         return APIResponse(
@@ -140,6 +160,18 @@ class BaseAPI:
         :param params: Optional query parameters.
         :type params: dict, optional
         :returns: API response with data, status code, and metadata.
+                  Example return::
+
+                      APIResponse(
+                          data={"page": 1, "results": [{"id": 550, "title": "Fight Club"}]},
+                          status_code=200,
+                          url="https://api.themoviedb.org/3/movie/popular?page=1",
+                          elapsed_seconds=0.12,
+                          reason="OK",
+                          request="GET",
+                          request_params={"page": 1},
+                          request_payload=None,
+                      )
         :rtype: APIResponse
         """
         url = f"{self.base_url}/{self.api_version}/{endpoint}"
@@ -158,6 +190,18 @@ class BaseAPI:
         :param params: Optional query parameters.
         :type params: dict, optional
         :returns: API response with data, status code, and metadata.
+                  Example return::
+
+                      APIResponse(
+                          data={"success": True, "status_code": 1, "status_message": "Success."},
+                          status_code=201,
+                          url="https://api.themoviedb.org/3/movie/550/rating",
+                          elapsed_seconds=0.15,
+                          reason="Created",
+                          request="POST",
+                          request_params=None,
+                          request_payload={"value": 8.5},
+                      )
         :rtype: APIResponse
         """
         url = f"{self.base_url}/{self.api_version}/{endpoint}"
@@ -174,6 +218,19 @@ class BaseAPI:
         :param data: Optional JSON payload to send in the request body.
         :type data: dict, optional
         :returns: API response with data, status code, and metadata.
+                  Example return::
+
+                      APIResponse(
+                          data={"success": True, "status_code": 12,
+                                "status_message": "The item/record was updated successfully."},
+                          status_code=201,
+                          url="https://api.themoviedb.org/4/list/123",
+                          elapsed_seconds=0.20,
+                          reason="Created",
+                          request="PUT",
+                          request_params=None,
+                          request_payload={"description": "Updated description"},
+                      )
         :rtype: APIResponse
         """
         url = f"{self.base_url}/{self.api_version}/{endpoint}"
@@ -192,6 +249,19 @@ class BaseAPI:
         :param params: Optional query parameters.
         :type params: dict, optional
         :returns: API response with data, status code, and metadata.
+                  Example return::
+
+                      APIResponse(
+                          data={"success": True, "status_code": 13,
+                                "status_message": "The item/record was deleted successfully."},
+                          status_code=200,
+                          url="https://api.themoviedb.org/3/movie/550/rating",
+                          elapsed_seconds=0.14,
+                          reason="OK",
+                          request="DELETE",
+                          request_params=None,
+                          request_payload=None,
+                      )
         :rtype: APIResponse
         """
         url = f"{self.base_url}/{self.api_version}/{endpoint}"
