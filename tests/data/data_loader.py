@@ -33,7 +33,25 @@ def load_test_data(file_name: str, section: str | None = None) -> dict:
         :param file_name: Name of the YAML file containing test data.
         :param section: Optional top-level section to load exclusively (e.g.
             ``'get_movie_details'``). If ``None``, the whole file is loaded.
-        :return: Parsed data with defaults applied (scoped to ``section`` if given).
+        :return: Parsed data with defaults merged into each test case and
+            ``$placeholder`` tokens resolved (scoped to ``section`` if given; the
+            ``defaults`` keys are consumed, not returned). Example return for
+            ``load_test_data("test_data.yaml", "get_movie_details")``::
+
+                {
+                    "get_movie_details": {
+                        "valid": [
+                            {"movie_id": 27205, "status_code": 200, "reason": "OK",
+                             "exp_max_elp_secs": 5, "exp_content_type": "application/json",
+                             "exp_get_req_method": "GET"}
+                        ],
+                        "invalid": [
+                            {"movie_id": 0, "status_code": 404, "reason": "Not Found",
+                             "expected_message": "Invalid id: The pre-requisite id is invalid or not found.",
+                             "exp_max_elp_secs": 5}
+                        ],
+                    }
+                }
         :raises FileNotFoundError: If the specified file does not exist.
         :raises KeyError: If ``section`` is given but not present in the file.
         :raises yaml.YAMLError: If the file contains invalid YAML.

@@ -118,9 +118,19 @@ class FailureAnalyzer:
             - api_url: The API URL that was called (if available)
             - status_code: HTTP status code received (if available)
             - response_body: API response body snippet (if available)
-        :returns: Parsed JSON diagnosis dict (keys: ``root_cause``, ``category``,
-            ``suggested_fix``, ``confidence`` (0–100 int), ``explanation``, ``evidence``,
-            ``test_name``, ``model``) or None if analysis is disabled/fails.
+        :returns: Parsed JSON diagnosis dict, or None if analysis is
+            disabled/fails. Example return::
+
+                {
+                    "root_cause": "Movie id 0 is invalid, so TMDB returned 404.",
+                    "category": "data_issue",
+                    "suggested_fix": "Use a valid movie id from movie_ids.txt in the test data.",
+                    "confidence": 92,
+                    "explanation": "The request targeted /3/movie/0; TMDB rejects id 0 ...",
+                    "evidence": ["HTTP 404", "status_message: The resource you requested could not be found."],
+                    "test_name": "test_get_movie_details",
+                    "model": "llama-3.3-70b-versatile"
+                }
         """
         if not self.enabled:
             return None
@@ -149,7 +159,8 @@ class FailureAnalyzer:
         :param system_prompt: System message controlling the JSON output contract.
         :param user_prompt: The assembled failure (or critique) prompt.
         :param test_name: Name of the failed test, stamped onto the result.
-        :returns: Normalized diagnosis dict, or None if the call/parse fails.
+        :returns: Normalized diagnosis dict (same shape as :meth:`analyze`'s
+            return), or None if the call/parse fails.
         """
         from groq.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
         messages = [
@@ -200,8 +211,8 @@ class FailureAnalyzer:
         :param failure_context: Same dict passed to :meth:`analyze`.
         :param prior_diag: The diagnosis being critiqued.
         :param weaknesses: Concrete weaknesses from the judge to address.
-        :returns: Improved diagnosis dict, or None if analysis is disabled or
-            the call fails.
+        :returns: Improved diagnosis dict (same shape as :meth:`analyze`'s
+            return), or None if analysis is disabled or the call fails.
         """
         if not self.enabled:
             return None
@@ -362,7 +373,19 @@ def refine_until_confident(
     :param judge_fn: Callable ``(failure_context, diagnosis) -> judgement | None``.
     :param max_iterations: Maximum number of refine passes.
     :param confidence_target: Confidence (0–100) the diagnosis must reach.
-    :returns: Tuple of the final ``(diagnosis, judgement)``.
+    :returns: Tuple of the final ``(diagnosis, judgement)`` — the diagnosis has
+        the shape shown in :meth:`FailureAnalyzer.analyze`, the judgement is the
+        ``judge_fn`` output (or ``None`` if the judge errored). Example return::
+
+            (
+                {"root_cause": "...", "category": "data_issue", "confidence": 92, ...},
+                {
+                    "groundedness": {"verdict": "pass", "reasoning": "...", "issues": []},
+                    "completeness": {"verdict": "pass", "reasoning": "...", "issues": []},
+                    "actionability": {"verdict": "pass", "reasoning": "...", "issues": []},
+                    "overall_verdict": "pass",
+                },
+            )
     """
     # In production, the real judge, in conftest.py (~line 405) gets passed. judge_fn is a thin lambda wrapping
     # evals.judge.judge_live — It pre-binds the model/api_key args.

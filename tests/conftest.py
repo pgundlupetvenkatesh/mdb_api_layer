@@ -257,7 +257,12 @@ def load_schema():
     """
     Fixture that provides a Pydantic model loader for response validation.
 
-    Returns a callable that maps schema names to Pydantic model classes.
+    :return: A callable ``_load(name)`` that maps a registered schema name to
+        its Pydantic model class, raising ``ValueError`` for an unknown name.
+        Example use::
+
+            model = load_schema("movie_schema")   # -> <class 'MovieDetails'>
+            model.model_validate(response.data)
     """
     schema_map = {
         'generic_schema': GenericResponse,
