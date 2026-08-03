@@ -58,6 +58,21 @@
 <span class="sd">        :param person_id: TMDB person ID (e.g., 287 for Brad Pitt).</span>
 <span class="sd">        :return: Response object with person details including name,</span>
 <span class="sd">                 biography, known for movies, and birth info.</span>
+<span class="sd">                 Example ``response.data``::</span>
+
+<span class="sd">                     {</span>
+<span class="sd">                         &quot;adult&quot;: false,</span>
+<span class="sd">                         &quot;id&quot;: 287,</span>
+<span class="sd">                         &quot;name&quot;: &quot;Brad Pitt&quot;,</span>
+<span class="sd">                         &quot;gender&quot;: 2,</span>
+<span class="sd">                         &quot;known_for_department&quot;: &quot;Acting&quot;,</span>
+<span class="sd">                         &quot;birthday&quot;: &quot;1963-12-18&quot;,</span>
+<span class="sd">                         &quot;place_of_birth&quot;: &quot;Shawnee, Oklahoma, USA&quot;,</span>
+<span class="sd">                         &quot;also_known_as&quot;: [&quot;William Bradley Pitt&quot;],</span>
+<span class="sd">                         &quot;biography&quot;: &quot;William Bradley Pitt is an American actor...&quot;,</span>
+<span class="sd">                         &quot;imdb_id&quot;: &quot;nm0000093&quot;,</span>
+<span class="sd">                         &quot;profile_path&quot;: &quot;/cckcYc2v0yh5tnZTdZk6bnywnBv.png&quot;</span>
+<span class="sd">                     }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">person_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 </div>

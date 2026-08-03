@@ -53,7 +53,20 @@ Defaults to page 1 if not specified.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with paginated list of rated movies.</p>
+<dd class="field-even"><p><p>Response object with paginated list of rated movies.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">550</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Fight Club&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;vote_average&quot;</span><span class="p">:</span> <span class="mf">8.4</span><span class="p">,</span> <span class="s2">&quot;vote_count&quot;</span><span class="p">:</span> <span class="mi">26280</span><span class="p">}</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;total_pages&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s2">&quot;total_results&quot;</span><span class="p">:</span> <span class="mi">42</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -157,7 +170,22 @@ for interacting with the Movie Database API.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>API response with data, status code, and metadata.</p>
+<dd class="field-even"><p><p>API response with data, status code, and metadata.
+Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">APIResponse</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;success&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;status_code&quot;</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>
+          <span class="s2">&quot;status_message&quot;</span><span class="p">:</span> <span class="s2">&quot;The item/record was deleted successfully.&quot;</span><span class="p">},</span>
+    <span class="n">status_code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://api.themoviedb.org/3/movie/550/rating&quot;</span><span class="p">,</span>
+    <span class="n">elapsed_seconds</span><span class="o">=</span><span class="mf">0.14</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;OK&quot;</span><span class="p">,</span>
+    <span class="n">request</span><span class="o">=</span><span class="s2">&quot;DELETE&quot;</span><span class="p">,</span>
+    <span class="n">request_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">request_payload</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>APIResponse</p>
@@ -177,7 +205,21 @@ for interacting with the Movie Database API.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>API response with data, status code, and metadata.</p>
+<dd class="field-even"><p><p>API response with data, status code, and metadata.
+Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">APIResponse</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">550</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Fight Club&quot;</span><span class="p">}]},</span>
+    <span class="n">status_code</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://api.themoviedb.org/3/movie/popular?page=1&quot;</span><span class="p">,</span>
+    <span class="n">elapsed_seconds</span><span class="o">=</span><span class="mf">0.12</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;OK&quot;</span><span class="p">,</span>
+    <span class="n">request</span><span class="o">=</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span>
+    <span class="n">request_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+    <span class="n">request_payload</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>APIResponse</p>
@@ -198,7 +240,21 @@ for interacting with the Movie Database API.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>API response with data, status code, and metadata.</p>
+<dd class="field-even"><p><p>API response with data, status code, and metadata.
+Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">APIResponse</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;success&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;status_code&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;status_message&quot;</span><span class="p">:</span> <span class="s2">&quot;Success.&quot;</span><span class="p">},</span>
+    <span class="n">status_code</span><span class="o">=</span><span class="mi">201</span><span class="p">,</span>
+    <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://api.themoviedb.org/3/movie/550/rating&quot;</span><span class="p">,</span>
+    <span class="n">elapsed_seconds</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Created&quot;</span><span class="p">,</span>
+    <span class="n">request</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+    <span class="n">request_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">request_payload</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mf">8.5</span><span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>APIResponse</p>
@@ -218,7 +274,22 @@ for interacting with the Movie Database API.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>API response with data, status code, and metadata.</p>
+<dd class="field-even"><p><p>API response with data, status code, and metadata.
+Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">APIResponse</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;success&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;status_code&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+          <span class="s2">&quot;status_message&quot;</span><span class="p">:</span> <span class="s2">&quot;The item/record was updated successfully.&quot;</span><span class="p">},</span>
+    <span class="n">status_code</span><span class="o">=</span><span class="mi">201</span><span class="p">,</span>
+    <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://api.themoviedb.org/4/list/123&quot;</span><span class="p">,</span>
+    <span class="n">elapsed_seconds</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;Created&quot;</span><span class="p">,</span>
+    <span class="n">request</span><span class="o">=</span><span class="s2">&quot;PUT&quot;</span><span class="p">,</span>
+    <span class="n">request_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">request_payload</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Updated description&quot;</span><span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>APIResponse</p>
@@ -271,7 +342,21 @@ vote_count.gte (among others documented by TMDB).</p>
 Defaults to page 1 if not specified.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with paginated list of matching movies.</p>
+<dd class="field-even"><p><p>Response object with paginated list of matching movies.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">27205</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Inception&quot;</span><span class="p">,</span> <span class="s2">&quot;original_language&quot;</span><span class="p">:</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;genre_ids&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">28</span><span class="p">,</span> <span class="mi">878</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span> <span class="s2">&quot;vote_average&quot;</span><span class="p">:</span> <span class="mf">8.4</span><span class="p">,</span>
+         <span class="s2">&quot;release_date&quot;</span><span class="p">:</span> <span class="s2">&quot;2010-07-15&quot;</span><span class="p">}</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;total_pages&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>
+    <span class="s2">&quot;total_results&quot;</span><span class="p">:</span> <span class="mi">10000</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -308,7 +393,16 @@ favorite movies”, language=”en”)</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with updated list details.</p>
+<dd class="field-even"><p><p>Response object with updated list details.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;status_message&quot;</span><span class="p">:</span> <span class="s2">&quot;The item/record was updated successfully.&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;success&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;status_code&quot;</span><span class="p">:</span> <span class="mi">12</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -357,7 +451,12 @@ popular = api.get_popular_movies({‘page’: 2})</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with status of the rating submission.</p>
+<dd class="field-even"><p><p>Response object with status of the rating submission.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s2">&quot;success&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span> <span class="s2">&quot;status_code&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;status_message&quot;</span><span class="p">:</span> <span class="s2">&quot;Success.&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -365,10 +464,24 @@ popular = api.get_popular_movies({‘page’: 2})</p>
 <dl class="py method">
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">delete_rating</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">movie_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/movies_api.html#MoviesAPI.delete_rating"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Delete a user rating for a specific movie.
-:param movie_id: TMDB movie ID.
-:param query_params: Optional dict of query parameters, such as session_id for authentication.
-:return: Response object with status of the rating deletion.</p>
+<dd><p>Delete a user rating for a specific movie.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>movie_id</strong> – TMDB movie ID.</p></li>
+<li><p><strong>query_params</strong> – Optional dict of query parameters, such as session_id for authentication.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Response object with status of the rating deletion.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s2">&quot;success&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span> <span class="s2">&quot;status_code&quot;</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>
+ <span class="s2">&quot;status_message&quot;</span><span class="p">:</span> <span class="s2">&quot;The item/record was deleted successfully.&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -381,8 +494,19 @@ popular = api.get_popular_movies({‘page’: 2})</p>
 <dd class="field-odd"><p><strong>movie_id</strong> – TMDB movie ID.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with list of alternative titles
-including country codes and title strings.</p>
+<dd class="field-even"><p><p>Response object with list of alternative titles
+including country codes and title strings.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">550</span><span class="p">,</span>
+    <span class="s2">&quot;titles&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;iso_3166_1&quot;</span><span class="p">:</span> <span class="s2">&quot;BR&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Clube da Luta&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;iso_3166_1&quot;</span><span class="p">:</span> <span class="s2">&quot;PL&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Podziemny krąg&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -396,8 +520,26 @@ including country codes and title strings.</p>
 <dd class="field-odd"><p><strong>movie_id</strong> – TMDB movie ID (e.g., 550 for Fight Club).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with movie details including title,
-genres, production companies, and release info.</p>
+<dd class="field-even"><p><p>Response object with movie details including title,
+genres, production companies, and release info.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;adult&quot;</span><span class="p">:</span> <span class="n">false</span><span class="p">,</span>
+    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">550</span><span class="p">,</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Fight Club&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;original_title&quot;</span><span class="p">:</span> <span class="s2">&quot;Fight Club&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;original_language&quot;</span><span class="p">:</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;release_date&quot;</span><span class="p">:</span> <span class="s2">&quot;1999-10-15&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;origin_country&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;US&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;genres&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Drama&quot;</span><span class="p">}],</span>
+    <span class="s2">&quot;production_companies&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">508</span><span class="p">,</span> <span class="s2">&quot;logo_path&quot;</span><span class="p">:</span> <span class="s2">&quot;/7cxRWzi4LsVm4Utfpr1hfARNurT.png&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Regency Enterprises&quot;</span><span class="p">,</span> <span class="s2">&quot;origin_country&quot;</span><span class="p">:</span> <span class="s2">&quot;US&quot;</span><span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -414,7 +556,27 @@ genres, production companies, and release info.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with a paginated list of user reviews.</p>
+<dd class="field-even"><p><p>Response object with a paginated list of user reviews.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">550</span><span class="p">,</span>
+    <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;5b1c13b9c3a36848f2026384&quot;</span><span class="p">,</span> <span class="s2">&quot;author&quot;</span><span class="p">:</span> <span class="s2">&quot;Cat Ellington&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;author_details&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Cat Ellington&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;CatEllington&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;avatar_path&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span> <span class="s2">&quot;rating&quot;</span><span class="p">:</span> <span class="mf">8.0</span><span class="p">},</span>
+         <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;The film that launched...&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;created_at&quot;</span><span class="p">:</span> <span class="s2">&quot;2018-06-09T18:15:37.023Z&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;updated_at&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-06-23T15:58:09.043Z&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://www.themoviedb.org/review/5b1c13b9c3a36848f2026384&quot;</span><span class="p">}</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;total_pages&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;total_results&quot;</span><span class="p">:</span> <span class="mi">8</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -429,7 +591,21 @@ genres, production companies, and release info.</p>
 Defaults to page 1 if not specified.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with paginated list of popular movies.</p>
+<dd class="field-even"><p><p>Response object with paginated list of popular movies.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">550</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Fight Club&quot;</span><span class="p">,</span> <span class="s2">&quot;original_language&quot;</span><span class="p">:</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;genre_ids&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">18</span><span class="p">],</span> <span class="s2">&quot;vote_average&quot;</span><span class="p">:</span> <span class="mf">8.4</span><span class="p">,</span> <span class="s2">&quot;vote_count&quot;</span><span class="p">:</span> <span class="mi">26280</span><span class="p">,</span>
+         <span class="s2">&quot;release_date&quot;</span><span class="p">:</span> <span class="s2">&quot;1999-10-15&quot;</span><span class="p">}</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;total_pages&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>
+    <span class="s2">&quot;total_results&quot;</span><span class="p">:</span> <span class="mi">10000</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -444,7 +620,21 @@ Defaults to page 1 if not specified.</p>
 Defaults to page 1 if not specified.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with paginated list of top-rated movies.</p>
+<dd class="field-even"><p><p>Response object with paginated list of top-rated movies.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">278</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Shawshank Redemption&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;original_language&quot;</span><span class="p">:</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="s2">&quot;vote_average&quot;</span><span class="p">:</span> <span class="mf">8.7</span><span class="p">,</span>
+         <span class="s2">&quot;vote_count&quot;</span><span class="p">:</span> <span class="mi">27000</span><span class="p">,</span> <span class="s2">&quot;release_date&quot;</span><span class="p">:</span> <span class="s2">&quot;1994-09-23&quot;</span><span class="p">}</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;total_pages&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>
+    <span class="s2">&quot;total_results&quot;</span><span class="p">:</span> <span class="mi">10000</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -474,8 +664,20 @@ a response object containing status code, headers, and parsed data.</p>
 <dd class="field-odd"><p><strong>network_id</strong> – TMDB network ID (e.g., 213 for Netflix).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with network details including name,
-headquarters, homepage, logo path, and origin country.</p>
+<dd class="field-even"><p><p>Response object with network details including name,
+headquarters, homepage, logo path, and origin country.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">213</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Netflix&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;headquarters&quot;</span><span class="p">:</span> <span class="s2">&quot;Los Gatos, California, USA&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;homepage&quot;</span><span class="p">:</span> <span class="s2">&quot;https://www.netflix.com&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;logo_path&quot;</span><span class="p">:</span> <span class="s2">&quot;/wwemzKWzjKYJFfCeiB57q3r4Bcm.png&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;origin_country&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -506,8 +708,25 @@ status code, headers, and parsed data.</p>
 <dd class="field-odd"><p><strong>person_id</strong> – TMDB person ID (e.g., 287 for Brad Pitt).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with person details including name,
-biography, known for movies, and birth info.</p>
+<dd class="field-even"><p><p>Response object with person details including name,
+biography, known for movies, and birth info.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;adult&quot;</span><span class="p">:</span> <span class="n">false</span><span class="p">,</span>
+    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">287</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Brad Pitt&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gender&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s2">&quot;known_for_department&quot;</span><span class="p">:</span> <span class="s2">&quot;Acting&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;birthday&quot;</span><span class="p">:</span> <span class="s2">&quot;1963-12-18&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;place_of_birth&quot;</span><span class="p">:</span> <span class="s2">&quot;Shawnee, Oklahoma, USA&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;also_known_as&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;William Bradley Pitt&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;biography&quot;</span><span class="p">:</span> <span class="s2">&quot;William Bradley Pitt is an American actor...&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;imdb_id&quot;</span><span class="p">:</span> <span class="s2">&quot;nm0000093&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;profile_path&quot;</span><span class="p">:</span> <span class="s2">&quot;/cckcYc2v0yh5tnZTdZk6bnywnBv.png&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -550,8 +769,28 @@ review = api.get_review_details(“5b1c13b9c3a36848f2026384”)</p>
 <dd class="field-odd"><p><strong>review_id</strong> – TMDB review ID (a 24-character hex string).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with review details including author,
-content, media reference, and timestamps.</p>
+<dd class="field-even"><p><p>Response object with review details including author,
+content, media reference, and timestamps.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;5b1c13b9c3a36848f2026384&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;author&quot;</span><span class="p">:</span> <span class="s2">&quot;Cat Ellington&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;author_details&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Cat Ellington&quot;</span><span class="p">,</span> <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;CatEllington&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;avatar_path&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span> <span class="s2">&quot;rating&quot;</span><span class="p">:</span> <span class="mf">8.0</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;The film that launched a thousand fight clubs...&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;created_at&quot;</span><span class="p">:</span> <span class="s2">&quot;2018-06-09T18:15:37.023Z&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;iso_639_1&quot;</span><span class="p">:</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;media_id&quot;</span><span class="p">:</span> <span class="mi">550</span><span class="p">,</span>
+    <span class="s2">&quot;media_title&quot;</span><span class="p">:</span> <span class="s2">&quot;Fight Club&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;media_type&quot;</span><span class="p">:</span> <span class="s2">&quot;movie&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;updated_at&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-06-23T15:58:09.043Z&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://www.themoviedb.org/review/5b1c13b9c3a36848f2026384&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -598,7 +837,20 @@ primary_release_year, page, region, year.</p>
 Defaults to page 1 if not specified.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with paginated list of matching movies.</p>
+<dd class="field-even"><p><p>Response object with paginated list of matching movies.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">268</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Batman&quot;</span><span class="p">,</span> <span class="s2">&quot;original_language&quot;</span><span class="p">:</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;release_date&quot;</span><span class="p">:</span> <span class="s2">&quot;1989-06-23&quot;</span><span class="p">,</span> <span class="s2">&quot;vote_average&quot;</span><span class="p">:</span> <span class="mf">7.2</span><span class="p">}</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;total_pages&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s2">&quot;total_results&quot;</span><span class="p">:</span> <span class="mi">92</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -646,7 +898,20 @@ Defaults to page 1 if not specified.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Response object with paginated list of trending movies.</p>
+<dd class="field-even"><p><p>Response object with paginated list of trending movies.
+Example <code class="docutils literal notranslate"><span class="pre">response.data</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;page&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1061474</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Superman&quot;</span><span class="p">,</span> <span class="s2">&quot;original_language&quot;</span><span class="p">:</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;release_date&quot;</span><span class="p">:</span> <span class="s2">&quot;2025-07-09&quot;</span><span class="p">,</span> <span class="s2">&quot;vote_average&quot;</span><span class="p">:</span> <span class="mf">7.5</span><span class="p">}</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;total_pages&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="s2">&quot;total_results&quot;</span><span class="p">:</span> <span class="mi">20000</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>

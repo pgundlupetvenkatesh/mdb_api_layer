@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tests.evals.test_failure_refine &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for tests.evals.test_failure_refine</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Unit tests for the agentic refine loop in :mod:`tests.helpers.failure_analyzer`.</span>
+
+<span class="sd">Covers :func:`~tests.helpers.failure_analyzer.refine_until_confident`,</span>
+<span class="sd">:func:`~tests.helpers.failure_analyzer._collect_issues`, and</span>
+<span class="sd">:meth:`~tests.helpers.failure_analyzer.FailureAnalyzer.refine`. These are</span>
+<span class="sd">offline, deterministic tests — the analyzer&#39;s ``_request_refined_diagnosis`` (the</span>
+<span class="sd">refine path&#39;s Groq call) is monkeypatched and the judge is injected as a fake</span>
+<span class="sd">callable, so no ``GROQ_API_KEY`` and no network are required.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">allure</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tests.helpers.failure_analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FailureAnalyzer</span><span class="p">,</span>
+    <span class="n">_collect_issues</span><span class="p">,</span>
+    <span class="n">refine_until_confident</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Applies the unit marker to every test in the file at once, instead of decorating each class/test.</span>
+<span class="n">pytestmark</span> <span class="o">=</span> <span class="n">pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">unit</span>
+<span class="sd">&quot;&quot;&quot;Mark every test in this module as an offline unit test (not a TMDB API test).&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_diagnosis</span><span class="p">(</span><span class="n">confidence</span><span class="p">,</span> <span class="n">root_cause</span><span class="o">=</span><span class="s2">&quot;stale movie id&quot;</span><span class="p">,</span> <span class="n">test_name</span><span class="o">=</span><span class="s2">&quot;test_a&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a minimal diagnosis dict as the analyzer would return it.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;root_cause&quot;</span><span class="p">:</span> <span class="n">root_cause</span><span class="p">,</span>
+        <span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="s2">&quot;data_issue&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;suggested_fix&quot;</span><span class="p">:</span> <span class="s2">&quot;refresh the fixture id&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="n">confidence</span><span class="p">,</span>
+        <span class="s2">&quot;explanation&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;evidence&quot;</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="n">test_name</span><span class="p">,</span>
+        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;llama&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_judgement</span><span class="p">(</span><span class="n">overall</span><span class="p">,</span> <span class="n">groundedness</span><span class="o">=</span><span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="n">completeness</span><span class="o">=</span><span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="n">actionability</span><span class="o">=</span><span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="n">issues</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ``judge_live``-shaped verdict dict.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dim</span><span class="p">(</span><span class="n">verdict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="n">verdict</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="n">issues</span> <span class="ow">or</span> <span class="p">[]}</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;groundedness&quot;</span><span class="p">:</span> <span class="n">dim</span><span class="p">(</span><span class="n">groundedness</span><span class="p">),</span>
+        <span class="s2">&quot;completeness&quot;</span><span class="p">:</span> <span class="n">dim</span><span class="p">(</span><span class="n">completeness</span><span class="p">),</span>
+        <span class="s2">&quot;actionability&quot;</span><span class="p">:</span> <span class="n">dim</span><span class="p">(</span><span class="n">actionability</span><span class="p">),</span>
+        <span class="s2">&quot;overall_verdict&quot;</span><span class="p">:</span> <span class="n">overall</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sequenced_judge</span><span class="p">(</span><span class="n">verdicts</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A judge_fn that returns each verdict in turn (repeating the last), counting calls.&quot;&quot;&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">judge_fn</span><span class="p">(</span><span class="n">_ctx</span><span class="p">,</span> <span class="n">_diag</span><span class="p">):</span>
+        <span class="n">verdict</span> <span class="o">=</span> <span class="n">verdicts</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">verdicts</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="n">state</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">verdict</span>
+
+    <span class="k">return</span> <span class="n">judge_fn</span><span class="p">,</span> <span class="n">state</span>
+
+
+<div class="viewcode-block" id="analyzer">
+<a class="viewcode-back" href="../../../tests.html#tests.evals.test_failure_refine.analyzer">[docs]</a>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">analyzer</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A force-enabled analyzer whose Groq call is stubbed per test.&quot;&quot;&quot;</span>
+    <span class="n">instance</span> <span class="o">=</span> <span class="n">FailureAnalyzer</span><span class="p">()</span>
+    <span class="n">instance</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># bypass env gating; _request_refined_diagnosis is monkeypatched per test</span>
+    <span class="k">return</span> <span class="n">instance</span></div>
+
+
+
+<span class="nd">@allure</span><span class="o">.</span><span class="n">epic</span><span class="p">(</span><span class="s2">&quot;AI Evaluation&quot;</span><span class="p">)</span>
+<span class="nd">@allure</span><span class="o">.</span><span class="n">feature</span><span class="p">(</span><span class="s2">&quot;Agentic refine loop&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestRefineUntilConfident</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Behavior of :func:`refine_until_confident`.&quot;&quot;&quot;</span>
+
+    <span class="nd">@allure</span><span class="o">.</span><span class="n">story</span><span class="p">(</span><span class="s2">&quot;Weak diagnosis is refined until judge-pass + confident&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_refines_low_confidence_failing_diagnosis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analyzer</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A failing judge + low confidence triggers a refine that returns the improved diagnosis.&quot;&quot;&quot;</span>
+        <span class="n">initial</span> <span class="o">=</span> <span class="n">_diagnosis</span><span class="p">(</span><span class="n">confidence</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">_results</span> <span class="o">=</span> <span class="p">[</span><span class="n">initial</span><span class="p">]</span>
+        <span class="n">improved</span> <span class="o">=</span> <span class="n">_diagnosis</span><span class="p">(</span><span class="n">confidence</span><span class="o">=</span><span class="mi">95</span><span class="p">,</span> <span class="n">root_cause</span><span class="o">=</span><span class="s2">&quot;fixture id 550 was deleted&quot;</span><span class="p">)</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">_request_refined_diagnosis</span> <span class="o">=</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">_a</span><span class="p">,</span> <span class="o">**</span><span class="n">_k</span><span class="p">:</span> <span class="n">improved</span>
+        <span class="n">judge_fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_sequenced_judge</span><span class="p">([</span><span class="n">_judgement</span><span class="p">(</span><span class="s2">&quot;fail&quot;</span><span class="p">,</span> <span class="n">groundedness</span><span class="o">=</span><span class="s2">&quot;fail&quot;</span><span class="p">),</span> <span class="n">_judgement</span><span class="p">(</span><span class="s2">&quot;pass&quot;</span><span class="p">)])</span>
+
+        <span class="n">final</span><span class="p">,</span> <span class="n">judgement</span> <span class="o">=</span> <span class="n">refine_until_confident</span><span class="p">(</span>
+            <span class="n">analyzer</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="s2">&quot;test_a&quot;</span><span class="p">},</span> <span class="n">initial</span><span class="p">,</span> <span class="n">judge_fn</span><span class="p">,</span>
+            <span class="n">max_iterations</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">confidence_target</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">final</span> <span class="ow">is</span> <span class="n">improved</span>
+        <span class="k">assert</span> <span class="n">final</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">95</span>
+        <span class="k">assert</span> <span class="n">judgement</span><span class="p">[</span><span class="s2">&quot;overall_verdict&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;pass&quot;</span>
+        <span class="c1"># The refined diagnosis replaces the stored one for that test.</span>
+        <span class="k">assert</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="n">improved</span>
+
+    <span class="nd">@allure</span><span class="o">.</span><span class="n">story</span><span class="p">(</span><span class="s2">&quot;Refine when judge passes but confidence misses the bar&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_refines_when_only_confidence_below_target</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analyzer</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Judge-pass at confidence 80 still refines up to the confidence target.&quot;&quot;&quot;</span>
+        <span class="n">initial</span> <span class="o">=</span> <span class="n">_diagnosis</span><span class="p">(</span><span class="n">confidence</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">_results</span> <span class="o">=</span> <span class="p">[</span><span class="n">initial</span><span class="p">]</span>
+        <span class="n">improved</span> <span class="o">=</span> <span class="n">_diagnosis</span><span class="p">(</span><span class="n">confidence</span><span class="o">=</span><span class="mi">92</span><span class="p">)</span>
+        <span class="n">calls</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">complete</span><span class="p">(</span><span class="o">*</span><span class="n">_a</span><span class="p">,</span> <span class="o">**</span><span class="n">_k</span><span class="p">):</span>
+            <span class="n">calls</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="n">improved</span>
+
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">_request_refined_diagnosis</span> <span class="o">=</span> <span class="n">complete</span>
+        <span class="n">judge_fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_sequenced_judge</span><span class="p">([</span><span class="n">_judgement</span><span class="p">(</span><span class="s2">&quot;pass&quot;</span><span class="p">),</span> <span class="n">_judgement</span><span class="p">(</span><span class="s2">&quot;pass&quot;</span><span class="p">)])</span>
+
+        <span class="n">final</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">refine_until_confident</span><span class="p">(</span>
+            <span class="n">analyzer</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="s2">&quot;test_a&quot;</span><span class="p">},</span> <span class="n">initial</span><span class="p">,</span> <span class="n">judge_fn</span><span class="p">,</span>
+            <span class="n">max_iterations</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">confidence_target</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">calls</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>  <span class="c1"># one refine pass</span>
+        <span class="k">assert</span> <span class="n">final</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">92</span>
+
+    <span class="nd">@allure</span><span class="o">.</span><span class="n">story</span><span class="p">(</span><span class="s2">&quot;Loop is bounded by max_iterations&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_stops_at_max_iterations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analyzer</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A persistently failing judge stops after max_iterations refine passes.&quot;&quot;&quot;</span>
+        <span class="n">initial</span> <span class="o">=</span> <span class="n">_diagnosis</span><span class="p">(</span><span class="n">confidence</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">_results</span> <span class="o">=</span> <span class="p">[</span><span class="n">initial</span><span class="p">]</span>
+        <span class="n">calls</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">complete</span><span class="p">(</span><span class="o">*</span><span class="n">_a</span><span class="p">,</span> <span class="o">**</span><span class="n">_k</span><span class="p">):</span>
+            <span class="n">calls</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="n">_diagnosis</span><span class="p">(</span><span class="n">confidence</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">_request_refined_diagnosis</span> <span class="o">=</span> <span class="n">complete</span>
+        <span class="n">judge_fn</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">_sequenced_judge</span><span class="p">([</span><span class="n">_judgement</span><span class="p">(</span><span class="s2">&quot;fail&quot;</span><span class="p">)])</span>
+
+        <span class="n">final</span><span class="p">,</span> <span class="n">judgement</span> <span class="o">=</span> <span class="n">refine_until_confident</span><span class="p">(</span>
+            <span class="n">analyzer</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="s2">&quot;test_a&quot;</span><span class="p">},</span> <span class="n">initial</span><span class="p">,</span> <span class="n">judge_fn</span><span class="p">,</span>
+            <span class="n">max_iterations</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">confidence_target</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">calls</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span>  <span class="c1"># exactly max_iterations refine passes</span>
+        <span class="k">assert</span> <span class="n">state</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span>  <span class="c1"># initial judge + one re-judge per refine</span>
+        <span class="k">assert</span> <span class="n">judgement</span><span class="p">[</span><span class="s2">&quot;overall_verdict&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;fail&quot;</span>
+
+    <span class="nd">@allure</span><span class="o">.</span><span class="n">story</span><span class="p">(</span><span class="s2">&quot;A judge error stops the loop&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_none_judgement_stops_immediately</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analyzer</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;When the judge returns None (API error), no refinement is attempted.&quot;&quot;&quot;</span>
+        <span class="n">initial</span> <span class="o">=</span> <span class="n">_diagnosis</span><span class="p">(</span><span class="n">confidence</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">_results</span> <span class="o">=</span> <span class="p">[</span><span class="n">initial</span><span class="p">]</span>
+        <span class="n">calls</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">_request_refined_diagnosis</span> <span class="o">=</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">_a</span><span class="p">,</span> <span class="o">**</span><span class="n">_k</span><span class="p">:</span> <span class="n">calls</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="n">calls</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">judge_fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_sequenced_judge</span><span class="p">([</span><span class="kc">None</span><span class="p">])</span>
+
+        <span class="n">final</span><span class="p">,</span> <span class="n">judgement</span> <span class="o">=</span> <span class="n">refine_until_confident</span><span class="p">(</span>
+            <span class="n">analyzer</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="s2">&quot;test_a&quot;</span><span class="p">},</span> <span class="n">initial</span><span class="p">,</span> <span class="n">judge_fn</span><span class="p">,</span>
+            <span class="n">max_iterations</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">confidence_target</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">calls</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>  <span class="c1"># refine never called</span>
+        <span class="k">assert</span> <span class="n">final</span> <span class="ow">is</span> <span class="n">initial</span>
+        <span class="k">assert</span> <span class="n">judgement</span> <span class="ow">is</span> <span class="kc">None</span>
+
+
+<span class="nd">@allure</span><span class="o">.</span><span class="n">epic</span><span class="p">(</span><span class="s2">&quot;AI Evaluation&quot;</span><span class="p">)</span>
+<span class="nd">@allure</span><span class="o">.</span><span class="n">feature</span><span class="p">(</span><span class="s2">&quot;Agentic refine loop&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestCollectIssues</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Behavior of :func:`_collect_issues`.&quot;&quot;&quot;</span>
+
+    <span class="nd">@allure</span><span class="o">.</span><span class="n">story</span><span class="p">(</span><span class="s2">&quot;Only failed dimensions contribute issues&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_collects_failed_dimension_issues</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Issues from failing dimensions are prefixed with the dimension name; passing ones are skipped.&quot;&quot;&quot;</span>
+        <span class="n">judgement</span> <span class="o">=</span> <span class="n">_judgement</span><span class="p">(</span><span class="s2">&quot;fail&quot;</span><span class="p">,</span> <span class="n">groundedness</span><span class="o">=</span><span class="s2">&quot;fail&quot;</span><span class="p">,</span> <span class="n">issues</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;invented a 404 status&quot;</span><span class="p">])</span>
+        <span class="n">issues</span> <span class="o">=</span> <span class="n">_collect_issues</span><span class="p">(</span><span class="n">judgement</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">issues</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;groundedness: invented a 404 status&quot;</span><span class="p">]</span>
+
+    <span class="nd">@allure</span><span class="o">.</span><span class="n">story</span><span class="p">(</span><span class="s2">&quot;A clean pass yields no issues&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_empty_when_all_pass</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;An all-pass judgement contributes no issues.&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">_collect_issues</span><span class="p">(</span><span class="n">_judgement</span><span class="p">(</span><span class="s2">&quot;pass&quot;</span><span class="p">))</span> <span class="o">==</span> <span class="p">[]</span>
+
+
+<span class="nd">@allure</span><span class="o">.</span><span class="n">epic</span><span class="p">(</span><span class="s2">&quot;AI Evaluation&quot;</span><span class="p">)</span>
+<span class="nd">@allure</span><span class="o">.</span><span class="n">feature</span><span class="p">(</span><span class="s2">&quot;Agentic refine loop&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestRefine</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Behavior of :meth:`FailureAnalyzer.refine`.&quot;&quot;&quot;</span>
+
+    <span class="nd">@allure</span><span class="o">.</span><span class="n">story</span><span class="p">(</span><span class="s2">&quot;Disabled analyzer refines to None&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_returns_none_when_disabled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analyzer</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A disabled analyzer performs no completion and returns None.&quot;&quot;&quot;</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">called</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">_request_refined_diagnosis</span> <span class="o">=</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">_a</span><span class="p">,</span> <span class="o">**</span><span class="n">_k</span><span class="p">:</span> <span class="n">called</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="n">called</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">refine</span><span class="p">({</span><span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="s2">&quot;t&quot;</span><span class="p">},</span> <span class="n">_diagnosis</span><span class="p">(</span><span class="mi">40</span><span class="p">),</span> <span class="p">[])</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="k">assert</span> <span class="n">called</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="nd">@allure</span><span class="o">.</span><span class="n">story</span><span class="p">(</span><span class="s2">&quot;Refinement appends when no prior result matches&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_appends_when_no_matching_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">analyzer</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;With an empty results list, the refined diagnosis is appended rather than replacing.&quot;&quot;&quot;</span>
+        <span class="n">improved</span> <span class="o">=</span> <span class="n">_diagnosis</span><span class="p">(</span><span class="n">confidence</span><span class="o">=</span><span class="mi">95</span><span class="p">)</span>
+        <span class="n">analyzer</span><span class="o">.</span><span class="n">_request_refined_diagnosis</span> <span class="o">=</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">_a</span><span class="p">,</span> <span class="o">**</span><span class="n">_k</span><span class="p">:</span> <span class="n">improved</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">refine</span><span class="p">({</span><span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="s2">&quot;test_a&quot;</span><span class="p">},</span> <span class="n">_diagnosis</span><span class="p">(</span><span class="mi">40</span><span class="p">),</span> <span class="p">[])</span>
+        <span class="k">assert</span> <span class="n">result</span> <span class="ow">is</span> <span class="n">improved</span>
+        <span class="k">assert</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">_results</span> <span class="o">==</span> <span class="p">[</span><span class="n">improved</span><span class="p">]</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../performance.html">Performance Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../evals.html">Evaluation Harness (evals)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

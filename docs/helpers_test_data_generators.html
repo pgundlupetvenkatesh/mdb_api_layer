@@ -43,7 +43,7 @@
 in-memory random choice.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Random movie ID</p>
+<dd class="field-odd"><p>Random movie ID, e.g. <code class="docutils literal notranslate"><span class="pre">27205</span></code>.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
@@ -60,7 +60,7 @@ in-memory random choice.</p>
 <dd><p>Return a random TMDB network ID from the hardcoded <code class="xref py py-data docutils literal notranslate"><span class="pre">NETWORK_IDS</span></code> list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Random network ID</p>
+<dd class="field-odd"><p>Random network ID, e.g. <code class="docutils literal notranslate"><span class="pre">213</span></code> (Netflix).</p>
 </dd>
 </dl>
 </dd></dl>
@@ -71,7 +71,7 @@ in-memory random choice.</p>
 <dd><p>Fetches rated movies from the account and returns a random movie ID.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Random rated movie ID</p>
+<dd class="field-odd"><p>Random rated movie ID, e.g. <code class="docutils literal notranslate"><span class="pre">27205</span></code>.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If no rated movies are found</p>
@@ -93,7 +93,8 @@ import cycle (<code class="docutils literal notranslate"><span class="pre">api</
 <dd class="field-odd"><p><strong>max_attempts</strong> – Maximum random movies to try before giving up.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A TMDB review ID (24-character hex string).</p>
+<dd class="field-even"><p>A TMDB review ID (24-character hex string), e.g.
+<code class="docutils literal notranslate"><span class="pre">&quot;58a231c592514111d5001a2f&quot;</span></code>.</p>
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ValueError</strong> – If no reviews are found within <code class="docutils literal notranslate"><span class="pre">max_attempts</span></code> tries.</p>
@@ -107,7 +108,7 @@ import cycle (<code class="docutils literal notranslate"><span class="pre">api</
 <dd><p>Generate a random invalid movie rating (outside 0.5-10.0 range).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Random invalid rating</p>
+<dd class="field-odd"><p>Random invalid rating, e.g. <code class="docutils literal notranslate"><span class="pre">-3.5</span></code> or <code class="docutils literal notranslate"><span class="pre">14.2</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -124,7 +125,7 @@ import cycle (<code class="docutils literal notranslate"><span class="pre">api</
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Random rating rounded to 1 decimal place</p>
+<dd class="field-even"><p>Random rating in 0.5 increments, e.g. <code class="docutils literal notranslate"><span class="pre">7.5</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>

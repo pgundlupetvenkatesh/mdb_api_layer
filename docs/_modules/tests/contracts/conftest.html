@@ -69,6 +69,9 @@
 <span class="sd">    test&#39;s interactions merge into the same contract file on write.</span>
 
 <span class="sd">    :yields: Configured Pact instance ready for interaction definition.</span>
+<span class="sd">        Example yield::</span>
+
+<span class="sd">            Pact(&quot;mdb_api_layer&quot;, &quot;api_pvd&quot;)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">pact</span> <span class="o">=</span> <span class="n">Pact</span><span class="p">(</span><span class="n">PACT_CONSUMER</span><span class="p">,</span> <span class="n">PACT_PROVIDER</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">pact</span>
@@ -88,6 +91,11 @@
 <span class="sd">    Returns the client with its default (real TMDB) base URL. Each test</span>
 <span class="sd">    repoints ``base_url`` at the Pact mock server *after* ``pact.serve()``</span>
 <span class="sd">    starts, because the mock server&#39;s URL/port aren&#39;t known until then.</span>
+
+<span class="sd">    :returns: A fresh :class:`~api.movies_api.MoviesAPI` client with its</span>
+<span class="sd">        default TMDB ``base_url``. Example return::</span>
+
+<span class="sd">            MoviesAPI()  # base_url=&quot;https://api.themoviedb.org&quot; until repointed at the mock</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">MoviesAPI</span><span class="p">()</span></div>
 
@@ -97,7 +105,13 @@
 <a class="viewcode-back" href="../../../tests.html#tests.contracts.conftest.pact_address">[docs]</a>
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">pact_address</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the ``(host, port)`` the Pact mock server should bind to.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the ``(host, port)`` the Pact mock server should bind to.</span>
+
+<span class="sd">    :returns: A ``(host, port)`` tuple; port ``0`` lets the OS pick a free</span>
+<span class="sd">        port. Example return::</span>
+
+<span class="sd">            (&quot;localhost&quot;, 0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">PACT_MOCK_HOST</span><span class="p">,</span> <span class="n">PACT_MOCK_PORT</span></div>
 
 </pre></div>

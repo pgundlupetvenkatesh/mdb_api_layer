@@ -69,7 +69,23 @@
 <span class="sd">    :param path: Path to the YAML dataset (a mapping with a top-level</span>
 <span class="sd">        ``cases`` list).</span>
 <span class="sd">    :returns: The list of case dicts, each with ``id``, ``failure_context``,</span>
-<span class="sd">        and ``expected`` keys.</span>
+<span class="sd">        and ``expected`` keys. Example return::</span>
+
+<span class="sd">            [</span>
+<span class="sd">                {</span>
+<span class="sd">                    &quot;id&quot;: &quot;timeout_slow_response&quot;,</span>
+<span class="sd">                    &quot;failure_context&quot;: {</span>
+<span class="sd">                        &quot;test_name&quot;: &quot;test_update_list_description[update_list0]&quot;,</span>
+<span class="sd">                        &quot;api_url&quot;: &quot;https://api.themoviedb.org/4/list/8284605&quot;,</span>
+<span class="sd">                        &quot;status_code&quot;: 201,</span>
+<span class="sd">                        &quot;error_message&quot;: &quot;AssertionError: Response time 17.7s exceeded expected max 15s&quot;,</span>
+<span class="sd">                    },</span>
+<span class="sd">                    &quot;expected&quot;: {</span>
+<span class="sd">                        &quot;expected_category&quot;: &quot;timeout&quot;,</span>
+<span class="sd">                        &quot;expected_root_cause&quot;: &quot;The call succeeded (HTTP 201) but took ~17.7s, over the 15s threshold.&quot;,</span>
+<span class="sd">                    },</span>
+<span class="sd">                },</span>
+<span class="sd">            ]</span>
 <span class="sd">    :raises ValueError: If the file is malformed or any case is missing a</span>
 <span class="sd">        required field, has a duplicate ``id``, or names a category outside</span>
 <span class="sd">        :data:`VALID_CATEGORIES`. The message names the offending case.</span>

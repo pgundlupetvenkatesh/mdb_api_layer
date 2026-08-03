@@ -67,7 +67,25 @@
 <span class="sd">        :param file_name: Name of the YAML file containing test data.</span>
 <span class="sd">        :param section: Optional top-level section to load exclusively (e.g.</span>
 <span class="sd">            ``&#39;get_movie_details&#39;``). If ``None``, the whole file is loaded.</span>
-<span class="sd">        :return: Parsed data with defaults applied (scoped to ``section`` if given).</span>
+<span class="sd">        :return: Parsed data with defaults merged into each test case and</span>
+<span class="sd">            ``$placeholder`` tokens resolved (scoped to ``section`` if given; the</span>
+<span class="sd">            ``defaults`` keys are consumed, not returned). Example return for</span>
+<span class="sd">            ``load_test_data(&quot;test_data.yaml&quot;, &quot;get_movie_details&quot;)``::</span>
+
+<span class="sd">                {</span>
+<span class="sd">                    &quot;get_movie_details&quot;: {</span>
+<span class="sd">                        &quot;valid&quot;: [</span>
+<span class="sd">                            {&quot;movie_id&quot;: 27205, &quot;status_code&quot;: 200, &quot;reason&quot;: &quot;OK&quot;,</span>
+<span class="sd">                             &quot;exp_max_elp_secs&quot;: 5, &quot;exp_content_type&quot;: &quot;application/json&quot;,</span>
+<span class="sd">                             &quot;exp_get_req_method&quot;: &quot;GET&quot;}</span>
+<span class="sd">                        ],</span>
+<span class="sd">                        &quot;invalid&quot;: [</span>
+<span class="sd">                            {&quot;movie_id&quot;: 0, &quot;status_code&quot;: 404, &quot;reason&quot;: &quot;Not Found&quot;,</span>
+<span class="sd">                             &quot;expected_message&quot;: &quot;Invalid id: The pre-requisite id is invalid or not found.&quot;,</span>
+<span class="sd">                             &quot;exp_max_elp_secs&quot;: 5}</span>
+<span class="sd">                        ],</span>
+<span class="sd">                    }</span>
+<span class="sd">                }</span>
 <span class="sd">        :raises FileNotFoundError: If the specified file does not exist.</span>
 <span class="sd">        :raises KeyError: If ``section`` is given but not present in the file.</span>
 <span class="sd">        :raises yaml.YAMLError: If the file contains invalid YAML.</span>

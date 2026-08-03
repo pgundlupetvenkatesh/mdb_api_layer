@@ -76,6 +76,17 @@
 <span class="sd">        :param query_params: Optional dict of query parameters.</span>
 <span class="sd">                             Defaults to page 1 if not specified.</span>
 <span class="sd">        :return: Response object with paginated list of trending movies.</span>
+<span class="sd">                 Example ``response.data``::</span>
+
+<span class="sd">                     {</span>
+<span class="sd">                         &quot;page&quot;: 1,</span>
+<span class="sd">                         &quot;results&quot;: [</span>
+<span class="sd">                             {&quot;id&quot;: 1061474, &quot;title&quot;: &quot;Superman&quot;, &quot;original_language&quot;: &quot;en&quot;,</span>
+<span class="sd">                              &quot;release_date&quot;: &quot;2025-07-09&quot;, &quot;vote_average&quot;: 7.5}</span>
+<span class="sd">                         ],</span>
+<span class="sd">                         &quot;total_pages&quot;: 1000,</span>
+<span class="sd">                         &quot;total_results&quot;: 20000</span>
+<span class="sd">                     }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">query_params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;page&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">query_params</span> <span class="ow">or</span> <span class="p">{})}</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;query_params: </span><span class="si">{</span><span class="n">query_params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>

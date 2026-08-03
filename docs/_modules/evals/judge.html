@@ -157,7 +157,21 @@
 <span class="sd">    :param dimensions: The dimension names the judge must return (e.g.</span>
 <span class="sd">        ``(&quot;correctness&quot;, &quot;groundedness&quot;, &quot;completeness&quot;)``).</span>
 <span class="sd">    :returns: A JSON Schema requiring one ``_DIMENSION_SCHEMA`` block per</span>
-<span class="sd">        dimension plus an ``overall_verdict`` string.</span>
+<span class="sd">        dimension plus an ``overall_verdict`` string. Example return::</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;type&quot;: &quot;object&quot;,</span>
+<span class="sd">                &quot;additionalProperties&quot;: False,</span>
+<span class="sd">                &quot;required&quot;: [&quot;groundedness&quot;, &quot;overall_verdict&quot;],</span>
+<span class="sd">                &quot;properties&quot;: {</span>
+<span class="sd">                    &quot;groundedness&quot;: {  # one _DIMENSION_SCHEMA block per dimension</span>
+<span class="sd">                        &quot;type&quot;: &quot;object&quot;,</span>
+<span class="sd">                        &quot;required&quot;: [&quot;verdict&quot;, &quot;reasoning&quot;, &quot;issues&quot;],</span>
+<span class="sd">                        &quot;properties&quot;: {...},</span>
+<span class="sd">                    },</span>
+<span class="sd">                    &quot;overall_verdict&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;pass&quot;, &quot;fail&quot;]},</span>
+<span class="sd">                },</span>
+<span class="sd">            }</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
@@ -190,7 +204,18 @@
 <span class="sd">    tolerates a non-int confidence.</span>
 
 <span class="sd">    :param diagnosis: The raw diagnosis dict from the analyzer.</span>
-<span class="sd">    :returns: A new dict safe to embed in a judge payload and a report.</span>
+<span class="sd">    :returns: A new dict safe to embed in a judge payload and a report</span>
+<span class="sd">        (``test_name``/``model`` dropped, ``confidence`` coerced to int).</span>
+<span class="sd">        Example return::</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;root_cause&quot;: &quot;Stale movie id 550 returned HTTP 404&quot;,</span>
+<span class="sd">                &quot;category&quot;: &quot;data_issue&quot;,</span>
+<span class="sd">                &quot;suggested_fix&quot;: &quot;Refresh the movie id used in test_data.yaml&quot;,</span>
+<span class="sd">                &quot;confidence&quot;: 90,</span>
+<span class="sd">                &quot;explanation&quot;: &quot;The request to /movie/550 returned 404 Not Found...&quot;,</span>
+<span class="sd">                &quot;evidence&quot;: [&quot;status_code 404&quot;, &quot;error message &#39;could not be found&#39;&quot;],</span>
+<span class="sd">            }</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># rebuilds the diagnosis keeping every key except test_name and model so the judge can&#39;t be biased by knowing which</span>
     <span class="c1"># model wrote the answer</span>
@@ -224,6 +249,15 @@
 <span class="sd">    :param model: Groq model id for the judge.</span>
 <span class="sd">    :param api_key: Groq API key; falls back to the client&#39;s env-based default.</span>
 <span class="sd">    :returns: The parsed judge output, or ``None`` on failure.</span>
+<span class="sd">        Example return::</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;groundedness&quot;: {&quot;verdict&quot;: &quot;pass&quot;, &quot;reasoning&quot;: &quot;...&quot;, &quot;issues&quot;: []},</span>
+<span class="sd">                &quot;completeness&quot;: {&quot;verdict&quot;: &quot;fail&quot;, &quot;reasoning&quot;: &quot;...&quot;,</span>
+<span class="sd">                                 &quot;issues&quot;: [&quot;omits the 404 status code&quot;]},</span>
+<span class="sd">                &quot;actionability&quot;: {&quot;verdict&quot;: &quot;pass&quot;, &quot;reasoning&quot;: &quot;...&quot;, &quot;issues&quot;: []},</span>
+<span class="sd">                &quot;overall_verdict&quot;: &quot;fail&quot;,</span>
+<span class="sd">            }</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Lazy import</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">groq</span><span class="w"> </span><span class="kn">import</span> <span class="n">Groq</span>
@@ -287,6 +321,15 @@
 <span class="sd">    :returns: The parsed judge output (per-dimension ``{verdict, reasoning,</span>
 <span class="sd">        issues}`` for correctness/groundedness/completeness/actionability plus</span>
 <span class="sd">        ``overall_verdict``), or ``None`` if the call or parse fails.</span>
+<span class="sd">        Example return::</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;correctness&quot;: {&quot;verdict&quot;: &quot;pass&quot;, &quot;reasoning&quot;: &quot;...&quot;, &quot;issues&quot;: []},</span>
+<span class="sd">                &quot;groundedness&quot;: {&quot;verdict&quot;: &quot;pass&quot;, &quot;reasoning&quot;: &quot;...&quot;, &quot;issues&quot;: []},</span>
+<span class="sd">                &quot;completeness&quot;: {&quot;verdict&quot;: &quot;pass&quot;, &quot;reasoning&quot;: &quot;...&quot;, &quot;issues&quot;: []},</span>
+<span class="sd">                &quot;actionability&quot;: {&quot;verdict&quot;: &quot;pass&quot;, &quot;reasoning&quot;: &quot;...&quot;, &quot;issues&quot;: []},</span>
+<span class="sd">                &quot;overall_verdict&quot;: &quot;pass&quot;,</span>
+<span class="sd">            }</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_call_judge</span><span class="p">(</span><span class="n">JUDGE_SYSTEM_PROMPT</span><span class="p">,</span> <span class="n">JUDGE_OUTPUT_SCHEMA</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">api_key</span><span class="p">)</span></div>
 
@@ -308,7 +351,15 @@
 <span class="sd">    :param api_key: Groq API key; falls back to the client&#39;s env-based default.</span>
 <span class="sd">    :returns: The parsed judge output (``groundedness``, ``completeness``,</span>
 <span class="sd">        ``actionability``, ``overall_verdict``), or ``None`` if the call or</span>
-<span class="sd">        parse fails.</span>
+<span class="sd">        parse fails. Example return::</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &quot;groundedness&quot;: {&quot;verdict&quot;: &quot;pass&quot;, &quot;reasoning&quot;: &quot;...&quot;, &quot;issues&quot;: []},</span>
+<span class="sd">                &quot;completeness&quot;: {&quot;verdict&quot;: &quot;pass&quot;, &quot;reasoning&quot;: &quot;...&quot;, &quot;issues&quot;: []},</span>
+<span class="sd">                &quot;actionability&quot;: {&quot;verdict&quot;: &quot;fail&quot;, &quot;reasoning&quot;: &quot;...&quot;,</span>
+<span class="sd">                                  &quot;issues&quot;: [&quot;suggested_fix is too vague&quot;]},</span>
+<span class="sd">                &quot;overall_verdict&quot;: &quot;fail&quot;,</span>
+<span class="sd">            }</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;failure_context&quot;</span><span class="p">:</span> <span class="n">failure_context</span><span class="p">,</span> <span class="s2">&quot;diagnosis&quot;</span><span class="p">:</span> <span class="n">sanitize_diagnosis</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">)}</span>
     <span class="k">return</span> <span class="n">_call_judge</span><span class="p">(</span><span class="n">LIVE_JUDGE_SYSTEM_PROMPT</span><span class="p">,</span> <span class="n">LIVE_JUDGE_OUTPUT_SCHEMA</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">api_key</span><span class="p">)</span></div>

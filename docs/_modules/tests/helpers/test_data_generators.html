@@ -47,7 +47,7 @@
 
 <span class="sd">    :param min_val: Minimum rating value (default: 0.5)</span>
 <span class="sd">    :param max_val: Maximum rating value (default: 10.0)</span>
-<span class="sd">    :return: Random rating rounded to 1 decimal place</span>
+<span class="sd">    :return: Random rating in 0.5 increments, e.g. ``7.5``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">max_val</span> <span class="o">-</span> <span class="n">min_val</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="n">min_val</span> <span class="o">+</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="n">steps</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span></div>
@@ -60,7 +60,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generate a random invalid movie rating (outside 0.5-10.0 range).</span>
 
-<span class="sd">    :return: Random invalid rating</span>
+<span class="sd">    :return: Random invalid rating, e.g. ``-3.5`` or ``14.2``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">]):</span>
         <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Too low</span>
@@ -76,7 +76,7 @@
 <span class="sd">    return the cached tuple, so repeated ``pick_random_movie_id`` calls don&#39;t</span>
 <span class="sd">    re-read the file.</span>
 
-<span class="sd">    :return: Tuple of movie IDs.</span>
+<span class="sd">    :return: Tuple of movie IDs, e.g. ``(27205, 157336, 19995, ...)``.</span>
 <span class="sd">    :raises FileNotFoundError: If movie_ids.txt doesn&#39;t exist.</span>
 <span class="sd">    :raises ValueError: If the file is empty or contains no valid numbers.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -99,7 +99,7 @@
 <span class="sd">    The file is read once via :func:`_load_movie_ids`; each call only performs an</span>
 <span class="sd">    in-memory random choice.</span>
 
-<span class="sd">    :return: Random movie ID</span>
+<span class="sd">    :return: Random movie ID, e.g. ``27205``.</span>
 <span class="sd">    :raises FileNotFoundError: If movie_ids.txt doesn&#39;t exist</span>
 <span class="sd">    :raises ValueError: If file is empty or contains invalid data</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -116,7 +116,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return a random TMDB network ID from the hardcoded :data:`NETWORK_IDS` list.</span>
 
-<span class="sd">    :return: Random network ID</span>
+<span class="sd">    :return: Random network ID, e.g. ``213`` (Netflix).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">NETWORK_IDS</span><span class="p">)</span></div>
 
@@ -134,7 +134,8 @@
 <span class="sd">    import cycle (``api`` imports would otherwise load during test-data import).</span>
 
 <span class="sd">    :param max_attempts: Maximum random movies to try before giving up.</span>
-<span class="sd">    :return: A TMDB review ID (24-character hex string).</span>
+<span class="sd">    :return: A TMDB review ID (24-character hex string), e.g.</span>
+<span class="sd">        ``&quot;58a231c592514111d5001a2f&quot;``.</span>
 <span class="sd">    :raises ValueError: If no reviews are found within ``max_attempts`` tries.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">api.movies_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">MoviesAPI</span>
@@ -161,7 +162,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fetches rated movies from the account and returns a random movie ID.</span>
 
-<span class="sd">    :return: Random rated movie ID</span>
+<span class="sd">    :return: Random rated movie ID, e.g. ``27205``.</span>
 <span class="sd">    :raises ValueError: If no rated movies are found</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">api.account_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">AccountAPI</span>

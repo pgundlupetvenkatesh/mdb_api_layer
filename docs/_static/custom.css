@@ -1,1 +1,18 @@
-/* This file intentionally left blank. */
+/* Keep field-list labels ("Parameters:", "Returns:", "Raises:") horizontal.
+ *
+ * Alabaster's basic.css renders each field list as a two-column grid
+ * (`grid-template-columns: fit-content(30%) auto`) and sets
+ * `word-break: break-word` on the label cell. When a field *body* holds a long
+ * unbreakable token (a code example, a long message, a URL), the `auto` body
+ * column claims the width and collapses the label column to its min-content --
+ * which, with break-word, is a single character, so the label renders one
+ * letter per line. Pin the label to a single line and let the body column
+ * shrink (min width 0) instead of squeezing the label. */
+dl.field-list {
+    grid-template-columns: fit-content(30%) minmax(0, 1fr);
+}
+
+dl.field-list > dt {
+    word-break: normal;
+    white-space: nowrap;
+}

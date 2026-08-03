@@ -75,6 +75,13 @@
 <span class="sd">        :param list_id: TMDB list ID to update.</span>
 <span class="sd">        :param payload: Dict containing fields to update (e.g., name, description).</span>
 <span class="sd">        :return: Response object with updated list details.</span>
+<span class="sd">                 Example ``response.data``::</span>
+
+<span class="sd">                     {</span>
+<span class="sd">                         &quot;status_message&quot;: &quot;The item/record was updated successfully.&quot;,</span>
+<span class="sd">                         &quot;success&quot;: true,</span>
+<span class="sd">                         &quot;status_code&quot;: 12</span>
+<span class="sd">                     }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Body payload: </span><span class="si">{</span><span class="n">payload</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">list_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span></div>

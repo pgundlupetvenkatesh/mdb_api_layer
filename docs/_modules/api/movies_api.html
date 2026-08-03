@@ -76,6 +76,22 @@
 <span class="sd">        :param movie_id: TMDB movie ID (e.g., 550 for Fight Club).</span>
 <span class="sd">        :return: Response object with movie details including title,</span>
 <span class="sd">                 genres, production companies, and release info.</span>
+<span class="sd">                 Example ``response.data``::</span>
+
+<span class="sd">                     {</span>
+<span class="sd">                         &quot;adult&quot;: false,</span>
+<span class="sd">                         &quot;id&quot;: 550,</span>
+<span class="sd">                         &quot;title&quot;: &quot;Fight Club&quot;,</span>
+<span class="sd">                         &quot;original_title&quot;: &quot;Fight Club&quot;,</span>
+<span class="sd">                         &quot;original_language&quot;: &quot;en&quot;,</span>
+<span class="sd">                         &quot;release_date&quot;: &quot;1999-10-15&quot;,</span>
+<span class="sd">                         &quot;origin_country&quot;: [&quot;US&quot;],</span>
+<span class="sd">                         &quot;genres&quot;: [{&quot;id&quot;: 18, &quot;name&quot;: &quot;Drama&quot;}],</span>
+<span class="sd">                         &quot;production_companies&quot;: [</span>
+<span class="sd">                             {&quot;id&quot;: 508, &quot;logo_path&quot;: &quot;/7cxRWzi4LsVm4Utfpr1hfARNurT.png&quot;,</span>
+<span class="sd">                              &quot;name&quot;: &quot;Regency Enterprises&quot;, &quot;origin_country&quot;: &quot;US&quot;}</span>
+<span class="sd">                         ]</span>
+<span class="sd">                     }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
@@ -89,6 +105,18 @@
 <span class="sd">        :param query_params: Optional dict of query parameters.</span>
 <span class="sd">                             Defaults to page 1 if not specified.</span>
 <span class="sd">        :return: Response object with paginated list of popular movies.</span>
+<span class="sd">                 Example ``response.data``::</span>
+
+<span class="sd">                     {</span>
+<span class="sd">                         &quot;page&quot;: 1,</span>
+<span class="sd">                         &quot;results&quot;: [</span>
+<span class="sd">                             {&quot;id&quot;: 550, &quot;title&quot;: &quot;Fight Club&quot;, &quot;original_language&quot;: &quot;en&quot;,</span>
+<span class="sd">                              &quot;genre_ids&quot;: [18], &quot;vote_average&quot;: 8.4, &quot;vote_count&quot;: 26280,</span>
+<span class="sd">                              &quot;release_date&quot;: &quot;1999-10-15&quot;}</span>
+<span class="sd">                         ],</span>
+<span class="sd">                         &quot;total_pages&quot;: 500,</span>
+<span class="sd">                         &quot;total_results&quot;: 10000</span>
+<span class="sd">                     }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">query_params</span> <span class="o">=</span><span class="p">{</span> <span class="s1">&#39;page&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">query_params</span> <span class="ow">or</span> <span class="p">{})}</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;query_params: </span><span class="si">{</span><span class="n">query_params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -104,6 +132,18 @@
 <span class="sd">        :param query_params: Optional dict of query parameters.</span>
 <span class="sd">                             Defaults to page 1 if not specified.</span>
 <span class="sd">        :return: Response object with paginated list of top-rated movies.</span>
+<span class="sd">                 Example ``response.data``::</span>
+
+<span class="sd">                     {</span>
+<span class="sd">                         &quot;page&quot;: 1,</span>
+<span class="sd">                         &quot;results&quot;: [</span>
+<span class="sd">                             {&quot;id&quot;: 278, &quot;title&quot;: &quot;The Shawshank Redemption&quot;,</span>
+<span class="sd">                              &quot;original_language&quot;: &quot;en&quot;, &quot;vote_average&quot;: 8.7,</span>
+<span class="sd">                              &quot;vote_count&quot;: 27000, &quot;release_date&quot;: &quot;1994-09-23&quot;}</span>
+<span class="sd">                         ],</span>
+<span class="sd">                         &quot;total_pages&quot;: 500,</span>
+<span class="sd">                         &quot;total_results&quot;: 10000</span>
+<span class="sd">                     }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">query_params</span> <span class="o">=</span><span class="p">{</span> <span class="s1">&#39;page&#39;</span><span class="p">:</span> <span class="mi">1</span> <span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">query_params</span> <span class="ow">or</span> <span class="p">{})}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/top_rated&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">)</span></div>
@@ -118,6 +158,24 @@
 <span class="sd">        :param movie_id: TMDB movie ID.</span>
 <span class="sd">        :param query_params: Optional dict of query parameters (e.g., page).</span>
 <span class="sd">        :return: Response object with a paginated list of user reviews.</span>
+<span class="sd">                 Example ``response.data``::</span>
+
+<span class="sd">                     {</span>
+<span class="sd">                         &quot;id&quot;: 550,</span>
+<span class="sd">                         &quot;page&quot;: 1,</span>
+<span class="sd">                         &quot;results&quot;: [</span>
+<span class="sd">                             {&quot;id&quot;: &quot;5b1c13b9c3a36848f2026384&quot;, &quot;author&quot;: &quot;Cat Ellington&quot;,</span>
+<span class="sd">                              &quot;author_details&quot;: {&quot;name&quot;: &quot;Cat Ellington&quot;,</span>
+<span class="sd">                                                 &quot;username&quot;: &quot;CatEllington&quot;,</span>
+<span class="sd">                                                 &quot;avatar_path&quot;: null, &quot;rating&quot;: 8.0},</span>
+<span class="sd">                              &quot;content&quot;: &quot;The film that launched...&quot;,</span>
+<span class="sd">                              &quot;created_at&quot;: &quot;2018-06-09T18:15:37.023Z&quot;,</span>
+<span class="sd">                              &quot;updated_at&quot;: &quot;2021-06-23T15:58:09.043Z&quot;,</span>
+<span class="sd">                              &quot;url&quot;: &quot;https://www.themoviedb.org/review/5b1c13b9c3a36848f2026384&quot;}</span>
+<span class="sd">                         ],</span>
+<span class="sd">                         &quot;total_pages&quot;: 1,</span>
+<span class="sd">                         &quot;total_results&quot;: 8</span>
+<span class="sd">                     }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;query_params: </span><span class="si">{</span><span class="n">query_params</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">/reviews&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">)</span></div>
@@ -134,6 +192,15 @@
 <span class="sd">        :param movie_id: TMDB movie ID.</span>
 <span class="sd">        :return: Response object with list of alternative titles</span>
 <span class="sd">                 including country codes and title strings.</span>
+<span class="sd">                 Example ``response.data``::</span>
+
+<span class="sd">                     {</span>
+<span class="sd">                         &quot;id&quot;: 550,</span>
+<span class="sd">                         &quot;titles&quot;: [</span>
+<span class="sd">                             {&quot;iso_3166_1&quot;: &quot;BR&quot;, &quot;title&quot;: &quot;Clube da Luta&quot;, &quot;type&quot;: &quot;&quot;},</span>
+<span class="sd">                             {&quot;iso_3166_1&quot;: &quot;PL&quot;, &quot;title&quot;: &quot;Podziemny krąg&quot;, &quot;type&quot;: &quot;&quot;}</span>
+<span class="sd">                         ]</span>
+<span class="sd">                     }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">/alternative_titles&quot;</span><span class="p">)</span></div>
 
@@ -148,6 +215,9 @@
 <span class="sd">        :param rating: User rating value (0.5 to 10.0).</span>
 <span class="sd">        :param query_params: Optional dict of query parameters, such as session_id for authentication.</span>
 <span class="sd">        :return: Response object with status of the rating submission.</span>
+<span class="sd">                 Example ``response.data``::</span>
+
+<span class="sd">                     {&quot;success&quot;: true, &quot;status_code&quot;: 1, &quot;status_message&quot;: &quot;Success.&quot;}</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">rating</span><span class="p">}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">/rating&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span></div>
@@ -158,9 +228,14 @@
     <span class="k">def</span><span class="w">  </span><span class="nf">delete_rating</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movie_id</span><span class="p">,</span> <span class="n">query_params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Delete a user rating for a specific movie.</span>
+
 <span class="sd">        :param movie_id: TMDB movie ID.</span>
 <span class="sd">        :param query_params: Optional dict of query parameters, such as session_id for authentication.</span>
 <span class="sd">        :return: Response object with status of the rating deletion.</span>
+<span class="sd">                 Example ``response.data``::</span>
+
+<span class="sd">                     {&quot;success&quot;: true, &quot;status_code&quot;: 13,</span>
+<span class="sd">                      &quot;status_message&quot;: &quot;The item/record was deleted successfully.&quot;}</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">movie_id</span><span class="si">}</span><span class="s2">/rating&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">query_params</span><span class="p">)</span></div>
 </div>

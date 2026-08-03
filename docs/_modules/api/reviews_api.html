@@ -74,6 +74,24 @@
 <span class="sd">        :param review_id: TMDB review ID (a 24-character hex string).</span>
 <span class="sd">        :return: Response object with review details including author,</span>
 <span class="sd">                 content, media reference, and timestamps.</span>
+<span class="sd">                 Example ``response.data``::</span>
+
+<span class="sd">                     {</span>
+<span class="sd">                         &quot;id&quot;: &quot;5b1c13b9c3a36848f2026384&quot;,</span>
+<span class="sd">                         &quot;author&quot;: &quot;Cat Ellington&quot;,</span>
+<span class="sd">                         &quot;author_details&quot;: {</span>
+<span class="sd">                             &quot;name&quot;: &quot;Cat Ellington&quot;, &quot;username&quot;: &quot;CatEllington&quot;,</span>
+<span class="sd">                             &quot;avatar_path&quot;: null, &quot;rating&quot;: 8.0</span>
+<span class="sd">                         },</span>
+<span class="sd">                         &quot;content&quot;: &quot;The film that launched a thousand fight clubs...&quot;,</span>
+<span class="sd">                         &quot;created_at&quot;: &quot;2018-06-09T18:15:37.023Z&quot;,</span>
+<span class="sd">                         &quot;iso_639_1&quot;: &quot;en&quot;,</span>
+<span class="sd">                         &quot;media_id&quot;: 550,</span>
+<span class="sd">                         &quot;media_title&quot;: &quot;Fight Club&quot;,</span>
+<span class="sd">                         &quot;media_type&quot;: &quot;movie&quot;,</span>
+<span class="sd">                         &quot;updated_at&quot;: &quot;2021-06-23T15:58:09.043Z&quot;,</span>
+<span class="sd">                         &quot;url&quot;: &quot;https://www.themoviedb.org/review/5b1c13b9c3a36848f2026384&quot;</span>
+<span class="sd">                     }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fetching review details for review_id: </span><span class="si">{</span><span class="n">review_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_sub_path</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">review_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>

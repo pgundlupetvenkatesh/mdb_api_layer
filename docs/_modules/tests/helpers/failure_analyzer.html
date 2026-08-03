@@ -74,6 +74,16 @@
 <span class="s2">- Respond ONLY with valid JSON, no markdown fences</span>
 <span class="s2">&quot;&quot;&quot;</span>
 
+<span class="c1"># Used by the agentic refine loop: the same output contract as SYSTEM_PROMPT,</span>
+<span class="c1"># plus an instruction to address an independent reviewer&#39;s critique of a prior</span>
+<span class="c1"># diagnosis. Confidence must reflect genuine evidential support, not the target.</span>
+<span class="n">REFINE_SYSTEM_PROMPT</span> <span class="o">=</span> <span class="n">SYSTEM_PROMPT</span> <span class="o">+</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">You are refining a previous diagnosis that an independent reviewer judged weak. Address the</span>
+<span class="s2">reviewer&#39;s specific issues, ground every claim in the provided evidence, and make the</span>
+<span class="s2">suggested_fix concrete. Return the same JSON object. Only raise confidence if the improved</span>
+<span class="s2">diagnosis is genuinely better supported by the evidence — never inflate it to hit a target.</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="FailureAnalyzer">
 <a class="viewcode-back" href="../../../helpers_failure_analyzer.html#tests.helpers.failure_analyzer.FailureAnalyzer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FailureAnalyzer</span><span class="p">:</span>
@@ -144,9 +154,19 @@
 <span class="sd">            - api_url: The API URL that was called (if available)</span>
 <span class="sd">            - status_code: HTTP status code received (if available)</span>
 <span class="sd">            - response_body: API response body snippet (if available)</span>
-<span class="sd">        :returns: Parsed JSON diagnosis dict (keys: ``root_cause``, ``category``,</span>
-<span class="sd">            ``suggested_fix``, ``confidence`` (0–100 int), ``explanation``, ``evidence``,</span>
-<span class="sd">            ``test_name``, ``model``) or None if analysis is disabled/fails.</span>
+<span class="sd">        :returns: Parsed JSON diagnosis dict, or None if analysis is</span>
+<span class="sd">            disabled/fails. Example return::</span>
+
+<span class="sd">                {</span>
+<span class="sd">                    &quot;root_cause&quot;: &quot;Movie id 0 is invalid, so TMDB returned 404.&quot;,</span>
+<span class="sd">                    &quot;category&quot;: &quot;data_issue&quot;,</span>
+<span class="sd">                    &quot;suggested_fix&quot;: &quot;Use a valid movie id from movie_ids.txt in the test data.&quot;,</span>
+<span class="sd">                    &quot;confidence&quot;: 92,</span>
+<span class="sd">                    &quot;explanation&quot;: &quot;The request targeted /3/movie/0; TMDB rejects id 0 ...&quot;,</span>
+<span class="sd">                    &quot;evidence&quot;: [&quot;HTTP 404&quot;, &quot;status_message: The resource you requested could not be found.&quot;],</span>
+<span class="sd">                    &quot;test_name&quot;: &quot;test_get_movie_details&quot;,</span>
+<span class="sd">                    &quot;model&quot;: &quot;llama-3.3-70b-versatile&quot;</span>
+<span class="sd">                }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -154,11 +174,35 @@
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AI_ANALYSIS_ENABLED=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="si">}</span><span class="s2"> and GROQ_API_KEY </span><span class="si">{</span><span class="s1">&#39;set&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;missing&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="n">prompt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_prompt</span><span class="p">(</span><span class="n">failure_context</span><span class="p">)</span>
+        <span class="n">diagnosis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_diagnosis</span><span class="p">(</span><span class="n">SYSTEM_PROMPT</span><span class="p">,</span> <span class="n">prompt</span><span class="p">,</span> <span class="n">failure_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;test_name&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">diagnosis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 AI Analysis [</span><span class="si">{</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;category&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;?&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">]: </span><span class="si">{</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;root_cause&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;N/A&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">diagnosis</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_request_diagnosis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user_prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">test_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run one LLM completion and return a parsed, normalized diagnosis dict.</span>
+
+<span class="sd">        Shared by :meth:`analyze` (initial diagnosis) and :meth:`refine`</span>
+<span class="sd">        (judge-guided improvement). Handles the Groq call, JSON parse,</span>
+<span class="sd">        ``test_name``/``model`` stamping, and ``confidence`` int-coercion.</span>
+<span class="sd">        Does **not** touch ``self._results`` — the caller decides whether to</span>
+<span class="sd">        append (a new diagnosis) or replace (a refinement).</span>
+
+<span class="sd">        :param system_prompt: System message controlling the JSON output contract.</span>
+<span class="sd">        :param user_prompt: The assembled failure (or critique) prompt.</span>
+<span class="sd">        :param test_name: Name of the failed test, stamped onto the result.</span>
+<span class="sd">        :returns: Normalized diagnosis dict (same shape as :meth:`analyze`&#39;s</span>
+<span class="sd">            return), or None if the call/parse fails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">groq.types.chat</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatCompletionSystemMessageParam</span><span class="p">,</span> <span class="n">ChatCompletionUserMessageParam</span>
         <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">ChatCompletionSystemMessageParam</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">SYSTEM_PROMPT</span><span class="p">),</span>
-            <span class="n">ChatCompletionUserMessageParam</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">prompt</span><span class="p">)</span>
+            <span class="n">ChatCompletionSystemMessageParam</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">system_prompt</span><span class="p">),</span>
+            <span class="n">ChatCompletionUserMessageParam</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">user_prompt</span><span class="p">)</span>
         <span class="p">]</span>
 
         <span class="k">try</span><span class="p">:</span>
@@ -172,7 +216,7 @@
 
             <span class="n">raw</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span>
             <span class="n">diagnosis</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-            <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;test_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">failure_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;test_name&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">)</span>
+            <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;test_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_name</span>
             <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
             <span class="c1"># llama-3.3-70b sometimes returns confidence as a string (&quot;95&quot;);</span>
             <span class="c1"># downstream tiering compares it numerically, so coerce here.</span>
@@ -180,14 +224,53 @@
                 <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
             <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
                 <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">)</span>
-
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 AI Analysis [</span><span class="si">{</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;category&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;?&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">]: </span><span class="si">{</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;root_cause&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;N/A&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">diagnosis</span>
 
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AI analysis failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">None</span></div>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># Alias used by refine() — same completion call, named for the refinement context.</span>
+    <span class="n">_request_refined_diagnosis</span> <span class="o">=</span> <span class="n">_request_diagnosis</span>
+
+<div class="viewcode-block" id="FailureAnalyzer.refine">
+<a class="viewcode-back" href="../../../helpers_failure_analyzer.html#tests.helpers.failure_analyzer.FailureAnalyzer.refine">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">failure_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">prior_diag</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">weaknesses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Produce an improved diagnosis given a critique of a prior one.</span>
+
+<span class="sd">        Called by :func:`refine_until_confident` when the independent judge</span>
+<span class="sd">        flags a diagnosis. Re-prompts the model with the original failure</span>
+<span class="sd">        context, the prior diagnosis, and the judge&#39;s concrete ``weaknesses``,</span>
+<span class="sd">        asking it to address each one and re-examine the evidence. The improved</span>
+<span class="sd">        diagnosis **replaces** the prior one in ``self._results`` (matched by</span>
+<span class="sd">        ``test_name``) so the saved report and terminal summary reflect the</span>
+<span class="sd">        final version.</span>
+
+<span class="sd">        :param failure_context: Same dict passed to :meth:`analyze`.</span>
+<span class="sd">        :param prior_diag: The diagnosis being critiqued.</span>
+<span class="sd">        :param weaknesses: Concrete weaknesses from the judge to address.</span>
+<span class="sd">        :returns: Improved diagnosis dict (same shape as :meth:`analyze`&#39;s</span>
+<span class="sd">            return), or None if analysis is disabled or the call fails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">prompt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_refine_prompt</span><span class="p">(</span><span class="n">failure_context</span><span class="p">,</span> <span class="n">prior_diag</span><span class="p">,</span> <span class="n">weaknesses</span><span class="p">)</span>
+        <span class="n">diagnosis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_refined_diagnosis</span><span class="p">(</span><span class="n">REFINE_SYSTEM_PROMPT</span><span class="p">,</span> <span class="n">prompt</span><span class="p">,</span> <span class="n">failure_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;test_name&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">diagnosis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;test_name&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;test_name&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">diagnosis</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;🤖 AI Refine [</span><span class="si">{</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;category&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;?&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">] &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;confidence </span><span class="si">{</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;confidence&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;?&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">%: </span><span class="si">{</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;root_cause&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;N/A&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">diagnosis</span></div>
 
 
     <span class="nd">@staticmethod</span>
@@ -228,6 +311,40 @@
 
         <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_refine_prompt</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">prior_diag</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">weaknesses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the critique prompt for a refinement pass.</span>
+
+<span class="sd">        Combines the original failure context with the prior diagnosis and the</span>
+<span class="sd">        judge&#39;s concrete weaknesses, instructing the model to address each one,</span>
+<span class="sd">        re-examine the evidence, and emit an improved diagnosis in the same JSON</span>
+<span class="sd">        contract. The bookkeeping keys (``test_name``/``model``) are dropped from</span>
+<span class="sd">        the echoed prior so the model focuses on the diagnosis content.</span>
+
+<span class="sd">        :param ctx: The original failure context (see :meth:`analyze`).</span>
+<span class="sd">        :param prior_diag: The diagnosis being critiqued.</span>
+<span class="sd">        :param weaknesses: Concrete weaknesses raised by the judge (may be empty</span>
+<span class="sd">            when only the confidence bar was missed).</span>
+<span class="sd">        :returns: Formatted multi-line prompt string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">weakness_lines</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- </span><span class="si">{</span><span class="n">weakness</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">weakness</span> <span class="ow">in</span> <span class="n">weaknesses</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">weaknesses</span>
+            <span class="k">else</span> <span class="s2">&quot;- Confidence is below the required bar; strengthen the evidence and reasoning.&quot;</span>
+        <span class="p">)</span>
+        <span class="n">prior_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">prior_diag</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;test_name&quot;</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">)},</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">FailureAnalyzer</span><span class="o">.</span><span class="n">_build_prompt</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;An independent reviewer judged your previous diagnosis and found these weaknesses:</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">weakness_lines</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Previous diagnosis:</span><span class="se">\n</span><span class="si">{</span><span class="n">prior_json</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+            <span class="s2">&quot;Address every weakness above, re-examine the evidence, and return an improved &quot;</span>
+            <span class="s2">&quot;diagnosis in the same JSON format.&quot;</span>
+        <span class="p">)</span>
+
 <div class="viewcode-block" id="FailureAnalyzer.save_results">
 <a class="viewcode-back" href="../../../helpers_failure_analyzer.html#tests.helpers.failure_analyzer.FailureAnalyzer.save_results">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;ai_analysis&quot;</span><span class="p">):</span>
@@ -252,6 +369,90 @@
         <span class="n">report_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📊 AI analysis report saved: </span><span class="si">{</span><span class="n">report_file</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">)</span><span class="si">}</span><span class="s2"> failures analyzed)&quot;</span><span class="p">)</span></div>
 </div>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_collect_issues</span><span class="p">(</span><span class="n">judgement</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gather concrete issues from a judgement&#39;s failed dimensions.</span>
+
+<span class="sd">    Pulls the ``issues`` list from each of groundedness/completeness/</span>
+<span class="sd">    actionability whose verdict is ``fail``, prefixing each with its dimension</span>
+<span class="sd">    so the refine prompt knows what to fix.</span>
+
+<span class="sd">    :param judgement: A ``judge_live`` result dict.</span>
+<span class="sd">    :returns: Flat list of ``&quot;&lt;dimension&gt;: &lt;issue&gt;&quot;`` strings (possibly empty), e.g.::</span>
+
+<span class="sd">        [</span>
+<span class="sd">            &quot;groundedness: Speculative causes in explanation not found in failure_context&quot;,</span>
+<span class="sd">            &quot;completeness: Diagnosis omits the HTTP status code from the response&quot;,</span>
+<span class="sd">        ]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">collected</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;groundedness&quot;</span><span class="p">,</span> <span class="s2">&quot;completeness&quot;</span><span class="p">,</span> <span class="s2">&quot;actionability&quot;</span><span class="p">):</span>
+        <span class="n">section</span> <span class="o">=</span> <span class="n">judgement</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">section</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;verdict&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;fail&quot;</span><span class="p">:</span>
+            <span class="n">collected</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">issue</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">section</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issues&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="k">return</span> <span class="n">collected</span>
+
+
+<div class="viewcode-block" id="refine_until_confident">
+<a class="viewcode-back" href="../../../helpers_failure_analyzer.html#tests.helpers.failure_analyzer.refine_until_confident">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">refine_until_confident</span><span class="p">(</span>
+    <span class="n">analyzer_instance</span><span class="p">,</span> <span class="n">failure_context</span><span class="p">,</span> <span class="n">diagnosis</span><span class="p">,</span> <span class="n">judge_fn</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_iterations</span><span class="p">,</span> <span class="n">confidence_target</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Iteratively improve a diagnosis using an independent judge as the critic.</span>
+
+<span class="sd">    Agentic loop: judge the current diagnosis; if the judge passes **and** the</span>
+<span class="sd">    self-reported ``confidence`` clears ``confidence_target``, stop. Otherwise</span>
+<span class="sd">    feed the judge&#39;s failed-dimension issues back into</span>
+<span class="sd">    :meth:`FailureAnalyzer.refine` and re-judge, up to ``max_iterations`` times.</span>
+
+<span class="sd">    The judge is injected (``judge_fn``) so this module stays decoupled from</span>
+<span class="sd">    ``evals.judge`` and the loop is unit-testable. A ``None`` judgement (judge</span>
+<span class="sd">    API error) stops the loop — without a critic signal there is nothing to</span>
+<span class="sd">    refine against.</span>
+
+<span class="sd">    :param analyzer_instance: The :class:`FailureAnalyzer` that produced ``diagnosis``.</span>
+<span class="sd">    :param failure_context: The failure context dict.</span>
+<span class="sd">    :param diagnosis: The initial diagnosis from :meth:`FailureAnalyzer.analyze`.</span>
+<span class="sd">    :param judge_fn: Callable ``(failure_context, diagnosis) -&gt; judgement | None``.</span>
+<span class="sd">    :param max_iterations: Maximum number of refine passes.</span>
+<span class="sd">    :param confidence_target: Confidence (0–100) the diagnosis must reach.</span>
+<span class="sd">    :returns: Tuple of the final ``(diagnosis, judgement)`` — the diagnosis has</span>
+<span class="sd">        the shape shown in :meth:`FailureAnalyzer.analyze`, the judgement is the</span>
+<span class="sd">        ``judge_fn`` output (or ``None`` if the judge errored). Example return::</span>
+
+<span class="sd">            (</span>
+<span class="sd">                {&quot;root_cause&quot;: &quot;...&quot;, &quot;category&quot;: &quot;data_issue&quot;, &quot;confidence&quot;: 92, ...},</span>
+<span class="sd">                {</span>
+<span class="sd">                    &quot;groundedness&quot;: {&quot;verdict&quot;: &quot;pass&quot;, &quot;reasoning&quot;: &quot;...&quot;, &quot;issues&quot;: []},</span>
+<span class="sd">                    &quot;completeness&quot;: {&quot;verdict&quot;: &quot;pass&quot;, &quot;reasoning&quot;: &quot;...&quot;, &quot;issues&quot;: []},</span>
+<span class="sd">                    &quot;actionability&quot;: {&quot;verdict&quot;: &quot;pass&quot;, &quot;reasoning&quot;: &quot;...&quot;, &quot;issues&quot;: []},</span>
+<span class="sd">                    &quot;overall_verdict&quot;: &quot;pass&quot;,</span>
+<span class="sd">                },</span>
+<span class="sd">            )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># In production, the real judge, in conftest.py (~line 405) gets passed. judge_fn is a thin lambda wrapping</span>
+    <span class="c1"># evals.judge.judge_live — It pre-binds the model/api_key args.</span>
+    <span class="n">judgement</span> <span class="o">=</span> <span class="n">judge_fn</span><span class="p">(</span><span class="n">failure_context</span><span class="p">,</span> <span class="n">diagnosis</span><span class="p">)</span> <span class="c1"># judge the current diagnosis</span>
+
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iterations</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">judgement</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">passing</span> <span class="o">=</span> <span class="n">judgement</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;overall_verdict&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;pass&quot;</span>
+        <span class="n">confident</span> <span class="o">=</span> <span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">confidence_target</span>
+        <span class="k">if</span> <span class="n">passing</span> <span class="ow">and</span> <span class="n">confident</span><span class="p">:</span>
+            <span class="k">break</span>
+
+        <span class="n">refined</span> <span class="o">=</span> <span class="n">analyzer_instance</span><span class="o">.</span><span class="n">refine</span><span class="p">(</span><span class="n">failure_context</span><span class="p">,</span> <span class="n">diagnosis</span><span class="p">,</span> <span class="n">_collect_issues</span><span class="p">(</span><span class="n">judgement</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">refined</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">diagnosis</span> <span class="o">=</span> <span class="n">refined</span>
+        <span class="n">judgement</span> <span class="o">=</span> <span class="n">judge_fn</span><span class="p">(</span><span class="n">failure_context</span><span class="p">,</span> <span class="n">diagnosis</span><span class="p">)</span> <span class="c1"># re-judge the refined diagnosis</span>
+
+    <span class="k">return</span> <span class="n">diagnosis</span><span class="p">,</span> <span class="n">judgement</span></div>
+
 
 
 <span class="c1"># Singleton instance — shared across all tests in a session</span>

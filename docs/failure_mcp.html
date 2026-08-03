@@ -99,8 +99,13 @@ JSON Schema advertised in <a class="reference internal" href="#failure_mcp.serve
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of <code class="xref py py-class docutils literal notranslate"><span class="pre">mcp.types.TextContent</span></code> with the JSON result,
-as returned by <a class="reference internal" href="#failure_mcp.tools.analyze_test_failure.handle_call" title="failure_mcp.tools.analyze_test_failure.handle_call"><code class="xref py py-func docutils literal notranslate"><span class="pre">handle_call()</span></code></a>.</p>
+<dd class="field-even"><p><p>List of <code class="xref py py-class docutils literal notranslate"><span class="pre">mcp.types.TextContent</span></code> with the JSON result,
+as returned by <a class="reference internal" href="#failure_mcp.tools.analyze_test_failure.handle_call" title="failure_mcp.tools.analyze_test_failure.handle_call"><code class="xref py py-func docutils literal notranslate"><span class="pre">handle_call()</span></code></a>.
+Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">TextContent</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">&#39;{&quot;saved&quot;: 3, &quot;path&quot;: &quot;ai_analysis/failure_analysis.json&quot;}&#39;</span><span class="p">)]</span>
+</pre></div>
+</div>
+</p>
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ValueError</strong> – Propagated from <code class="docutils literal notranslate"><span class="pre">handle_call</span></code> if <code class="docutils literal notranslate"><span class="pre">name</span></code> is unknown.</p>
@@ -118,9 +123,17 @@ list defined in the tools module so that tool definitions are maintained
 in one place.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>List of <code class="xref py py-class docutils literal notranslate"><span class="pre">mcp.types.Tool</span></code> objects — one entry per
+<dd class="field-odd"><p><p>List of <code class="xref py py-class docutils literal notranslate"><span class="pre">mcp.types.Tool</span></code> objects — one entry per
 exposed capability (<code class="docutils literal notranslate"><span class="pre">analyze_failure</span></code>, <code class="docutils literal notranslate"><span class="pre">get_results</span></code>,
-<code class="docutils literal notranslate"><span class="pre">save_results</span></code>).</p>
+<code class="docutils literal notranslate"><span class="pre">save_results</span></code>). Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+    <span class="n">Tool</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;analyze_failure&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Send a test failure...&quot;</span><span class="p">,</span> <span class="n">inputSchema</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">}),</span>
+    <span class="n">Tool</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;get_results&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Return all diagnosis results...&quot;</span><span class="p">,</span> <span class="n">inputSchema</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">}),</span>
+    <span class="n">Tool</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;save_results&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Flush all accumulated results...&quot;</span><span class="p">,</span> <span class="n">inputSchema</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">}),</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -263,6 +276,30 @@ validated against the JSON Schema in <a class="reference internal" href="#failur
   <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;llama-3.3-70b-versatile&quot;</span><span class="p">,</span>
   <span class="s2">&quot;confidence_tier&quot;</span><span class="p">:</span> <span class="s2">&quot;high&quot;</span>
 <span class="p">}</span>
+</pre></div>
+</div>
+<p>When analysis is disabled or fails, <code class="docutils literal notranslate"><span class="pre">analyze_failure</span></code> instead returns:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Analysis disabled or failed.&quot;</span><span class="p">,</span> <span class="s2">&quot;hint&quot;</span><span class="p">:</span> <span class="s2">&quot;Set AI_ANALYSIS_ENABLED=true and GROQ_API_KEY in the environment.&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">get_results</span></code> returns a JSON array of the stored diagnoses (without the
+<code class="docutils literal notranslate"><span class="pre">confidence_tier</span></code> field, which only <code class="docutils literal notranslate"><span class="pre">analyze_failure</span></code> adds):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;root_cause&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="s2">&quot;auth_error&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;suggested_fix&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="mi">92</span><span class="p">,</span>
+    <span class="s2">&quot;explanation&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;evidence&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;HTTP 401&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="s2">&quot;test_get_movie_details&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;llama-3.3-70b-versatile&quot;</span>
+  <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">save_results</span></code> returns the count written and the output path:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s2">&quot;saved&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;ai_analysis/failure_analysis.json&quot;</span><span class="p">}</span>
 </pre></div>
 </div>
 </dd></dl>

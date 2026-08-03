@@ -55,8 +55,26 @@ against, so a malformed case is a hard error rather than a silent skip.</p>
 <code class="docutils literal notranslate"><span class="pre">cases</span></code> list).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The list of case dicts, each with <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">failure_context</span></code>,
-and <code class="docutils literal notranslate"><span class="pre">expected</span></code> keys.</p>
+<dd class="field-even"><p><p>The list of case dicts, each with <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">failure_context</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">expected</span></code> keys. Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;timeout_slow_response&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;failure_context&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="s2">&quot;test_update_list_description[update_list0]&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;api_url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://api.themoviedb.org/4/list/8284605&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;status_code&quot;</span><span class="p">:</span> <span class="mi">201</span><span class="p">,</span>
+            <span class="s2">&quot;error_message&quot;</span><span class="p">:</span> <span class="s2">&quot;AssertionError: Response time 17.7s exceeded expected max 15s&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;expected&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;expected_category&quot;</span><span class="p">:</span> <span class="s2">&quot;timeout&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;expected_root_cause&quot;</span><span class="p">:</span> <span class="s2">&quot;The call succeeded (HTTP 201) but took ~17.7s, over the 15s threshold.&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</p>
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ValueError</strong> – If the file is malformed or any case is missing a
@@ -107,7 +125,18 @@ error rather than crashing).</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The parsed judge output, or <code class="docutils literal notranslate"><span class="pre">None</span></code> on failure.</p>
+<dd class="field-even"><p><p>The parsed judge output, or <code class="docutils literal notranslate"><span class="pre">None</span></code> on failure.
+Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;groundedness&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s2">&quot;completeness&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;fail&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
+                     <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;omits the 404 status code&quot;</span><span class="p">]},</span>
+    <span class="s2">&quot;actionability&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s2">&quot;overall_verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;fail&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -122,8 +151,24 @@ error rather than crashing).</p>
 <code class="docutils literal notranslate"><span class="pre">(&quot;correctness&quot;,</span> <span class="pre">&quot;groundedness&quot;,</span> <span class="pre">&quot;completeness&quot;)</span></code>).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A JSON Schema requiring one <code class="docutils literal notranslate"><span class="pre">_DIMENSION_SCHEMA</span></code> block per
-dimension plus an <code class="docutils literal notranslate"><span class="pre">overall_verdict</span></code> string.</p>
+<dd class="field-even"><p><p>A JSON Schema requiring one <code class="docutils literal notranslate"><span class="pre">_DIMENSION_SCHEMA</span></code> block per
+dimension plus an <code class="docutils literal notranslate"><span class="pre">overall_verdict</span></code> string. Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;additionalProperties&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;groundedness&quot;</span><span class="p">,</span> <span class="s2">&quot;overall_verdict&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;groundedness&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># one _DIMENSION_SCHEMA block per dimension</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;verdict&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">},</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;overall_verdict&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;fail&quot;</span><span class="p">]},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -143,9 +188,20 @@ dimension plus an <code class="docutils literal notranslate"><span class="pre">o
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The parsed judge output (per-dimension <code class="docutils literal notranslate"><span class="pre">{verdict,</span> <span class="pre">reasoning,</span>
+<dd class="field-even"><p><p>The parsed judge output (per-dimension <code class="docutils literal notranslate"><span class="pre">{verdict,</span> <span class="pre">reasoning,</span>
 <span class="pre">issues}</span></code> for correctness/groundedness/completeness/actionability plus
-<code class="docutils literal notranslate"><span class="pre">overall_verdict</span></code>), or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the call or parse fails.</p>
+<code class="docutils literal notranslate"><span class="pre">overall_verdict</span></code>), or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the call or parse fails.
+Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;correctness&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s2">&quot;groundedness&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s2">&quot;completeness&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s2">&quot;actionability&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s2">&quot;overall_verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -167,9 +223,19 @@ correctness is deliberately not judged. The diagnosis is cleaned with
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The parsed judge output (<code class="docutils literal notranslate"><span class="pre">groundedness</span></code>, <code class="docutils literal notranslate"><span class="pre">completeness</span></code>,
+<dd class="field-even"><p><p>The parsed judge output (<code class="docutils literal notranslate"><span class="pre">groundedness</span></code>, <code class="docutils literal notranslate"><span class="pre">completeness</span></code>,
 <code class="docutils literal notranslate"><span class="pre">actionability</span></code>, <code class="docutils literal notranslate"><span class="pre">overall_verdict</span></code>), or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the call or
-parse fails.</p>
+parse fails. Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;groundedness&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s2">&quot;completeness&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[]},</span>
+    <span class="s2">&quot;actionability&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;fail&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;suggested_fix is too vague&quot;</span><span class="p">]},</span>
+    <span class="s2">&quot;overall_verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;fail&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -190,7 +256,20 @@ tolerates a non-int confidence.</p>
 <dd class="field-odd"><p><strong>diagnosis</strong> – The raw diagnosis dict from the analyzer.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A new dict safe to embed in a judge payload and a report.</p>
+<dd class="field-even"><p><p>A new dict safe to embed in a judge payload and a report
+(<code class="docutils literal notranslate"><span class="pre">test_name</span></code>/<code class="docutils literal notranslate"><span class="pre">model</span></code> dropped, <code class="docutils literal notranslate"><span class="pre">confidence</span></code> coerced to int).
+Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;root_cause&quot;</span><span class="p">:</span> <span class="s2">&quot;Stale movie id 550 returned HTTP 404&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="s2">&quot;data_issue&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;suggested_fix&quot;</span><span class="p">:</span> <span class="s2">&quot;Refresh the movie id used in test_data.yaml&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="mi">90</span><span class="p">,</span>
+    <span class="s2">&quot;explanation&quot;</span><span class="p">:</span> <span class="s2">&quot;The request to /movie/550 returned 404 Not Found...&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;evidence&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;status_code 404&quot;</span><span class="p">,</span> <span class="s2">&quot;error message &#39;could not be found&#39;&quot;</span><span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>

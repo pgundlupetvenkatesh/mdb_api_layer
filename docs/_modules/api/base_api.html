@@ -108,7 +108,9 @@
 <span class="sd">        :param params: Query parameters sent with the request.</span>
 <span class="sd">        :type params: dict, optional</span>
 <span class="sd">        :returns: Params with any :data:`_SECRET_QUERY_PARAMS` value replaced</span>
-<span class="sd">                  by ``&lt;hidden&gt;``.</span>
+<span class="sd">                  by ``&lt;hidden&gt;``. Example::</span>
+
+<span class="sd">                      {&quot;page&quot;: 1, &quot;session_id&quot;: &quot;&lt;hidden&gt;&quot;}</span>
 <span class="sd">        :rtype: dict or the original value</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -128,7 +130,9 @@
 <span class="sd">        :param url: Full request URL, possibly containing secret query params.</span>
 <span class="sd">        :type url: str</span>
 <span class="sd">        :returns: URL with any :data:`_SECRET_QUERY_PARAMS` value replaced by</span>
-<span class="sd">                  ``&lt;hidden&gt;``.</span>
+<span class="sd">                  ``&lt;hidden&gt;``. Example::</span>
+
+<span class="sd">                      &quot;https://api.themoviedb.org/3/account/42/rated/movies?session_id=&lt;hidden&gt;&quot;</span>
 <span class="sd">        :rtype: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">pattern</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;\b(</span><span class="si">{</span><span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BaseAPI</span><span class="o">.</span><span class="n">_SECRET_QUERY_PARAMS</span><span class="p">)</span><span class="si">}</span><span class="s2">)=[^&amp;]+&quot;</span>
@@ -152,6 +156,22 @@
 <span class="sd">        :param payload: JSON payload sent with the request body.</span>
 <span class="sd">        :type payload: dict, optional</span>
 <span class="sd">        :returns: Standardized API response with data, status code, and metadata.</span>
+<span class="sd">                  ``data`` holds the parsed JSON body; credentials in ``url`` /</span>
+<span class="sd">                  ``request_params`` are masked. Example return::</span>
+
+<span class="sd">                      APIResponse(</span>
+<span class="sd">                          data={&quot;id&quot;: 550, &quot;title&quot;: &quot;Fight Club&quot;},</span>
+<span class="sd">                          status_code=200,</span>
+<span class="sd">                          url=&quot;https://api.themoviedb.org/3/movie/550&quot;,</span>
+<span class="sd">                          headers={&quot;Content-Type&quot;: &quot;application/json;charset=utf-8&quot;},</span>
+<span class="sd">                          cookies=&lt;RequestsCookieJar&gt;,</span>
+<span class="sd">                          encoding=&quot;utf-8&quot;,</span>
+<span class="sd">                          elapsed_seconds=0.12,</span>
+<span class="sd">                          reason=&quot;OK&quot;,</span>
+<span class="sd">                          request=&quot;GET&quot;,</span>
+<span class="sd">                          request_params={&quot;page&quot;: 1},</span>
+<span class="sd">                          request_payload=None,</span>
+<span class="sd">                      )</span>
 <span class="sd">        :rtype: APIResponse</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">APIResponse</span><span class="p">(</span>
@@ -179,6 +199,18 @@
 <span class="sd">        :param params: Optional query parameters.</span>
 <span class="sd">        :type params: dict, optional</span>
 <span class="sd">        :returns: API response with data, status code, and metadata.</span>
+<span class="sd">                  Example return::</span>
+
+<span class="sd">                      APIResponse(</span>
+<span class="sd">                          data={&quot;page&quot;: 1, &quot;results&quot;: [{&quot;id&quot;: 550, &quot;title&quot;: &quot;Fight Club&quot;}]},</span>
+<span class="sd">                          status_code=200,</span>
+<span class="sd">                          url=&quot;https://api.themoviedb.org/3/movie/popular?page=1&quot;,</span>
+<span class="sd">                          elapsed_seconds=0.12,</span>
+<span class="sd">                          reason=&quot;OK&quot;,</span>
+<span class="sd">                          request=&quot;GET&quot;,</span>
+<span class="sd">                          request_params={&quot;page&quot;: 1},</span>
+<span class="sd">                          request_payload=None,</span>
+<span class="sd">                      )</span>
 <span class="sd">        :rtype: APIResponse</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">api_version</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -200,6 +232,18 @@
 <span class="sd">        :param params: Optional query parameters.</span>
 <span class="sd">        :type params: dict, optional</span>
 <span class="sd">        :returns: API response with data, status code, and metadata.</span>
+<span class="sd">                  Example return::</span>
+
+<span class="sd">                      APIResponse(</span>
+<span class="sd">                          data={&quot;success&quot;: True, &quot;status_code&quot;: 1, &quot;status_message&quot;: &quot;Success.&quot;},</span>
+<span class="sd">                          status_code=201,</span>
+<span class="sd">                          url=&quot;https://api.themoviedb.org/3/movie/550/rating&quot;,</span>
+<span class="sd">                          elapsed_seconds=0.15,</span>
+<span class="sd">                          reason=&quot;Created&quot;,</span>
+<span class="sd">                          request=&quot;POST&quot;,</span>
+<span class="sd">                          request_params=None,</span>
+<span class="sd">                          request_payload={&quot;value&quot;: 8.5},</span>
+<span class="sd">                      )</span>
 <span class="sd">        :rtype: APIResponse</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">api_version</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -219,6 +263,19 @@
 <span class="sd">        :param data: Optional JSON payload to send in the request body.</span>
 <span class="sd">        :type data: dict, optional</span>
 <span class="sd">        :returns: API response with data, status code, and metadata.</span>
+<span class="sd">                  Example return::</span>
+
+<span class="sd">                      APIResponse(</span>
+<span class="sd">                          data={&quot;success&quot;: True, &quot;status_code&quot;: 12,</span>
+<span class="sd">                                &quot;status_message&quot;: &quot;The item/record was updated successfully.&quot;},</span>
+<span class="sd">                          status_code=201,</span>
+<span class="sd">                          url=&quot;https://api.themoviedb.org/4/list/123&quot;,</span>
+<span class="sd">                          elapsed_seconds=0.20,</span>
+<span class="sd">                          reason=&quot;Created&quot;,</span>
+<span class="sd">                          request=&quot;PUT&quot;,</span>
+<span class="sd">                          request_params=None,</span>
+<span class="sd">                          request_payload={&quot;description&quot;: &quot;Updated description&quot;},</span>
+<span class="sd">                      )</span>
 <span class="sd">        :rtype: APIResponse</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">api_version</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -240,6 +297,19 @@
 <span class="sd">        :param params: Optional query parameters.</span>
 <span class="sd">        :type params: dict, optional</span>
 <span class="sd">        :returns: API response with data, status code, and metadata.</span>
+<span class="sd">                  Example return::</span>
+
+<span class="sd">                      APIResponse(</span>
+<span class="sd">                          data={&quot;success&quot;: True, &quot;status_code&quot;: 13,</span>
+<span class="sd">                                &quot;status_message&quot;: &quot;The item/record was deleted successfully.&quot;},</span>
+<span class="sd">                          status_code=200,</span>
+<span class="sd">                          url=&quot;https://api.themoviedb.org/3/movie/550/rating&quot;,</span>
+<span class="sd">                          elapsed_seconds=0.14,</span>
+<span class="sd">                          reason=&quot;OK&quot;,</span>
+<span class="sd">                          request=&quot;DELETE&quot;,</span>
+<span class="sd">                          request_params=None,</span>
+<span class="sd">                          request_payload=None,</span>
+<span class="sd">                      )</span>
 <span class="sd">        :rtype: APIResponse</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">api_version</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">&quot;</span>

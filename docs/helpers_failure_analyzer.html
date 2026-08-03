@@ -66,9 +66,21 @@ GROQ_API_KEY in the .env file.</p>
 - response_body: API response body snippet (if available)</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Parsed JSON diagnosis dict (keys: <code class="docutils literal notranslate"><span class="pre">root_cause</span></code>, <code class="docutils literal notranslate"><span class="pre">category</span></code>,
-<code class="docutils literal notranslate"><span class="pre">suggested_fix</span></code>, <code class="docutils literal notranslate"><span class="pre">confidence</span></code> (0–100 int), <code class="docutils literal notranslate"><span class="pre">explanation</span></code>, <code class="docutils literal notranslate"><span class="pre">evidence</span></code>,
-<code class="docutils literal notranslate"><span class="pre">test_name</span></code>, <code class="docutils literal notranslate"><span class="pre">model</span></code>) or None if analysis is disabled/fails.</p>
+<dd class="field-even"><p><p>Parsed JSON diagnosis dict, or None if analysis is
+disabled/fails. Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;root_cause&quot;</span><span class="p">:</span> <span class="s2">&quot;Movie id 0 is invalid, so TMDB returned 404.&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="s2">&quot;data_issue&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;suggested_fix&quot;</span><span class="p">:</span> <span class="s2">&quot;Use a valid movie id from movie_ids.txt in the test data.&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="mi">92</span><span class="p">,</span>
+    <span class="s2">&quot;explanation&quot;</span><span class="p">:</span> <span class="s2">&quot;The request targeted /3/movie/0; TMDB rejects id 0 ...&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;evidence&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;HTTP 404&quot;</span><span class="p">,</span> <span class="s2">&quot;status_message: The resource you requested could not be found.&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;test_name&quot;</span><span class="p">:</span> <span class="s2">&quot;test_get_movie_details&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;llama-3.3-70b-versatile&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -83,6 +95,32 @@ is installed but never used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Configured <code class="docutils literal notranslate"><span class="pre">groq.Groq</span></code> client instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.helpers.failure_analyzer.FailureAnalyzer.refine">
+<span class="sig-name descname"><span class="pre">refine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">failure_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_diag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weaknesses</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/tests/helpers/failure_analyzer.html#FailureAnalyzer.refine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.helpers.failure_analyzer.FailureAnalyzer.refine" title="Link to this definition">¶</a></dt>
+<dd><p>Produce an improved diagnosis given a critique of a prior one.</p>
+<p>Called by <a class="reference internal" href="#tests.helpers.failure_analyzer.refine_until_confident" title="tests.helpers.failure_analyzer.refine_until_confident"><code class="xref py py-func docutils literal notranslate"><span class="pre">refine_until_confident()</span></code></a> when the independent judge
+flags a diagnosis. Re-prompts the model with the original failure
+context, the prior diagnosis, and the judge’s concrete <code class="docutils literal notranslate"><span class="pre">weaknesses</span></code>,
+asking it to address each one and re-examine the evidence. The improved
+diagnosis <strong>replaces</strong> the prior one in <code class="docutils literal notranslate"><span class="pre">self._results</span></code> (matched by
+<code class="docutils literal notranslate"><span class="pre">test_name</span></code>) so the saved report and terminal summary reflect the
+final version.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>failure_context</strong> – Same dict passed to <a class="reference internal" href="#tests.helpers.failure_analyzer.FailureAnalyzer.analyze" title="tests.helpers.failure_analyzer.FailureAnalyzer.analyze"><code class="xref py py-meth docutils literal notranslate"><span class="pre">analyze()</span></code></a>.</p></li>
+<li><p><strong>prior_diag</strong> – The diagnosis being critiqued.</p></li>
+<li><p><strong>weaknesses</strong> – Concrete weaknesses from the judge to address.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Improved diagnosis dict (same shape as <a class="reference internal" href="#tests.helpers.failure_analyzer.FailureAnalyzer.analyze" title="tests.helpers.failure_analyzer.FailureAnalyzer.analyze"><code class="xref py py-meth docutils literal notranslate"><span class="pre">analyze()</span></code></a>’s
+return), or None if analysis is disabled or the call fails.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -109,6 +147,49 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">ai_anal
 <p>Output file: <code class="docutils literal notranslate"><span class="pre">&lt;output_dir&gt;/failure_analysis.json</span></code></p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.helpers.failure_analyzer.refine_until_confident">
+<span class="sig-prename descclassname"><span class="pre">tests.helpers.failure_analyzer.</span></span><span class="sig-name descname"><span class="pre">refine_until_confident</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">analyzer_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">failure_context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnosis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">judge_fn</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/helpers/failure_analyzer.html#refine_until_confident"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.helpers.failure_analyzer.refine_until_confident" title="Link to this definition">¶</a></dt>
+<dd><p>Iteratively improve a diagnosis using an independent judge as the critic.</p>
+<p>Agentic loop: judge the current diagnosis; if the judge passes <strong>and</strong> the
+self-reported <code class="docutils literal notranslate"><span class="pre">confidence</span></code> clears <code class="docutils literal notranslate"><span class="pre">confidence_target</span></code>, stop. Otherwise
+feed the judge’s failed-dimension issues back into
+<a class="reference internal" href="#tests.helpers.failure_analyzer.FailureAnalyzer.refine" title="tests.helpers.failure_analyzer.FailureAnalyzer.refine"><code class="xref py py-meth docutils literal notranslate"><span class="pre">FailureAnalyzer.refine()</span></code></a> and re-judge, up to <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> times.</p>
+<p>The judge is injected (<code class="docutils literal notranslate"><span class="pre">judge_fn</span></code>) so this module stays decoupled from
+<code class="docutils literal notranslate"><span class="pre">evals.judge</span></code> and the loop is unit-testable. A <code class="docutils literal notranslate"><span class="pre">None</span></code> judgement (judge
+API error) stops the loop — without a critic signal there is nothing to
+refine against.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>analyzer_instance</strong> – The <a class="reference internal" href="#tests.helpers.failure_analyzer.FailureAnalyzer" title="tests.helpers.failure_analyzer.FailureAnalyzer"><code class="xref py py-class docutils literal notranslate"><span class="pre">FailureAnalyzer</span></code></a> that produced <code class="docutils literal notranslate"><span class="pre">diagnosis</span></code>.</p></li>
+<li><p><strong>failure_context</strong> – The failure context dict.</p></li>
+<li><p><strong>diagnosis</strong> – The initial diagnosis from <a class="reference internal" href="#tests.helpers.failure_analyzer.FailureAnalyzer.analyze" title="tests.helpers.failure_analyzer.FailureAnalyzer.analyze"><code class="xref py py-meth docutils literal notranslate"><span class="pre">FailureAnalyzer.analyze()</span></code></a>.</p></li>
+<li><p><strong>judge_fn</strong> – Callable <code class="docutils literal notranslate"><span class="pre">(failure_context,</span> <span class="pre">diagnosis)</span> <span class="pre">-&gt;</span> <span class="pre">judgement</span> <span class="pre">|</span> <span class="pre">None</span></code>.</p></li>
+<li><p><strong>max_iterations</strong> – Maximum number of refine passes.</p></li>
+<li><p><strong>confidence_target</strong> – Confidence (0–100) the diagnosis must reach.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Tuple of the final <code class="docutils literal notranslate"><span class="pre">(diagnosis,</span> <span class="pre">judgement)</span></code> — the diagnosis has
+the shape shown in <a class="reference internal" href="#tests.helpers.failure_analyzer.FailureAnalyzer.analyze" title="tests.helpers.failure_analyzer.FailureAnalyzer.analyze"><code class="xref py py-meth docutils literal notranslate"><span class="pre">FailureAnalyzer.analyze()</span></code></a>, the judgement is the
+<code class="docutils literal notranslate"><span class="pre">judge_fn</span></code> output (or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the judge errored). Example return:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">&quot;root_cause&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="s2">&quot;data_issue&quot;</span><span class="p">,</span> <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="mi">92</span><span class="p">,</span> <span class="o">...</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;groundedness&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[]},</span>
+        <span class="s2">&quot;completeness&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[]},</span>
+        <span class="s2">&quot;actionability&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span> <span class="s2">&quot;reasoning&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[]},</span>
+        <span class="s2">&quot;overall_verdict&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

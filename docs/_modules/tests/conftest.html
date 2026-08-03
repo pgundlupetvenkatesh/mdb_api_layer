@@ -52,7 +52,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">zoneinfo</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZoneInfo</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">tests.helpers.failure_analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="n">analyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tests.helpers.failure_analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="n">analyzer</span><span class="p">,</span> <span class="n">refine_until_confident</span>
 
 <span class="c1"># Registering logger configuration options and setup before any test runs</span>
 <div class="viewcode-block" id="pytest_addoption">
@@ -321,7 +321,12 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fixture that provides a Pydantic model loader for response validation.</span>
 
-<span class="sd">    Returns a callable that maps schema names to Pydantic model classes.</span>
+<span class="sd">    :return: A callable ``_load(name)`` that maps a registered schema name to</span>
+<span class="sd">        its Pydantic model class, raising ``ValueError`` for an unknown name.</span>
+<span class="sd">        Example use::</span>
+
+<span class="sd">            model = load_schema(&quot;movie_schema&quot;)   # -&gt; &lt;class &#39;MovieDetails&#39;&gt;</span>
+<span class="sd">            model.model_validate(response.data)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">schema_map</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;generic_schema&#39;</span><span class="p">:</span> <span class="n">GenericResponse</span><span class="p">,</span>
@@ -464,58 +469,66 @@
                 <span class="n">failure_context</span><span class="p">[</span><span class="s2">&quot;response_body&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">data</span>
 
     <span class="n">diagnosis</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">analyze</span><span class="p">(</span><span class="n">failure_context</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">diagnosis</span><span class="p">:</span>
+        <span class="k">return</span>
 
-    <span class="c1"># Attach analysis to Allure report</span>
-    <span class="k">if</span> <span class="n">diagnosis</span><span class="p">:</span>
-        <span class="n">confidence</span> <span class="o">=</span> <span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># When judging is enabled (--judge-diagnosis sets AI_JUDGE_ENABLED=true in</span>
+    <span class="c1"># pytest_configure; Docker/K8s/CI set it via .env), run an agentic refine</span>
+    <span class="c1"># loop: an independent judge critiques the diagnosis and the analyzer</span>
+    <span class="c1"># improves it until the judge passes and confidence clears the target, or</span>
+    <span class="c1"># AI_REFINE_MAX_ITERS is hit. A normal triage run skips this entirely, so it</span>
+    <span class="c1"># pays for the diagnosis but not the extra judge/refine calls.</span>
+    <span class="n">judgement</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AI_JUDGE_ENABLED&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;true&quot;</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">evals.judge</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_JUDGE_MODEL</span><span class="p">,</span> <span class="n">judge_live</span>
+        <span class="n">judge_model</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AI_JUDGE_MODEL&quot;</span><span class="p">,</span> <span class="n">DEFAULT_JUDGE_MODEL</span><span class="p">)</span>
+        <span class="n">api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">)</span>
+        <span class="n">diagnosis</span><span class="p">,</span> <span class="n">judgement</span> <span class="o">=</span> <span class="n">refine_until_confident</span><span class="p">(</span>
+            <span class="n">analyzer</span><span class="p">,</span>
+            <span class="n">failure_context</span><span class="p">,</span>
+            <span class="n">diagnosis</span><span class="p">,</span>
+            <span class="n">judge_fn</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">diag</span><span class="p">:</span> <span class="n">judge_live</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">diag</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">judge_model</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">),</span>
+            <span class="n">max_iterations</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AI_REFINE_MAX_ITERS&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">)),</span>
+            <span class="n">confidence_target</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AI_REFINE_CONFIDENCE_TARGET&quot;</span><span class="p">,</span> <span class="s2">&quot;90&quot;</span><span class="p">)),</span>
+        <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="mi">80</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 High confidence [</span><span class="si">{</span><span class="n">confidence</span><span class="si">}</span><span class="s2">%] - </span><span class="si">{</span><span class="n">diagnosis</span><span class="p">[</span><span class="s1">&#39;root_cause&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="mi">50</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 Medium confidence [</span><span class="si">{</span><span class="n">confidence</span><span class="si">}</span><span class="s2">%] - </span><span class="si">{</span><span class="n">diagnosis</span><span class="p">[</span><span class="s1">&#39;root_cause&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 Low confidence [</span><span class="si">{</span><span class="n">confidence</span><span class="si">}</span><span class="s2">%] - treat with caution: </span><span class="si">{</span><span class="n">diagnosis</span><span class="p">[</span><span class="s1">&#39;root_cause&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Log + attach the FINAL diagnosis (after any refinement).</span>
+    <span class="n">confidence</span> <span class="o">=</span> <span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="mi">80</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 High confidence [</span><span class="si">{</span><span class="n">confidence</span><span class="si">}</span><span class="s2">%] - </span><span class="si">{</span><span class="n">diagnosis</span><span class="p">[</span><span class="s1">&#39;root_cause&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="mi">50</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 Medium confidence [</span><span class="si">{</span><span class="n">confidence</span><span class="si">}</span><span class="s2">%] - </span><span class="si">{</span><span class="n">diagnosis</span><span class="p">[</span><span class="s1">&#39;root_cause&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🤖 Low confidence [</span><span class="si">{</span><span class="n">confidence</span><span class="si">}</span><span class="s2">%] - treat with caution: </span><span class="si">{</span><span class="n">diagnosis</span><span class="p">[</span><span class="s1">&#39;root_cause&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">allure</span>
+        <span class="n">allure</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;🤖 AI Failure Analysis&quot;</span><span class="p">,</span>
+            <span class="n">attachment_type</span><span class="o">=</span><span class="n">allure</span><span class="o">.</span><span class="n">attachment_type</span><span class="o">.</span><span class="n">JSON</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>  <span class="c1"># Allure not available</span>
+
+    <span class="c1"># Attach the final judge verdict (groundedness + completeness + actionability,</span>
+    <span class="c1"># everything except correctness — a live failure has no reference answer).</span>
+    <span class="k">if</span> <span class="n">judgement</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;⚖️ Diagnosis quality [</span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;overall_verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">] — &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;groundedness: </span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;groundedness&#39;</span><span class="p">][</span><span class="s1">&#39;verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;completeness: </span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;completeness&#39;</span><span class="p">][</span><span class="s1">&#39;verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;actionability: </span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;actionability&#39;</span><span class="p">][</span><span class="s1">&#39;verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">allure</span>
             <span class="n">allure</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span>
-                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;🤖 AI Failure Analysis&quot;</span><span class="p">,</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">judgement</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;⚖️ Diagnosis Quality (LLM-as-a-judge)&quot;</span><span class="p">,</span>
                 <span class="n">attachment_type</span><span class="o">=</span><span class="n">allure</span><span class="o">.</span><span class="n">attachment_type</span><span class="o">.</span><span class="n">JSON</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">pass</span>  <span class="c1"># Allure not available</span>
-
-        <span class="c1"># Judge the diagnosis&#39;s quality (groundedness + completeness + actionability,</span>
-        <span class="c1"># everything except correctness — a live failure has no reference answer).</span>
-        <span class="c1"># Opt-in and subordinate to analysis: skip unless judging is enabled</span>
-        <span class="c1"># (--judge-diagnosis sets AI_JUDGE_ENABLED=true in pytest_configure;</span>
-        <span class="c1"># Docker/K8s/CI set it via .env), so a normal triage run pays for</span>
-        <span class="c1"># diagnosis but not the extra judge call.</span>
-        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AI_JUDGE_ENABLED&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;true&quot;</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">evals.judge</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_JUDGE_MODEL</span><span class="p">,</span> <span class="n">judge_live</span>
-            <span class="n">judgement</span> <span class="o">=</span> <span class="n">judge_live</span><span class="p">(</span>
-                <span class="n">failure_context</span><span class="p">,</span>
-                <span class="n">diagnosis</span><span class="p">,</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AI_JUDGE_MODEL&quot;</span><span class="p">,</span> <span class="n">DEFAULT_JUDGE_MODEL</span><span class="p">),</span>
-                <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">),</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="n">judgement</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;⚖️ Diagnosis quality [</span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;overall_verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">] — &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;groundedness: </span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;groundedness&#39;</span><span class="p">][</span><span class="s1">&#39;verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;completeness: </span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;completeness&#39;</span><span class="p">][</span><span class="s1">&#39;verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;actionability: </span><span class="si">{</span><span class="n">judgement</span><span class="p">[</span><span class="s1">&#39;actionability&#39;</span><span class="p">][</span><span class="s1">&#39;verdict&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="kn">import</span><span class="w"> </span><span class="nn">allure</span>
-                    <span class="n">allure</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span>
-                        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">judgement</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
-                        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;⚖️ Diagnosis Quality (LLM-as-a-judge)&quot;</span><span class="p">,</span>
-                        <span class="n">attachment_type</span><span class="o">=</span><span class="n">allure</span><span class="o">.</span><span class="n">attachment_type</span><span class="o">.</span><span class="n">JSON</span>
-                    <span class="p">)</span>
-                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="k">pass</span>  <span class="c1"># Allure not available</span></div>
+            <span class="k">pass</span>  <span class="c1"># Allure not available</span></div>
 
 
 <div class="viewcode-block" id="pytest_terminal_summary">
