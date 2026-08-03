@@ -225,6 +225,30 @@ async def handle_call(name: str, arguments: dict[str, Any]) -> list[types.TextCo
           "model": "llama-3.3-70b-versatile",
           "confidence_tier": "high"
         }
+
+    When analysis is disabled or fails, ``analyze_failure`` instead returns::
+
+        {"error": "Analysis disabled or failed.", "hint": "Set AI_ANALYSIS_ENABLED=true and GROQ_API_KEY in the environment."}
+
+    ``get_results`` returns a JSON array of the stored diagnoses (without the
+    ``confidence_tier`` field, which only ``analyze_failure`` adds)::
+
+        [
+          {
+            "root_cause": "...",
+            "category": "auth_error",
+            "suggested_fix": "...",
+            "confidence": 92,
+            "explanation": "...",
+            "evidence": ["HTTP 401"],
+            "test_name": "test_get_movie_details",
+            "model": "llama-3.3-70b-versatile"
+          }
+        ]
+
+    ``save_results`` returns the count written and the output path::
+
+        {"saved": 3, "path": "ai_analysis/failure_analysis.json"}
     """
     if name == "analyze_failure":
         diagnosis = analyzer.analyze(failure_context=arguments)

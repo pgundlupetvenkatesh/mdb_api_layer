@@ -42,6 +42,17 @@ class SearchAPI(BaseAPI):
         :param query_params: Optional dict of query parameters.
                              Defaults to page 1 if not specified.
         :return: Response object with paginated list of matching movies.
+                 Example ``response.data``::
+
+                     {
+                         "page": 1,
+                         "results": [
+                             {"id": 268, "title": "Batman", "original_language": "en",
+                              "release_date": "1989-06-23", "vote_average": 7.2}
+                         ],
+                         "total_pages": 5,
+                         "total_results": 92
+                     }
         """
         query_params = {'page': 1, **(query_params or {})}
         logger.debug(f"query_params: {query_params}")

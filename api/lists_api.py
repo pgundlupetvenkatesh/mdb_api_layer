@@ -39,6 +39,13 @@ class ListsAPI(BaseAPI):
         :param list_id: TMDB list ID to update.
         :param payload: Dict containing fields to update (e.g., name, description).
         :return: Response object with updated list details.
+                 Example ``response.data``::
+
+                     {
+                         "status_message": "The item/record was updated successfully.",
+                         "success": true,
+                         "status_code": 12
+                     }
         """
         logger.info(f"Body payload: {payload}")
         return self.put(f"{self._sub_path}/{list_id}", data=payload)

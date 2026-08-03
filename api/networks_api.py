@@ -20,5 +20,15 @@ class NetworksAPI(BaseAPI):
         :param network_id: TMDB network ID (e.g., 213 for Netflix).
         :return: Response object with network details including name,
                  headquarters, homepage, logo path, and origin country.
+                 Example ``response.data``::
+
+                     {
+                         "id": 213,
+                         "name": "Netflix",
+                         "headquarters": "Los Gatos, California, USA",
+                         "homepage": "https://www.netflix.com",
+                         "logo_path": "/wwemzKWzjKYJFfCeiB57q3r4Bcm.png",
+                         "origin_country": ""
+                     }
         """
         return self.get(f"{self._sub_path}/{network_id}")

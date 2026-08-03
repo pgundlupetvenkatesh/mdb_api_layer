@@ -123,7 +123,21 @@ def _output_schema(dimensions: tuple[str, ...]) -> dict:
     :param dimensions: The dimension names the judge must return (e.g.
         ``("correctness", "groundedness", "completeness")``).
     :returns: A JSON Schema requiring one ``_DIMENSION_SCHEMA`` block per
-        dimension plus an ``overall_verdict`` string.
+        dimension plus an ``overall_verdict`` string. Example return::
+
+            {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["groundedness", "overall_verdict"],
+                "properties": {
+                    "groundedness": {  # one _DIMENSION_SCHEMA block per dimension
+                        "type": "object",
+                        "required": ["verdict", "reasoning", "issues"],
+                        "properties": {...},
+                    },
+                    "overall_verdict": {"type": "string", "enum": ["pass", "fail"]},
+                },
+            }
     """
     return {
         "type": "object",
@@ -153,7 +167,18 @@ def sanitize_diagnosis(diagnosis: dict) -> dict:
     tolerates a non-int confidence.
 
     :param diagnosis: The raw diagnosis dict from the analyzer.
-    :returns: A new dict safe to embed in a judge payload and a report.
+    :returns: A new dict safe to embed in a judge payload and a report
+        (``test_name``/``model`` dropped, ``confidence`` coerced to int).
+        Example return::
+
+            {
+                "root_cause": "Stale movie id 550 returned HTTP 404",
+                "category": "data_issue",
+                "suggested_fix": "Refresh the movie id used in test_data.yaml",
+                "confidence": 90,
+                "explanation": "The request to /movie/550 returned 404 Not Found...",
+                "evidence": ["status_code 404", "error message 'could not be found'"],
+            }
     """
     # rebuilds the diagnosis keeping every key except test_name and model so the judge can't be biased by knowing which
     # model wrote the answer
@@ -184,6 +209,15 @@ def _call_judge(system_prompt: str, output_schema: dict, payload: dict, model: s
     :param model: Groq model id for the judge.
     :param api_key: Groq API key; falls back to the client's env-based default.
     :returns: The parsed judge output, or ``None`` on failure.
+        Example return::
+
+            {
+                "groundedness": {"verdict": "pass", "reasoning": "...", "issues": []},
+                "completeness": {"verdict": "fail", "reasoning": "...",
+                                 "issues": ["omits the 404 status code"]},
+                "actionability": {"verdict": "pass", "reasoning": "...", "issues": []},
+                "overall_verdict": "fail",
+            }
     """
     # Lazy import
     from groq import Groq
@@ -244,6 +278,15 @@ def judge_case(payload: dict, model: str = DEFAULT_JUDGE_MODEL, api_key: str | N
     :returns: The parsed judge output (per-dimension ``{verdict, reasoning,
         issues}`` for correctness/groundedness/completeness/actionability plus
         ``overall_verdict``), or ``None`` if the call or parse fails.
+        Example return::
+
+            {
+                "correctness": {"verdict": "pass", "reasoning": "...", "issues": []},
+                "groundedness": {"verdict": "pass", "reasoning": "...", "issues": []},
+                "completeness": {"verdict": "pass", "reasoning": "...", "issues": []},
+                "actionability": {"verdict": "pass", "reasoning": "...", "issues": []},
+                "overall_verdict": "pass",
+            }
     """
     return _call_judge(JUDGE_SYSTEM_PROMPT, JUDGE_OUTPUT_SCHEMA, payload, model, api_key)
 
@@ -262,7 +305,15 @@ def judge_live(failure_context: dict, diagnosis: dict, model: str = DEFAULT_JUDG
     :param api_key: Groq API key; falls back to the client's env-based default.
     :returns: The parsed judge output (``groundedness``, ``completeness``,
         ``actionability``, ``overall_verdict``), or ``None`` if the call or
-        parse fails.
+        parse fails. Example return::
+
+            {
+                "groundedness": {"verdict": "pass", "reasoning": "...", "issues": []},
+                "completeness": {"verdict": "pass", "reasoning": "...", "issues": []},
+                "actionability": {"verdict": "fail", "reasoning": "...",
+                                  "issues": ["suggested_fix is too vague"]},
+                "overall_verdict": "fail",
+            }
     """
     payload = {"failure_context": failure_context, "diagnosis": sanitize_diagnosis(diagnosis)}
     return _call_judge(LIVE_JUDGE_SYSTEM_PROMPT, LIVE_JUDGE_OUTPUT_SCHEMA, payload, model, api_key)

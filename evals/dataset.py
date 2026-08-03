@@ -35,7 +35,23 @@ def load_dataset(path: str | Path) -> list[dict]:
     :param path: Path to the YAML dataset (a mapping with a top-level
         ``cases`` list).
     :returns: The list of case dicts, each with ``id``, ``failure_context``,
-        and ``expected`` keys.
+        and ``expected`` keys. Example return::
+
+            [
+                {
+                    "id": "timeout_slow_response",
+                    "failure_context": {
+                        "test_name": "test_update_list_description[update_list0]",
+                        "api_url": "https://api.themoviedb.org/4/list/8284605",
+                        "status_code": 201,
+                        "error_message": "AssertionError: Response time 17.7s exceeded expected max 15s",
+                    },
+                    "expected": {
+                        "expected_category": "timeout",
+                        "expected_root_cause": "The call succeeded (HTTP 201) but took ~17.7s, over the 15s threshold.",
+                    },
+                },
+            ]
     :raises ValueError: If the file is malformed or any case is missing a
         required field, has a duplicate ``id``, or names a category outside
         :data:`VALID_CATEGORIES`. The message names the offending case.
