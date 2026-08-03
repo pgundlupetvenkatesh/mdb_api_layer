@@ -43,6 +43,11 @@ Evals
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: tests.evals.test_failure_refine
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Journeys
 --------
 .. automodule:: tests.journeys.test_search_to_details
