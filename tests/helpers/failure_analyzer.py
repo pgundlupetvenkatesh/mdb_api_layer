@@ -25,9 +25,9 @@ You are an expert API test failure analyst. When given a test failure context, a
   "root_cause": "One sentence explaining why the test failed",
   "category": "one of: api_bug | test_bug | data_issue | timeout | auth_error | schema_mismatch | environment",
   "suggested_fix": "Specific actionable fix in 1-2 sentences",
-  "confidence": "integer between 0 and 100 representing how confident you are in the diagnosis (e.g. 90 means 90% confident)",
   "explanation": "2-3 sentence detailed explanation of what went wrong",
-  "evidence": ["list of observable facts from logs/errors that support the diagnosis, e.g. HTTP status code, response body snippets, error messages"]
+  "evidence": ["list of observable facts from logs/errors that support the diagnosis, e.g. HTTP status code, response body snippets, error messages"],
+  "confidence": "integer 0-100 — fill this in LAST, after root_cause, explanation, and evidence; calibrate per the rubric below"
 }
 
 Rules:
@@ -40,6 +40,12 @@ Rules:
 - environment: Configuration, connectivity, or environment setup issue
 - Be concise and specific to the TMDB API domain
 - Respond ONLY with valid JSON, no markdown fences
+
+Confidence calibration (be conservative — when unsure, choose the LOWER band):
+- 85-100: failure_context alone is conclusive — a status code, error message, or response body directly and unambiguously confirms the cause.
+- 50-84: the cause is a strong inference from partial signals, but some step is not directly shown in failure_context.
+- 0-49: the context is ambiguous or sparse, or the cause is inferred from indirect evidence.
+- Confidence MUST be justified by the items in "evidence": if evidence is sparse or does not directly support root_cause, keep it low. Reserve >90 for a diagnosis you could defend line-by-line from failure_context.
 """
 
 # Used by the agentic refine loop: the same output contract as SYSTEM_PROMPT,
@@ -187,6 +193,13 @@ class FailureAnalyzer:
                 diagnosis["confidence"] = int(diagnosis.get("confidence", 0))
             except (TypeError, ValueError):
                 diagnosis["confidence"] = 0
+            # Deterministic clamp — A high confidence backed by little evidence is the hallucination
+            # signature the rubric warns against; enforce it deterministically so a
+            # thin diagnosis can't self-certify (matters most on non-judged runs,
+            # which have no independent critic to catch it).
+            evidence = diagnosis.get("evidence")
+            if not isinstance(evidence, list) or len(evidence) < 2:
+                diagnosis["confidence"] = min(diagnosis["confidence"], 50)
             return diagnosis
 
         except Exception as e:
