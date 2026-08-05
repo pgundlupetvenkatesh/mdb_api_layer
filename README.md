@@ -742,6 +742,44 @@ It prints a per-case table plus aggregate metrics (category accuracy, per-dimens
 pass rates) and writes a full report to `evals/results/eval_results.json` (gitignored).
 Exit code is non-zero if any case fails, so it can gate CI.
 
+### Token Optimization
+
+The failure-analysis pipeline is input-heavy: with judging on, a single failed test can
+fan out to ~6 Groq calls — `analyze()`, then up to `AI_REFINE_MAX_ITERS` `refine()` passes,
+each followed by a `judge_live()` re-judge — and every call re-sends a long, static system
+prompt plus the failure context. The techniques below keep that cost bounded. They apply to
+any LLM pipeline, open-weight or hosted:
+
+- **Prune the input.** `_build_prompt` truncates the response body to 2000 chars (head+tail)
+  and the traceback to its last 20 lines — the response envelope and final frames carry
+  almost all the diagnostic signal, while the middle is noise. This is a deliberate
+  recall-for-cost trade: cheaper calls at the risk of dropping a rarely-needed detail.
+
+- **Cap the output.** Output tokens cost several times more than input tokens, so generation
+  is bounded — `max_tokens=500` on the analyzer, `max_completion_tokens=1500` on the judge —
+  and both use a strict JSON contract (`response_format`) so the model can't ramble. On the
+  reasoning-model judge, `reasoning_effort="low"` also caps the (billed) reasoning tokens for
+  a constrained grading task.
+
+- **Prefix-stable prompts.** The system prompts (`SYSTEM_PROMPT`, `REFINE_SYSTEM_PROMPT`,
+  the judge prompts) are invariant across calls, and the variable failure context is appended
+  last. Keeping the long, reusable prefix first lets any prompt-caching layer reuse it and
+  improves latency even where no caching discount applies.
+
+- **Bound the agentic loop.** The refine loop is the biggest token multiplier, so it has hard
+  stops: `AI_REFINE_MAX_ITERS` caps the passes, an early exit fires as soon as the judge passes
+  *and* confidence clears `AI_REFINE_CONFIDENCE_TARGET`, and a judge error breaks the loop
+  rather than retrying blindly.
+
+- **Tier the models.** A smaller/cheaper model diagnoses (Llama 3.3 70B) and a larger one
+  judges (GPT-OSS 120B) — work is routed to the cheapest model that can do it. Normal
+  `--failure-analysis`-only runs skip the judge/refine calls entirely, paying for the
+  diagnosis but nothing more.
+
+- **Reliable-first-parse.** The judge uses strict `json_schema` structured outputs (falling
+  back to `json_object`); a malformed response you have to re-request costs double, so
+  parse-reliability is itself a token saving.
+
 ## Reports
 
 ### Pytest HTML Report
