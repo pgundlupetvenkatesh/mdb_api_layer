@@ -92,7 +92,11 @@ class TokenLedger:
         from :data:`_PRICE_PER_MILLION`. Calls whose model is not in the price
         table contribute 0.
 
-        :returns: Estimated cost in USD, rounded to 6 decimals.
+        :returns: Estimated cost in USD, rounded to 6 decimals. Example return
+            for 1000 prompt + 200 completion tokens on llama-3.3-70b
+            (``1000/1e6 * 0.59 + 200/1e6 * 0.79``)::
+
+                0.000748
         """
         total = 0.0
         for r in self._records:

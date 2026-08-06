@@ -90,6 +90,7 @@ Layered, with a strict separation between the API client and the tests:
 - State assumptions; if multiple interpretations exist, ask rather than pick silently.
 - Minimum code that solves the problem - no speculative abstractions or config.
 - Surgical edits: match existing style, touch only what the request requires, clean up only the orphans your change creates.
+- Docstring examples are gated on a return: add a Sphinx `Example return::` block **only** when the docstring has a `:returns:` param, showing a sample return value — matching the style already in `api/`, `tests/helpers/`, `evals/`, and `telemetry.py`. Functions/methods that return nothing, and module/class docstrings, get no example block. Rebuild `docs` (`cd docs && make clean && make html`) and confirm no new RST warnings.
 - Define a verifiable success check before coding; for test work that usually means a failing test that your change makes pass.
 - If you notice unrelated dead code, mention it - don't delete it unless asked.
 - Commits are atomic: one logical change per commit, each leaving the repo working (full rules in `.claude/skills/commit-rules/`).
