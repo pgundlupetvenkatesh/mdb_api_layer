@@ -117,3 +117,100 @@ run a thing, this repo's specific conventions) live in the relevant `README.md`
   `--reuse-diagnoses` did) freezes it so you measure only what you changed. Trade-
   off: frozen inputs aren't honest *end-to-end* numbers — use a fresh full pass
   for those.
+
+## LLM confidence & token economy
+
+- **Self-reported confidence is not verification.** A number the diagnosis model
+  emits about its own answer (the analyzer's `confidence` field) comes from the
+  *same* model that wrote the answer — it's self-assessment, not an independent
+  check. Verbalized self-confidence is reflexively overconfident, so "95%, no
+  evidence" is a real failure mode. The judge, by contrast, is independent *not
+  because it's a different model* but because it grades **someone else's work** —
+  a model scoring its own output would be self-grading again regardless of which
+  model it is.
+- **Confidence and groundedness are different signals from different owners.**
+  `confidence` (how sure the author is) ≠ `groundedness` (are the claims actually
+  supported by the context). A model can be confident *and* hallucinating; the
+  independent verifier exists precisely to distrust the author's self-grade.
+- **You can't skip a call by first making it (the gate circularity).** To *save*
+  the judge call by branching on a trustworthy score, the score has to come from
+  something you already have for free — which before the judge runs is only the
+  author's self-report. Routing the gate signal through the judge means running
+  the very call you wanted to skip. So: a cheap gate signal is necessarily a
+  *weak* one; a strong signal necessarily costs the call. Pick the goal (save
+  tokens **or** trust the branch), you can't have both at that decision point.
+- **Calibrate self-report without extra calls.** Four zero-cost levers: (1) anchor
+  the number to a **rubric** tied to how conclusive the evidence is; (2) require
+  it be **justified by the evidence** the model already extracted; (3) **reason
+  before scoring** — emit the number last, after root_cause/explanation/evidence,
+  so the score follows the reasoning instead of leading it; (4) a **deterministic
+  clamp** in code (cap confidence when the evidence list is thin) — prompts nudge,
+  code enforces. Prompt-only calibration *reduces* but never *eliminates*
+  overconfidence.
+- **A self-feedback loop with no independent critic inflates confidence.** The
+  judged refine loop works because it has two things — an independent critic *and*
+  concrete per-dimension feedback. A "re-diagnose while confidence is low" loop
+  on the un-judged path has neither: `failure_context` is frozen so there's no new
+  evidence to find, and the loop's only exit is a higher number, so the model just
+  bumps 40→90 and pads the evidence — actively undoing the calibration work. If
+  you must retry, trigger on a *degenerate* output (empty evidence / missing
+  fields), not on honest low confidence — an ambiguous failure *should* stay
+  low-confidence.
+- **Three axes of token optimization.** Fewer tokens *per call* (prune inputs —
+  head+tail truncation of bodies/tracebacks keeps the signal, drops the middle;
+  cap outputs; a strict JSON schema stops rambling). Fewer *calls* (bounded loops
+  with early exit; gate escalation to the expensive model). Cheaper *tokens*
+  (prefix-stable prompts so a caching layer can reuse the invariant system prompt;
+  model tiering — cheap model for the common case, big model only when needed).
+  Every input token cut is a recall-for-cost bet: you're trading a rarely-needed
+  detail for a cheaper call.
+- **Best-of-N is a deliberate *spend*, the mirror of everything else.** Sampling N
+  diagnoses and picking by agreement (modal category) genuinely improves
+  calibration because inter-sample agreement is a real signal — but at N× the
+  calls. It's the honest way to buy accuracy on the un-judged path, and it belongs
+  in the *cost* conversation, not the savings one.
+
+## LLM application lifecycle
+
+- **Two lifecycles; this project is inference-only.** The *model* lifecycle (data
+  → pretrain → fine-tune → align → release → deprecate) happens **upstream** at the
+  provider — Meta/OpenAI make the open weights, Groq serves them. This repo lives
+  entirely in the *application* (LLMOps) lifecycle: the loop you run to build,
+  ship, and improve a **feature** on an already-trained model. Tell: there is no
+  training/fine-tuning code, so the only improvement levers are prompt, context,
+  and orchestration — never weights.
+- **The application loop, in order:** task framing → model selection → context/input
+  engineering → prompt development → orchestration → guardrails → **offline eval** →
+  deploy/serve → **online eval** → feedback/iterate → (back to prompt). The failure
+  analyzer walks all of it; recognizing which stage a change touches keeps edits
+  scoped.
+- **Offline and online eval are different stages, not one.** Offline (`judge_case`
+  over a golden dataset, gates CI) scores against a **reference answer** and can
+  judge *correctness*. Online (`judge_live` on real failures) has **no reference**,
+  so it drops correctness and scores only groundedness/completeness/actionability.
+  Same judge, different applicability — the presence/absence of a ground-truth
+  label is what splits the two.
+- **A mature feedback loop runs at two timescales.** Fast + automated: the agentic
+  refine loop (an independent critic's failed-dimension issues feed straight back
+  into a re-diagnosis). Slow + human: offline eval surfaces a weakness → someone
+  edits the prompt → PR. Stage 10 ("iterate") is the one most projects *talk* about
+  and don't build; having *either* automated loop is the differentiator.
+- **The MLOps maturity layer is the usual gap.** A working build→eval→serve→monitor
+  loop still commonly lacks: prompt/model **versioning** as first-class artifacts,
+  **drift/trend** tracking (per-run scores rolled up over time, not just this run's
+  JSON), **cost/token telemetry**, and a **data flywheel** (production failures fed
+  back to grow the golden set). These are what separate "it works" from "it's
+  operable."
+- **Token telemetry is free data you were throwing away.** Every Groq response already
+  carries a `usage` block (prompt/completion/total tokens) on the wire — capturing
+  it costs zero extra API calls; it was simply being discarded. `telemetry.py` now
+  salvages it at both call sites and `conftest` appends one run-level row to
+  `ai_analysis/token_usage.jsonl`. The design lesson: the useful signal isn't cost
+  *alone* — it's cost **vs. quality** per run (does the refine loop's extra spend
+  actually buy higher judge pass rates?), so the row co-locates tokens/cost with the
+  judge pass-rate and mean confidence. Tokens are the durable, provider-independent
+  metric; the dollar figure is a derived estimate from a dated price table. Two things
+  it deliberately doesn't solve yet: cross-run persistence on ephemeral CI runners,
+  and the fact that a "gate signal computed from the same call you're trying to skip"
+  is circular — trend data informs the *next* run's config, it can't pre-empt the
+  current call.
