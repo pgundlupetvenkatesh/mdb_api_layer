@@ -169,3 +169,48 @@ run a thing, this repo's specific conventions) live in the relevant `README.md`
   calibration because inter-sample agreement is a real signal — but at N× the
   calls. It's the honest way to buy accuracy on the un-judged path, and it belongs
   in the *cost* conversation, not the savings one.
+
+## LLM application lifecycle
+
+- **Two lifecycles; this project is inference-only.** The *model* lifecycle (data
+  → pretrain → fine-tune → align → release → deprecate) happens **upstream** at the
+  provider — Meta/OpenAI make the open weights, Groq serves them. This repo lives
+  entirely in the *application* (LLMOps) lifecycle: the loop you run to build,
+  ship, and improve a **feature** on an already-trained model. Tell: there is no
+  training/fine-tuning code, so the only improvement levers are prompt, context,
+  and orchestration — never weights.
+- **The application loop, in order:** task framing → model selection → context/input
+  engineering → prompt development → orchestration → guardrails → **offline eval** →
+  deploy/serve → **online eval** → feedback/iterate → (back to prompt). The failure
+  analyzer walks all of it; recognizing which stage a change touches keeps edits
+  scoped.
+- **Offline and online eval are different stages, not one.** Offline (`judge_case`
+  over a golden dataset, gates CI) scores against a **reference answer** and can
+  judge *correctness*. Online (`judge_live` on real failures) has **no reference**,
+  so it drops correctness and scores only groundedness/completeness/actionability.
+  Same judge, different applicability — the presence/absence of a ground-truth
+  label is what splits the two.
+- **A mature feedback loop runs at two timescales.** Fast + automated: the agentic
+  refine loop (an independent critic's failed-dimension issues feed straight back
+  into a re-diagnosis). Slow + human: offline eval surfaces a weakness → someone
+  edits the prompt → PR. Stage 10 ("iterate") is the one most projects *talk* about
+  and don't build; having *either* automated loop is the differentiator.
+- **The MLOps maturity layer is the usual gap.** A working build→eval→serve→monitor
+  loop still commonly lacks: prompt/model **versioning** as first-class artifacts,
+  **drift/trend** tracking (per-run scores rolled up over time, not just this run's
+  JSON), **cost/token telemetry**, and a **data flywheel** (production failures fed
+  back to grow the golden set). These are what separate "it works" from "it's
+  operable."
+- **Token telemetry is free data you were throwing away.** Every Groq response already
+  carries a `usage` block (prompt/completion/total tokens) on the wire — capturing
+  it costs zero extra API calls; it was simply being discarded. `telemetry.py` now
+  salvages it at both call sites and `conftest` appends one run-level row to
+  `ai_analysis/token_usage.jsonl`. The design lesson: the useful signal isn't cost
+  *alone* — it's cost **vs. quality** per run (does the refine loop's extra spend
+  actually buy higher judge pass rates?), so the row co-locates tokens/cost with the
+  judge pass-rate and mean confidence. Tokens are the durable, provider-independent
+  metric; the dollar figure is a derived estimate from a dated price table. Two things
+  it deliberately doesn't solve yet: cross-run persistence on ephemeral CI runners,
+  and the fact that a "gate signal computed from the same call you're trying to skip"
+  is circular — trend data informs the *next* run's config, it can't pre-empt the
+  current call.

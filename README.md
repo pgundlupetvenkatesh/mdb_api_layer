@@ -349,6 +349,7 @@ mdb_api_layer/
 │       ├── analyze_test_failure.py     # TOOLS list + handle_call() dispatcher
 ├── report/
 │   └── tmdb_report.html        # Generated HTML test reports
+├── telemetry.py                # Token/cost ledger; conftest appends a run-level trend row to ai_analysis/token_usage.jsonl
 ├── .env                        # Environment variables (not committed)
 ├── .env.example                # Committed template for .env (placeholders only)
 ├── .gitignore
@@ -779,6 +780,15 @@ any LLM pipeline, open-weight or hosted:
 - **Reliable-first-parse.** The judge uses strict `json_schema` structured outputs (falling
   back to `json_object`); a malformed response you have to re-request costs double, so
   parse-reliability is itself a token saving.
+
+- **Measure what you spend.** Every Groq response carries a `usage` block that would otherwise
+  be discarded; `telemetry.py` captures it at both call sites, and `conftest` appends one
+  run-level row (tokens, an estimated cost from a dated price table, and the judge pass-rate +
+  mean confidence for that run) to `ai_analysis/token_usage.jsonl` (gitignored). Co-locating
+  cost and quality is the point — it lets you trend whether the judge/refine spend is actually
+  buying higher-quality diagnoses, rather than optimizing cost blind. Tokens are the durable
+  metric; the dollar figure is a derived estimate. (Local-only for now; persisting the trend
+  across ephemeral CI runners is a separate follow-up.)
 
 ## Reports
 
