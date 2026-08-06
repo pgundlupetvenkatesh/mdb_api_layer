@@ -349,6 +349,26 @@ def pytest_html_results_summary(prefix, summary, postfix):
         "</div>"
     ])
 
+# Judge verdicts accumulated this session, so pytest_sessionfinish can roll up a
+# run-level judge pass-rate alongside the token/cost totals. Populated only on
+# judged runs (AI_JUDGE_ENABLED); empty otherwise.
+_judgements: list[dict] = []
+
+
+def _current_git_sha() -> str:
+    """Short commit SHA for the trend row: CI env first, else local git, else ''."""
+    sha = os.environ.get("GITHUB_SHA")
+    if sha:
+        return sha[:12]
+    try:
+        import subprocess
+        return subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+    except Exception:
+        return ""
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """
@@ -438,6 +458,7 @@ def pytest_runtest_makereport(item, call):
     # Attach the final judge verdict (groundedness + completeness + actionability,
     # everything except correctness — a live failure has no reference answer).
     if judgement:
+        _judgements.append(judgement)  # for the run-level judge pass-rate at sessionfinish
         logger.info(
             f"⚖️ Diagnosis quality [{judgement['overall_verdict']}] — "
             f"groundedness: {judgement['groundedness']['verdict']}, "
@@ -485,6 +506,16 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         terminalreporter.write_line(f"  root cause:    {diagnosis.get('root_cause', 'N/A')}")
         terminalreporter.write_line(f"  suggested fix: {diagnosis.get('suggested_fix', 'N/A')}")
         terminalreporter.write_line("")
+
+    # One-line token/cost recap; the full run-level row is appended to the JSONL
+    # in pytest_sessionfinish (see below).
+    from telemetry import ledger
+    if ledger.records:
+        s = ledger.summary()
+        terminalreporter.write_line(
+            f"💸 LLM usage: {s['calls']} calls, {s['total_tokens']:,} tokens "
+            f"(~${s['est_cost_usd']:.4f}) → ai_analysis/token_usage.jsonl"
+        )
 
 def pytest_sessionfinish(session, exitstatus):
     """
@@ -536,3 +567,29 @@ def pytest_sessionfinish(session, exitstatus):
         (allure_dir / "environment.properties").write_text(properties)
 
     analyzer.save_results()
+
+    # Token/cost telemetry: append ONE run-level row to ai_analysis/token_usage.jsonl
+    # (gitignored) so cost and quality can be trended across runs together.
+    # Local-only for now: CI runners are ephemeral, so persisting this history in CI is a separate follow-up.
+    from telemetry import ledger
+    if ledger.records:
+        from evals.judge import DEFAULT_JUDGE_MODEL
+        judged = os.getenv("AI_JUDGE_ENABLED", "false").lower() == "true"
+        confidences = [d["confidence"] for d in analyzer.results if isinstance(d.get("confidence"), int)]
+        passes = sum(1 for j in _judgements if j.get("overall_verdict") == "pass")
+        row = {
+            "ts": datetime.now(ZoneInfo("UTC")).isoformat(),
+            "git_sha": _current_git_sha(),
+            "analyzer_model": analyzer.model,
+            "judge_model": os.getenv("AI_JUDGE_MODEL", DEFAULT_JUDGE_MODEL) if judged else None,
+            "judged": judged,
+            "n_failures": len(analyzer.results),
+            **ledger.summary(),
+            "judge_pass_rate": round(passes / len(_judgements), 3) if _judgements else None,
+            "mean_confidence": round(sum(confidences) / len(confidences)) if confidences else None,
+        }
+        out_dir = Path("ai_analysis")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        with (out_dir / "token_usage.jsonl").open("a") as f:
+            f.write(json.dumps(row) + "\n")
+        logger.info(f"💸 Token/cost trend row appended: {out_dir / 'token_usage.jsonl'}")

@@ -15,6 +15,8 @@ import json
 from pathlib import Path
 from loguru import logger
 
+from telemetry import ledger
+
 # Model options on Groq free tier:
 #   "llama-3.3-70b-versatile"
 #   "qwen/qwen3-32b"
@@ -181,6 +183,16 @@ class FailureAnalyzer:
                 temperature=0.1,        # Low temperature for consistent analysis
                 max_tokens=500,
                 response_format={"type": "json_object"}  # noqa: type stubs missing in groq v1.x
+            )
+
+            # Salvage the free usage block before parsing — the tokens were spent
+            # even if the JSON turns out unparseable. REFINE_SYSTEM_PROMPT marks a
+            # refine pass; anything else is the initial analyze.
+            ledger.record(
+                model=self.model,
+                role="refine" if system_prompt is REFINE_SYSTEM_PROMPT else "analyze",
+                usage=response.usage,
+                test_name=test_name,
             )
 
             raw = response.choices[0].message.content

@@ -28,6 +28,8 @@ import json
 
 from loguru import logger
 
+from telemetry import ledger
+
 DEFAULT_JUDGE_MODEL = "openai/gpt-oss-120b"
 
 JUDGE_SYSTEM_PROMPT = """\
@@ -250,6 +252,15 @@ def _call_judge(system_prompt: str, output_schema: dict, payload: dict, model: s
         except Exception as e2:
             logger.warning(f"Judge call failed: {e2}")
             return None
+
+    # Salvage the free usage block (both create branches converge here) before
+    # parsing — the judge tokens were spent regardless of the parse outcome.
+    ledger.record(
+        model=model,
+        role="judge",
+        usage=response.usage,
+        test_name=payload.get("failure_context", {}).get("test_name", payload.get("case_id", "unknown")),
+    )
 
     try:
         result = json.loads(response.choices[0].message.content)
