@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>telemetry &#8212; mdb_api_layer 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
+    <script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for telemetry</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Process-wide token/cost ledger for the AI failure-analysis pipeline.</span>
+
+<span class="sd">Every Groq response carries a ``usage`` block (prompt/completion/total tokens)</span>
+<span class="sd">that the analyzer and judge would otherwise discard. Both call sites record it</span>
+<span class="sd">here via :meth:`TokenLedger.record`; ``conftest.py`` drains the ledger at</span>
+<span class="sd">session end, rolls it up into one run-level row (tokens + estimated cost +</span>
+<span class="sd">quality), and appends it to ``ai_analysis/token_usage.jsonl`` for cross-run</span>
+<span class="sd">trending.</span>
+
+<span class="sd">Tokens are the durable, provider-independent signal; the dollar figure is a</span>
+<span class="sd">derived estimate from a small, dated price table and is best-effort only — a</span>
+<span class="sd">model missing from the table contributes 0 to the cost estimate but its tokens</span>
+<span class="sd">are still counted. Recording is defensive: a malformed ``usage`` object can</span>
+<span class="sd">never raise into a test run.</span>
+
+<span class="sd">.. module:: telemetry</span>
+<span class="sd">   :synopsis: Token/cost ledger for the LLM failure-analysis pipeline.</span>
+<span class="sd">   :no-index:</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="c1"># USD per 1,000,000 tokens, keyed by Groq model id, as ``(input, output)``.</span>
+<span class="c1"># Dated table (2026-08, Groq published pricing) — prices drift, so this is the</span>
+<span class="c1"># one place to update. A model absent here is still token-counted; it just</span>
+<span class="c1"># contributes 0 to est_cost_usd.</span>
+<span class="n">_PRICE_PER_MILLION</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;llama-3.3-70b-versatile&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.59</span><span class="p">,</span> <span class="mf">0.79</span><span class="p">),</span>
+    <span class="s2">&quot;openai/gpt-oss-120b&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Record</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One recorded LLM call&#39;s token usage.&quot;&quot;&quot;</span>
+
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">role</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># analyze | refine | judge</span>
+    <span class="n">prompt_tokens</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">completion_tokens</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">test_name</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<div class="viewcode-block" id="TokenLedger">
+<a class="viewcode-back" href="../telemetry.html#telemetry.TokenLedger">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TokenLedger</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Accumulates per-call token usage for one pytest session.</span>
+
+<span class="sd">    A single process-wide instance (:data:`ledger`) is shared by the analyzer</span>
+<span class="sd">    and the judge; ``conftest.py`` reads it once at session end. Not</span>
+<span class="sd">    thread-safe — the pipeline runs calls serially per test.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Record</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="TokenLedger.record">
+<a class="viewcode-back" href="../telemetry.html#telemetry.TokenLedger.record">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">usage</span><span class="p">,</span> <span class="n">test_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;unknown&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record one LLM call&#39;s token usage from a Groq ``response.usage`` object.</span>
+
+<span class="sd">        Defensive by design: a ``None`` or malformed ``usage`` counts as zero</span>
+<span class="sd">        tokens rather than raising, so telemetry can never break a test run.</span>
+
+<span class="sd">        :param model: The Groq model id that served the call.</span>
+<span class="sd">        :param role: Which pipeline step spent the tokens</span>
+<span class="sd">            (``analyze`` | ``refine`` | ``judge``).</span>
+<span class="sd">        :param usage: The Groq ``CompletionUsage`` object (``response.usage``);</span>
+<span class="sd">            ``prompt_tokens`` / ``completion_tokens`` are read off it.</span>
+<span class="sd">        :param test_name: The failed test this call was diagnosing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">prompt</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">usage</span><span class="p">,</span> <span class="s2">&quot;prompt_tokens&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">completion</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">usage</span><span class="p">,</span> <span class="s2">&quot;completion_tokens&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="n">prompt</span> <span class="o">=</span> <span class="n">completion</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_Record</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">prompt</span><span class="p">,</span> <span class="n">completion</span><span class="p">,</span> <span class="n">test_name</span><span class="p">))</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">records</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Record</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;All calls recorded this session (read-only view).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records</span>
+
+<div class="viewcode-block" id="TokenLedger.reset">
+<a class="viewcode-back" href="../telemetry.html#telemetry.TokenLedger.reset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Drop all recorded calls (used by tests to isolate runs).&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_records</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="TokenLedger.estimate_cost_usd">
+<a class="viewcode-back" href="../telemetry.html#telemetry.TokenLedger.estimate_cost_usd">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">estimate_cost_usd</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Best-effort dollar estimate for all recorded calls.</span>
+
+<span class="sd">        ``cost = Σ (prompt_tokens × in_price + completion_tokens × out_price)``</span>
+<span class="sd">        from :data:`_PRICE_PER_MILLION`. Calls whose model is not in the price</span>
+<span class="sd">        table contribute 0.</span>
+
+<span class="sd">        :returns: Estimated cost in USD, rounded to 6 decimals. Example return</span>
+<span class="sd">            for 1000 prompt + 200 completion tokens on llama-3.3-70b</span>
+<span class="sd">            (``1000/1e6 * 0.59 + 200/1e6 * 0.79``)::</span>
+
+<span class="sd">                0.000748</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records</span><span class="p">:</span>
+            <span class="n">price</span> <span class="o">=</span> <span class="n">_PRICE_PER_MILLION</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">price</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">in_price</span><span class="p">,</span> <span class="n">out_price</span> <span class="o">=</span> <span class="n">price</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">r</span><span class="o">.</span><span class="n">prompt_tokens</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">*</span> <span class="n">in_price</span> <span class="o">+</span> <span class="n">r</span><span class="o">.</span><span class="n">completion_tokens</span> <span class="o">/</span> <span class="mf">1e6</span> <span class="o">*</span> <span class="n">out_price</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">total</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TokenLedger.summary">
+<a class="viewcode-back" href="../telemetry.html#telemetry.TokenLedger.summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Roll the recorded calls up into a run-level totals dict.</span>
+
+<span class="sd">        :returns: ``{calls, prompt_tokens, completion_tokens, total_tokens,</span>
+<span class="sd">            est_cost_usd}`` — the token/cost half of the JSONL trend row. Example::</span>
+
+<span class="sd">                {&quot;calls&quot;: 5, &quot;prompt_tokens&quot;: 8421, &quot;completion_tokens&quot;: 1290,</span>
+<span class="sd">                 &quot;total_tokens&quot;: 9711, &quot;est_cost_usd&quot;: 0.0021}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">prompt</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">prompt_tokens</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records</span><span class="p">)</span>
+        <span class="n">completion</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">completion_tokens</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;calls&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_records</span><span class="p">),</span>
+            <span class="s2">&quot;prompt_tokens&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">,</span>
+            <span class="s2">&quot;completion_tokens&quot;</span><span class="p">:</span> <span class="n">completion</span><span class="p">,</span>
+            <span class="s2">&quot;total_tokens&quot;</span><span class="p">:</span> <span class="n">prompt</span> <span class="o">+</span> <span class="n">completion</span><span class="p">,</span>
+            <span class="s2">&quot;est_cost_usd&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimate_cost_usd</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<span class="c1"># Singleton instance — shared across the analyzer and judge for one session.</span>
+<span class="n">ledger</span> <span class="o">=</span> <span class="n">TokenLedger</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">mdb_api_layer</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../config.html">Config Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tests.html">Tests Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../performance.html">Performance Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../k8s.html">Kubernetes Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../failure_mcp.html">MCP Server (failure_mcp)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../evals.html">Evaluation Harness (evals)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../telemetry.html">Telemetry Module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Pratik Gundlupet Venkatesh.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

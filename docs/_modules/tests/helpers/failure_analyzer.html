@@ -47,6 +47,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">telemetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">ledger</span>
+
 <span class="c1"># Model options on Groq free tier:</span>
 <span class="c1">#   &quot;llama-3.3-70b-versatile&quot;</span>
 <span class="c1">#   &quot;qwen/qwen3-32b&quot;</span>
@@ -57,9 +59,9 @@
 <span class="s2">  &quot;root_cause&quot;: &quot;One sentence explaining why the test failed&quot;,</span>
 <span class="s2">  &quot;category&quot;: &quot;one of: api_bug | test_bug | data_issue | timeout | auth_error | schema_mismatch | environment&quot;,</span>
 <span class="s2">  &quot;suggested_fix&quot;: &quot;Specific actionable fix in 1-2 sentences&quot;,</span>
-<span class="s2">  &quot;confidence&quot;: &quot;integer between 0 and 100 representing how confident you are in the diagnosis (e.g. 90 means 90</span><span class="si">% c</span><span class="s2">onfident)&quot;,</span>
 <span class="s2">  &quot;explanation&quot;: &quot;2-3 sentence detailed explanation of what went wrong&quot;,</span>
-<span class="s2">  &quot;evidence&quot;: [&quot;list of observable facts from logs/errors that support the diagnosis, e.g. HTTP status code, response body snippets, error messages&quot;]</span>
+<span class="s2">  &quot;evidence&quot;: [&quot;list of observable facts from logs/errors that support the diagnosis, e.g. HTTP status code, response body snippets, error messages&quot;],</span>
+<span class="s2">  &quot;confidence&quot;: &quot;integer 0-100 — fill this in LAST, after root_cause, explanation, and evidence; calibrate per the rubric below&quot;</span>
 <span class="s2">}</span>
 
 <span class="s2">Rules:</span>
@@ -72,6 +74,12 @@
 <span class="s2">- environment: Configuration, connectivity, or environment setup issue</span>
 <span class="s2">- Be concise and specific to the TMDB API domain</span>
 <span class="s2">- Respond ONLY with valid JSON, no markdown fences</span>
+
+<span class="s2">Confidence calibration (be conservative — when unsure, choose the LOWER band):</span>
+<span class="s2">- 85-100: failure_context alone is conclusive — a status code, error message, or response body directly and unambiguously confirms the cause.</span>
+<span class="s2">- 50-84: the cause is a strong inference from partial signals, but some step is not directly shown in failure_context.</span>
+<span class="s2">- 0-49: the context is ambiguous or sparse, or the cause is inferred from indirect evidence.</span>
+<span class="s2">- Confidence MUST be justified by the items in &quot;evidence&quot;: if evidence is sparse or does not directly support root_cause, keep it low. Reserve &gt;90 for a diagnosis you could defend line-by-line from failure_context.</span>
 <span class="s2">&quot;&quot;&quot;</span>
 
 <span class="c1"># Used by the agentic refine loop: the same output contract as SYSTEM_PROMPT,</span>
@@ -214,6 +222,16 @@
                 <span class="n">response_format</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;json_object&quot;</span><span class="p">}</span>  <span class="c1"># noqa: type stubs missing in groq v1.x</span>
             <span class="p">)</span>
 
+            <span class="c1"># Salvage the free usage block before parsing — the tokens were spent</span>
+            <span class="c1"># even if the JSON turns out unparseable. REFINE_SYSTEM_PROMPT marks a</span>
+            <span class="c1"># refine pass; anything else is the initial analyze.</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">record</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">role</span><span class="o">=</span><span class="s2">&quot;refine&quot;</span> <span class="k">if</span> <span class="n">system_prompt</span> <span class="ow">is</span> <span class="n">REFINE_SYSTEM_PROMPT</span> <span class="k">else</span> <span class="s2">&quot;analyze&quot;</span><span class="p">,</span>
+                <span class="n">usage</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">usage</span><span class="p">,</span>
+                <span class="n">test_name</span><span class="o">=</span><span class="n">test_name</span><span class="p">,</span>
+            <span class="p">)</span>
+
             <span class="n">raw</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span>
             <span class="n">diagnosis</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
             <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;test_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_name</span>
@@ -224,6 +242,13 @@
                 <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
             <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
                 <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="c1"># Deterministic clamp — A high confidence backed by little evidence is the hallucination</span>
+            <span class="c1"># signature the rubric warns against; enforce it deterministically so a</span>
+            <span class="c1"># thin diagnosis can&#39;t self-certify (matters most on non-judged runs,</span>
+            <span class="c1"># which have no independent critic to catch it).</span>
+            <span class="n">evidence</span> <span class="o">=</span> <span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;evidence&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evidence</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">evidence</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">],</span> <span class="mi">50</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">diagnosis</span>
 
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -484,6 +509,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../k8s.html">Kubernetes Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../failure_mcp.html">MCP Server (failure_mcp)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../evals.html">Evaluation Harness (evals)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../telemetry.html">Telemetry Module</a></li>
 </ul>
 
 <div class="relations">

@@ -22,3 +22,4 @@ documentation for details.
    k8s
    failure_mcp
    evals
+   telemetry
