@@ -535,6 +535,23 @@ Pact files document the expected request/response structure and can be:
 When a test fails, the framework can automatically send the failure context to an open-source LLM for instant
 root-cause diagnosis. This is **disabled by default** — no API calls are made unless the user explicitly opt in.
 
+### AI Quality Gates
+
+The AI pipeline has five layers of quality control, all **opt-in** and off by default. This is the canonical
+list; each row links to its details below. (The conceptual *why* behind these gates lives in
+[`INSIGHTS.md`](INSIGHTS.md) — "LLM confidence & token economy" and "LLM application lifecycle".)
+
+| # | Gate | What it enforces | Enable with | Details |
+|---|------|------------------|-------------|---------|
+| 1 | **Failure analysis** | Every failure gets a structured, categorized root-cause diagnosis (`root_cause`, `category`, `suggested_fix`, `confidence`, `explanation`, `evidence`) — the triage entry point the other gates build on. | `--failure-analysis` / `AI_ANALYSIS_ENABLED=true` | [How It Works](#how-it-works), [Failure Categories](#failure-categories) |
+| 2 | **LLM-as-a-judge (live)** | An **independent** judge model (different family — GPT-OSS grading Llama) scores each diagnosis on **groundedness**, **completeness**, and **actionability**. Correctness is skipped live — a real failure has no reference answer. | `--judge-diagnosis` / `AI_JUDGE_ENABLED=true` (needs gate 1) | [Live diagnosis judging](#live-diagnosis-judging) |
+| 3 | **Agentic refine loop** | The judge doubles as a critic: failed-dimension issues feed back into the analyzer and the diagnosis is re-judged until it **passes AND** `confidence ≥ AI_REFINE_CONFIDENCE_TARGET` (90), capped at `AI_REFINE_MAX_ITERS` (2). The final refined diagnosis is what gets saved. | Enabled together with gate 2 | [Live diagnosis judging](#live-diagnosis-judging) |
+| 4 | **Offline golden-dataset eval** | Runs the analyzer over `evals/golden_dataset.yaml` and scores all **four** dimensions (adds **correctness** vs. an `expected` reference). Non-zero exit on any failure, so it can **gate CI**. | `poetry run python -m evals` | [Evaluating the AI Analyzer](#evaluating-the-ai-analyzer) |
+| 5 | **Token/quality telemetry** | Appends one run-level row co-locating **cost** (tokens, estimated $) with **quality** (judge pass-rate, mean confidence) to `ai_analysis/token_usage.jsonl`, so you can trend whether the judge/refine spend is buying better diagnoses. | Recorded automatically when gates 1–3 run | [Token Optimization](#token-optimization) |
+
+Gates 1–3 run inside the pytest session on live failures; gate 4 is a standalone offline harness; gate 5 observes
+whatever ran. See [AI Environment Variables](#ai-environment-variables) for the full knob list.
+
 ### How It Works
 
 ```

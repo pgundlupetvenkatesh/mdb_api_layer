@@ -120,6 +120,9 @@ run a thing, this repo's specific conventions) live in the relevant `README.md`
 
 ## LLM confidence & token economy
 
+> The five AI quality gates themselves (what each enforces + how to enable them) are
+> enumerated in [`README.md`](README.md#ai-quality-gates). This section is the *why*.
+
 - **Self-reported confidence is not verification.** A number the diagnosis model
   emits about its own answer (the analyzer's `confidence` field) comes from the
   *same* model that wrote the answer — it's self-assessment, not an independent
