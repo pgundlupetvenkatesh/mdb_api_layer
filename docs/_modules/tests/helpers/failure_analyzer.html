@@ -50,9 +50,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">telemetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">ledger</span>
 
 <span class="c1"># Model options on Groq free tier:</span>
-<span class="c1">#   &quot;llama-3.3-70b-versatile&quot;</span>
+<span class="c1">#   &quot;qwen/qwen3.6-27b&quot;</span>
 <span class="c1">#   &quot;qwen/qwen3-32b&quot;</span>
-<span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="s2">&quot;llama-3.3-70b-versatile&quot;</span>
+<span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="s2">&quot;qwen/qwen3.6-27b&quot;</span>
 <span class="n">SYSTEM_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">You are an expert API test failure analyst. When given a test failure context, analyze it and respond with a JSON object containing:</span>
 <span class="s2">{</span>
@@ -173,7 +173,7 @@
 <span class="sd">                    &quot;explanation&quot;: &quot;The request targeted /3/movie/0; TMDB rejects id 0 ...&quot;,</span>
 <span class="sd">                    &quot;evidence&quot;: [&quot;HTTP 404&quot;, &quot;status_message: The resource you requested could not be found.&quot;],</span>
 <span class="sd">                    &quot;test_name&quot;: &quot;test_get_movie_details&quot;,</span>
-<span class="sd">                    &quot;model&quot;: &quot;llama-3.3-70b-versatile&quot;</span>
+<span class="sd">                    &quot;model&quot;: &quot;qwen/qwen3.6-27b&quot;</span>
 <span class="sd">                }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
@@ -219,6 +219,11 @@
                 <span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span>
                 <span class="n">temperature</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>        <span class="c1"># Low temperature for consistent analysis</span>
                 <span class="n">max_tokens</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+                <span class="c1"># qwen3.6 is a reasoning model: without this, thinking tokens exhaust</span>
+                <span class="c1"># max_tokens before any JSON is emitted (empty generation → 400).</span>
+                <span class="c1"># Diagnosis is a constrained JSON task; &quot;none&quot; skips thinking entirely.</span>
+                <span class="c1"># Groq&#39;s qwen models accept only &quot;none&quot; | &quot;default&quot; here.</span>
+                <span class="n">reasoning_effort</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span>
                 <span class="n">response_format</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;json_object&quot;</span><span class="p">}</span>  <span class="c1"># noqa: type stubs missing in groq v1.x</span>
             <span class="p">)</span>
 
@@ -236,7 +241,7 @@
             <span class="n">diagnosis</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
             <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;test_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_name</span>
             <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
-            <span class="c1"># llama-3.3-70b sometimes returns confidence as a string (&quot;95&quot;);</span>
+            <span class="c1"># some models return confidence as a string (&quot;95&quot;);</span>
             <span class="c1"># downstream tiering compares it numerically, so coerce here.</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">diagnosis</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>

@@ -58,7 +58,8 @@
 <span class="c1"># one place to update. A model absent here is still token-counted; it just</span>
 <span class="c1"># contributes 0 to est_cost_usd.</span>
 <span class="n">_PRICE_PER_MILLION</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;llama-3.3-70b-versatile&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.59</span><span class="p">,</span> <span class="mf">0.79</span><span class="p">),</span>
+    <span class="s2">&quot;qwen/qwen3.6-27b&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.60</span><span class="p">,</span> <span class="mf">3.00</span><span class="p">),</span>
+    <span class="s2">&quot;llama-3.3-70b-versatile&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.59</span><span class="p">,</span> <span class="mf">0.79</span><span class="p">),</span>  <span class="c1"># deprecated on Groq; kept for pinned AI_MODEL runs</span>
     <span class="s2">&quot;openai/gpt-oss-120b&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span>
 <span class="p">}</span>
 
@@ -135,10 +136,10 @@
 <span class="sd">        table contribute 0.</span>
 
 <span class="sd">        :returns: Estimated cost in USD, rounded to 6 decimals. Example return</span>
-<span class="sd">            for 1000 prompt + 200 completion tokens on llama-3.3-70b</span>
-<span class="sd">            (``1000/1e6 * 0.59 + 200/1e6 * 0.79``)::</span>
+<span class="sd">            for 1000 prompt + 200 completion tokens on qwen/qwen3.6-27b</span>
+<span class="sd">            (``1000/1e6 * 0.60 + 200/1e6 * 3.00``)::</span>
 
-<span class="sd">                0.000748</span>
+<span class="sd">                0.0012</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">total</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_records</span><span class="p">:</span>

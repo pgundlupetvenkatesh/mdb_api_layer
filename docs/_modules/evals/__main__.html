@@ -33,7 +33,7 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">CLI runner for the failure-analyzer evaluation.</span>
 
-<span class="sd">Runs the AI failure analyzer (Llama 3.3 70B via Groq) live on each case in the</span>
+<span class="sd">Runs the AI failure analyzer (Qwen3.6 27B via Groq) live on each case in the</span>
 <span class="sd">golden dataset, then judges every produced diagnosis with the GPT-OSS judge on</span>
 <span class="sd">four dimensions (correctness, groundedness, completeness, actionability). Prints</span>
 <span class="sd">a per-case table plus aggregate metrics and writes a JSON report.</span>
@@ -153,7 +153,7 @@
 <span class="sd">    through the report (and excluded from quality metrics) rather than crashing</span>
 <span class="sd">    the run.</span>
 
-<span class="sd">    Exercise the analyzer (Llama 3.3 70B) on known inputs. Each dataset case carries a</span>
+<span class="sd">    Exercise the analyzer (Qwen3.6 27B) on known inputs. Each dataset case carries a</span>
 <span class="sd">    realistic ``failure_context``; this function feeds that context to a fresh</span>
 <span class="sd">    ``FailureAnalyzer`` and captures what the analyzer model says. This is the only</span>
 <span class="sd">    place in the eval where the system-under-test actually runs.</span>
