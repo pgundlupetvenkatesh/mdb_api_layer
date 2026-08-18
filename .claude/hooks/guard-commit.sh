@@ -18,6 +18,9 @@ staged="$(git diff --cached --name-only 2>/dev/null)"
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   case "$f" in
+    # .env.example is the committed, secret-free template (see CLAUDE.md);
+    # its contents are still covered by the credential-signature scan below.
+    .env.example|*/.env.example) ;;
     .env|.env.*|*/.env|*/.env.*)
       problems="${problems}  - staged env file: ${f}"$'\n' ;;
   esac
