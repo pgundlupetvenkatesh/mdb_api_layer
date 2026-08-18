@@ -222,7 +222,7 @@ async def handle_call(name: str, arguments: dict[str, Any]) -> list[types.TextCo
           "explanation": "...",
           "evidence": ["HTTP 401", "Response: Invalid API key"],
           "test_name": "test_get_movie_details",
-          "model": "llama-3.3-70b-versatile",
+          "model": "qwen/qwen3.6-27b",
           "confidence_tier": "high"
         }
 
@@ -242,7 +242,7 @@ async def handle_call(name: str, arguments: dict[str, Any]) -> list[types.TextCo
             "explanation": "...",
             "evidence": ["HTTP 401"],
             "test_name": "test_get_movie_details",
-            "model": "llama-3.3-70b-versatile"
+            "model": "qwen/qwen3.6-27b"
           }
         ]
 

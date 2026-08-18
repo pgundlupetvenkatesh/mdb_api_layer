@@ -16,7 +16,7 @@ Two modes share one judge call:
   a real failure has no reference answer to score correctness against.
 
 The judge runs on Groq (same provider as the analyzer it evaluates) but a
-different model family — GPT-OSS judging Llama — so there is no self-preference
+different model family — GPT-OSS judging Qwen — so there is no self-preference
 bias.
 
 .. module:: evals.judge

@@ -26,7 +26,8 @@ from dataclasses import dataclass
 # one place to update. A model absent here is still token-counted; it just
 # contributes 0 to est_cost_usd.
 _PRICE_PER_MILLION: dict[str, tuple[float, float]] = {
-    "llama-3.3-70b-versatile": (0.59, 0.79),
+    "qwen/qwen3.6-27b": (0.60, 3.00),
+    "llama-3.3-70b-versatile": (0.59, 0.79),  # deprecated on Groq; kept for pinned AI_MODEL runs
     "openai/gpt-oss-120b": (0.15, 0.75),
 }
 
@@ -93,10 +94,10 @@ class TokenLedger:
         table contribute 0.
 
         :returns: Estimated cost in USD, rounded to 6 decimals. Example return
-            for 1000 prompt + 200 completion tokens on llama-3.3-70b
-            (``1000/1e6 * 0.59 + 200/1e6 * 0.79``)::
+            for 1000 prompt + 200 completion tokens on qwen/qwen3.6-27b
+            (``1000/1e6 * 0.60 + 200/1e6 * 3.00``)::
 
-                0.000748
+                0.0012
         """
         total = 0.0
         for r in self._records:
