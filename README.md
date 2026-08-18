@@ -544,7 +544,7 @@ list; each row links to its details below. (The conceptual *why* behind these ga
 | # | Gate | What it enforces | Enable with | Details |
 |---|------|------------------|-------------|---------|
 | 1 | **Failure analysis** | Every failure gets a structured, categorized root-cause diagnosis (`root_cause`, `category`, `suggested_fix`, `confidence`, `explanation`, `evidence`) — the triage entry point the other gates build on. | `--failure-analysis` / `AI_ANALYSIS_ENABLED=true` | [How It Works](#how-it-works), [Failure Categories](#failure-categories) |
-| 2 | **LLM-as-a-judge (live)** | An **independent** judge model (different family — GPT-OSS grading Llama) scores each diagnosis on **groundedness**, **completeness**, and **actionability**. Correctness is skipped live — a real failure has no reference answer. | `--judge-diagnosis` / `AI_JUDGE_ENABLED=true` (needs gate 1) | [Live diagnosis judging](#live-diagnosis-judging) |
+| 2 | **LLM-as-a-judge (live)** | An **independent** judge model (different family — GPT-OSS grading Qwen) scores each diagnosis on **groundedness**, **completeness**, and **actionability**. Correctness is skipped live — a real failure has no reference answer. | `--judge-diagnosis` / `AI_JUDGE_ENABLED=true` (needs gate 1) | [Live diagnosis judging](#live-diagnosis-judging) |
 | 3 | **Agentic refine loop** | The judge doubles as a critic: failed-dimension issues feed back into the analyzer and the diagnosis is re-judged until it **passes AND** `confidence ≥ AI_REFINE_CONFIDENCE_TARGET` (90), capped at `AI_REFINE_MAX_ITERS` (2). The final refined diagnosis is what gets saved. | Enabled together with gate 2 | [Live diagnosis judging](#live-diagnosis-judging) |
 | 4 | **Offline golden-dataset eval** | Runs the analyzer over `evals/golden_dataset.yaml` and scores all **four** dimensions (adds **correctness** vs. an `expected` reference). Non-zero exit on any failure, so it can **gate CI**. | `poetry run python -m evals` | [Evaluating the AI Analyzer](#evaluating-the-ai-analyzer) |
 | 5 | **Token/quality telemetry** | Appends one run-level row co-locating **cost** (tokens, estimated $) with **quality** (judge pass-rate, mean confidence) to `ai_analysis/token_usage.jsonl`, so you can trend whether the judge/refine spend is buying better diagnoses. | Recorded automatically when gates 1–3 run | [Token Optimization](#token-optimization) |
@@ -562,7 +562,7 @@ pytest_runtest_makereport hook captures:
   • error message & traceback
   • API URL, status code, response body (if available)
   ↓
-FailureAnalyzer sends context to Groq API (Llama 3.3 70B)
+FailureAnalyzer sends context to Groq API (Qwen3.6 27B)
   ↓
 LLM returns structured JSON diagnosis:
   { root_cause, category, suggested_fix, confidence, explanation, evidence }
@@ -646,14 +646,14 @@ After execution completes, all diagnoses are re-printed as a dedicated console s
   "explanation": "The test expects a 200 OK but the API returned 404 Not Found because the movie resource was deleted or never existed. Refresh test data with current valid IDs.", 
   "evidence": ["HTTP status code: 404", "Response body: {'status_code':34, 'status_message':'The resource you requested could not be found.'}"],
   "test_name": "test_get_movie_details[invalid_id]",
-  "model": "llama-3.3-70b-versatile"
+  "model": "qwen/qwen3.6-27b"
 }
 ```
 ![allure_failure_ss](images/allure_failure_ss.png)
 
 ### Supported Models
 
-The default model is `llama-3.3-70b-versatile` on Groq's free tier.
+The default model is `qwen/qwen3.6-27b` on Groq's free tier.
 Override via environment variable:
 ```bash
 # In .env
@@ -674,7 +674,7 @@ attached to the Allure report deployed to GitHub Pages.
 | `AI_ANALYSIS_ENABLED`  | Enable AI failure analysis                | No         | `false`                                      |
 | `AI_JUDGE_ENABLED`     | Enable live diagnosis judging             | No         | `false`                                      |
 | `GROQ_API_KEY`         | Groq API key for LLM access               | If enabled | -                                            |
-| `AI_MODEL`             | Analyzer (diagnosis) model on Groq        | No         | `llama-3.3-70b-versatile`                    |
+| `AI_MODEL`             | Analyzer (diagnosis) model on Groq        | No         | `qwen/qwen3.6-27b`                           |
 | `AI_JUDGE_MODEL`       | Judge model on Groq for live judging      | No         | `openai/gpt-oss-120b`                        |
 | `AI_REFINE_MAX_ITERS`  | Max agentic refine passes (judging on)    | No         | `2`                                          |
 | `AI_REFINE_CONFIDENCE_TARGET` | Confidence the refined diagnosis must reach | No  | `90`                                         |
@@ -724,7 +724,7 @@ poetry run pytest tests/ --failure-analysis --judge-diagnosis --alluredir=allure
 ### Evaluating the AI Analyzer
 
 The `evals/` package measures how good the analyzer's diagnoses actually are, using
-an **LLM-as-a-judge**. It runs the analyzer (Llama 3.3 70B) live on a curated golden
+an **LLM-as-a-judge**. It runs the analyzer (Qwen3.6 27B) live on a curated golden
 dataset of realistic TMDB failures (`evals/golden_dataset.yaml`, one+ case per
 category), then has a judge model (`openai/gpt-oss-120b` on Groq) score each
 diagnosis on four dimensions:
@@ -743,18 +743,18 @@ poetry run python -m evals --judge-model openai/gpt-oss-20b   # override the jud
 #### Eval Summary Table
 | case_id                      | category (expected→got)   | corr | grnd | cmpl | actn | overall |
 |------------------------------|---------------------------|------|------|------|------|---------|
-| timeout_slow_response        | timeout→timeout         ✓ | pass | pass | pass | pass | PASS    |
-| timeout_read_timeout         | timeout→timeout         ✓ | pass | fail | pass | pass | FAIL    |
-| auth_error_invalid_token     | auth_error→auth_error   ✓ | pass | pass | pass | pass | PASS    |
-| schema_mismatch_pydantic     | schema_mismatch→api_bug ✗ | fail | pass | pass | pass | FAIL    |
-| api_bug_wrong_value          | api_bug→api_bug         ✓ | pass | pass | pass | pass | PASS    |
-| test_bug_wrong_expectation   | test_bug→test_bug       ✓ | pass | pass | pass | pass | PASS    |
-| data_issue_stale_id          | data_issue→data_issue   ✓ | pass | pass | pass | pass | PASS    |
-| environment_connection_error | environment→environment ✓ | pass | pass | pass | pass | PASS    |
+| timeout_slow_response        | timeout→timeout                 ✓ | pass | pass | pass | pass | PASS    |
+| timeout_read_timeout         | timeout→timeout                 ✓ | pass | pass | pass | pass | PASS    |
+| auth_error_invalid_token     | auth_error→auth_error           ✓ | pass | pass | pass | pass | PASS    |
+| schema_mismatch_pydantic     | schema_mismatch→schema_mismatch ✓ | pass | pass | pass | pass | PASS    |
+| api_bug_wrong_value          | api_bug→api_bug                 ✓ | fail | fail | pass | pass | FAIL    |
+| test_bug_wrong_expectation   | test_bug→test_bug               ✓ | pass | pass | pass | pass | PASS    |
+| data_issue_stale_id          | data_issue→data_issue           ✓ | pass | pass | pass | pass | PASS    |
+| environment_connection_error | environment→environment         ✓ | pass | pass | pass | pass | PASS    |
 
 Cases: 8  judged: 8  scout_failures: 0  judge_errors: 0
-Category accuracy: 88%
-Pass rates — correctness: 88%  groundedness: 88%  completeness: 100%  actionability: 100%  overall: 75%
+Category accuracy: 100%
+Pass rates — correctness: 88%  groundedness: 88%  completeness: 100%  actionability: 100%  overall: 88%
 
 It prints a per-case table plus aggregate metrics (category accuracy, per-dimension
 pass rates) and writes a full report to `evals/results/eval_results.json` (gitignored).
@@ -775,9 +775,10 @@ any LLM pipeline, open-weight or hosted:
 
 - **Cap the output.** Output tokens cost several times more than input tokens, so generation
   is bounded — `max_tokens=500` on the analyzer, `max_completion_tokens=1500` on the judge —
-  and both use a strict JSON contract (`response_format`) so the model can't ramble. On the
-  reasoning-model judge, `reasoning_effort="low"` also caps the (billed) reasoning tokens for
-  a constrained grading task.
+  and both use a strict JSON contract (`response_format`) so the model can't ramble. Both
+  models reason by default, and reasoning tokens are billed as output: the analyzer disables
+  thinking outright (`reasoning_effort="none"` — diagnosis is a constrained JSON task), and
+  the judge caps it (`reasoning_effort="low"`) for its constrained grading task.
 
 - **Prefix-stable prompts.** The system prompts (`SYSTEM_PROMPT`, `REFINE_SYSTEM_PROMPT`,
   the judge prompts) are invariant across calls, and the variable failure context is appended
@@ -789,8 +790,8 @@ any LLM pipeline, open-weight or hosted:
   *and* confidence clears `AI_REFINE_CONFIDENCE_TARGET`, and a judge error breaks the loop
   rather than retrying blindly.
 
-- **Tier the models.** A smaller/cheaper model diagnoses (Llama 3.3 70B) and a larger one
-  judges (GPT-OSS 120B) — work is routed to the cheapest model that can do it. Normal
+- **Tier the models.** A smaller model diagnoses (Qwen3.6 27B) and a larger one
+  judges (GPT-OSS 120B) — work is routed to the least-capable model that can do it. Normal
   `--failure-analysis`-only runs skip the judge/refine calls entirely, paying for the
   diagnosis but nothing more.
 
@@ -949,7 +950,7 @@ failure_mcp/
   "explanation": "The API rejected the request with HTTP 401...",
   "evidence": ["HTTP status code 401", "Response body contains 'Invalid API key'"],
   "test_name": "test_get_movie_details",
-  "model": "llama-3.3-70b-versatile",
+  "model": "qwen/qwen3.6-27b",
   "confidence_tier": "high"
 }
 ```
