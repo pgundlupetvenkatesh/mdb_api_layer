@@ -1,0 +1,13 @@
+{
+  "root_cause": "The test failed because the HTTP connection to the TMDB API was forcibly closed by the remote server or an intermediate network device.",
+  "category": "environment",
+  "suggested_fix": "Retry the request with exponential backoff or check if the test environment has network restrictions or firewall rules blocking outbound connections to the TMDB API.",
+  "explanation": "The error 'Connection reset by peer' indicates that the TCP connection was established but then abruptly terminated by the server side. This is typically an infrastructure or network issue rather than a logic error in the test or API code, often caused by firewalls, load balancers dropping idle connections, or rate limiting mechanisms that kill connections.",
+  "evidence": [
+    "requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+    "Error occurred in requests/adapters.py during conn.urlopen"
+  ],
+  "confidence": 95,
+  "test_name": "test_get_popular_movies_invalid[invalid_test0]",
+  "model": "qwen/qwen3.6-27b"
+}
