@@ -1,0 +1,14 @@
+{
+  "root_cause": "The TMDB API returned a 500 Internal Server Error with status code 11, indicating a server-side failure rather than an issue with the test logic or request parameters.",
+  "category": "api_bug",
+  "suggested_fix": "Retry the request after a brief delay to see if the error is transient; if it persists, report the specific endpoint and parameters to TMDb support as it indicates a backend issue on their side.",
+  "explanation": "The test expected a 200 OK response but received a 500 status code. The response body explicitly states 'Internal error: Something went wrong, contact TMDb' with status code 11, which is a standard TMDb error code for server-side failures. This confirms the API itself failed to process the request correctly, not the client.",
+  "evidence": [
+    "Status Code: 500",
+    "Response Body: {'success': False, 'status_code': 11, 'status_message': 'Internal error: Something went wrong, contact TMDb.'}",
+    "AssertionError: returned status code is not 200"
+  ],
+  "confidence": 95,
+  "test_name": "test_discover_movies_empty_results[empty_case1]",
+  "model": "qwen/qwen3.6-27b"
+}
