@@ -562,7 +562,7 @@ pytest_runtest_makereport hook captures:
   • error message & traceback
   • API URL, status code, response body (if available)
   ↓
-FailureAnalyzer sends context to Groq API (Qwen3.6 27B)
+FailureAnalyzer sends context to Groq API (Qwen3.8 27B)
   ↓
 LLM returns structured JSON diagnosis:
   { root_cause, category, suggested_fix, confidence, explanation, evidence }
@@ -646,14 +646,14 @@ After execution completes, all diagnoses are re-printed as a dedicated console s
   "explanation": "The test expects a 200 OK but the API returned 404 Not Found because the movie resource was deleted or never existed. Refresh test data with current valid IDs.", 
   "evidence": ["HTTP status code: 404", "Response body: {'status_code':34, 'status_message':'The resource you requested could not be found.'}"],
   "test_name": "test_get_movie_details[invalid_id]",
-  "model": "qwen/qwen3.6-27b"
+  "model": "qwen/qwen3.8-27b"
 }
 ```
 ![allure_failure_ss](images/allure_failure_ss.png)
 
 ### Supported Models
 
-The default model is `qwen/qwen3.6-27b` on Groq's free tier.
+The default model is `qwen/qwen3.8-27b` on Groq's free tier.
 Override via environment variable:
 ```bash
 # In .env
@@ -674,7 +674,7 @@ attached to the Allure report deployed to GitHub Pages.
 | `AI_ANALYSIS_ENABLED`  | Enable AI failure analysis                | No         | `false`                                      |
 | `AI_JUDGE_ENABLED`     | Enable live diagnosis judging             | No         | `false`                                      |
 | `GROQ_API_KEY`         | Groq API key for LLM access               | If enabled | -                                            |
-| `AI_MODEL`             | Analyzer (diagnosis) model on Groq        | No         | `qwen/qwen3.6-27b`                           |
+| `AI_MODEL`             | Analyzer (diagnosis) model on Groq        | No         | `qwen/qwen3.8-27b`                           |
 | `AI_JUDGE_MODEL`       | Judge model on Groq for live judging      | No         | `openai/gpt-oss-120b`                        |
 | `AI_REFINE_MAX_ITERS`  | Max agentic refine passes (judging on)    | No         | `2`                                          |
 | `AI_REFINE_CONFIDENCE_TARGET` | Confidence the refined diagnosis must reach | No  | `90`                                         |
@@ -724,7 +724,7 @@ poetry run pytest tests/ --failure-analysis --judge-diagnosis --alluredir=allure
 ### Evaluating the AI Analyzer
 
 The `evals/` package measures how good the analyzer's diagnoses actually are, using
-an **LLM-as-a-judge**. It runs the analyzer (Qwen3.6 27B) live on a curated golden
+an **LLM-as-a-judge**. It runs the analyzer (Qwen3.8 27B) live on a curated golden
 dataset of realistic TMDB failures (`evals/golden_dataset.yaml`, one+ case per
 category), then has a judge model (`openai/gpt-oss-120b` on Groq) score each
 diagnosis on four dimensions:
@@ -790,7 +790,7 @@ any LLM pipeline, open-weight or hosted:
   *and* confidence clears `AI_REFINE_CONFIDENCE_TARGET`, and a judge error breaks the loop
   rather than retrying blindly.
 
-- **Tier the models.** A smaller model diagnoses (Qwen3.6 27B) and a larger one
+- **Tier the models.** A smaller model diagnoses (Qwen3.8 27B) and a larger one
   judges (GPT-OSS 120B) — work is routed to the least-capable model that can do it. Normal
   `--failure-analysis`-only runs skip the judge/refine calls entirely, paying for the
   diagnosis but nothing more.
@@ -950,7 +950,7 @@ failure_mcp/
   "explanation": "The API rejected the request with HTTP 401...",
   "evidence": ["HTTP status code 401", "Response body contains 'Invalid API key'"],
   "test_name": "test_get_movie_details",
-  "model": "qwen/qwen3.6-27b",
+  "model": "qwen/qwen3.8-27b",
   "confidence_tier": "high"
 }
 ```

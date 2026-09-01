@@ -18,9 +18,9 @@ from loguru import logger
 from telemetry import ledger
 
 # Model options on Groq free tier:
-#   "qwen/qwen3.6-27b"
+#   "qwen/qwen3.8-27b"
 #   "qwen/qwen3-32b"
-DEFAULT_MODEL = "qwen/qwen3.6-27b"
+DEFAULT_MODEL = "qwen/qwen3.8-27b"
 SYSTEM_PROMPT = """
 You are an expert API test failure analyst. When given a test failure context, analyze it and respond with a JSON object containing:
 {
@@ -137,7 +137,7 @@ class FailureAnalyzer:
                     "explanation": "The request targeted /3/movie/0; TMDB rejects id 0 ...",
                     "evidence": ["HTTP 404", "status_message: The resource you requested could not be found."],
                     "test_name": "test_get_movie_details",
-                    "model": "qwen/qwen3.6-27b"
+                    "model": "qwen/qwen3.8-27b"
                 }
         """
         if not self.enabled:
@@ -182,7 +182,7 @@ class FailureAnalyzer:
                 messages=messages,
                 temperature=0.1,        # Low temperature for consistent analysis
                 max_tokens=500,
-                # qwen3.6 is a reasoning model: without this, thinking tokens exhaust
+                # qwen3.8 is a reasoning model: without this, thinking tokens exhaust
                 # max_tokens before any JSON is emitted (empty generation → 400).
                 # Diagnosis is a constrained JSON task; "none" skips thinking entirely.
                 # Groq's qwen models accept only "none" | "default" here.
