@@ -541,13 +541,13 @@ The AI pipeline has five layers of quality control, all **opt-in** and off by de
 list; each row links to its details below. (The conceptual *why* behind these gates lives in
 [`INSIGHTS.md`](INSIGHTS.md) — "LLM confidence & token economy" and "LLM application lifecycle".)
 
-| # | Gate | What it enforces | Enable with | Details |
-|---|------|------------------|-------------|---------|
-| 1 | **Failure analysis** | Every failure gets a structured, categorized root-cause diagnosis (`root_cause`, `category`, `suggested_fix`, `confidence`, `explanation`, `evidence`) — the triage entry point the other gates build on. | `--failure-analysis` / `AI_ANALYSIS_ENABLED=true` | [How It Works](#how-it-works), [Failure Categories](#failure-categories) |
-| 2 | **LLM-as-a-judge (live)** | An **independent** judge model (different family — GPT-OSS grading Qwen) scores each diagnosis on **groundedness**, **completeness**, and **actionability**. Correctness is skipped live — a real failure has no reference answer. | `--judge-diagnosis` / `AI_JUDGE_ENABLED=true` (needs gate 1) | [Live diagnosis judging](#live-diagnosis-judging) |
-| 3 | **Agentic refine loop** | The judge doubles as a critic: failed-dimension issues feed back into the analyzer and the diagnosis is re-judged until it **passes AND** `confidence ≥ AI_REFINE_CONFIDENCE_TARGET` (90), capped at `AI_REFINE_MAX_ITERS` (2). The final refined diagnosis is what gets saved. | Enabled together with gate 2 | [Live diagnosis judging](#live-diagnosis-judging) |
-| 4 | **Offline golden-dataset eval** | Runs the analyzer over `evals/golden_dataset.yaml` and scores all **four** dimensions (adds **correctness** vs. an `expected` reference). Non-zero exit on any failure, so it can **gate CI**. | `poetry run python -m evals` | [Evaluating the AI Analyzer](#evaluating-the-ai-analyzer) |
-| 5 | **Token/quality telemetry** | Appends one run-level row co-locating **cost** (tokens, estimated $) with **quality** (judge pass-rate, mean confidence) to `ai_analysis/token_usage.jsonl`, so you can trend whether the judge/refine spend is buying better diagnoses. | Recorded automatically when gates 1–3 run | [Token Optimization](#token-optimization) |
+| #  | Gate                            | What it enforces                                                                                                                                                                                                                                                                | Enable with                                                  | Details                                                                  |
+|----|---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|--------------------------------------------------------------------------|
+| 1  | **Failure analysis**            | Every failure gets a structured, categorized root-cause diagnosis (`root_cause`, `category`, `suggested_fix`, `confidence`, `explanation`, `evidence`) — the triage entry point the other gates build on.                                                                       | `--failure-analysis` / `AI_ANALYSIS_ENABLED=true`            | [How It Works](#how-it-works), [Failure Categories](#failure-categories) |
+| 2  | **LLM-as-a-judge (live)**       | An **independent** judge model (different family — GPT-OSS grading Qwen) scores each diagnosis on **groundedness**, **completeness**, and **actionability**. Correctness is skipped live — a real failure has no reference answer.                                              | `--judge-diagnosis` / `AI_JUDGE_ENABLED=true` (needs gate 1) | [Live diagnosis judging](#live-diagnosis-judging)                        |
+| 3  | **Agentic refine loop**         | The judge doubles as a critic: failed-dimension issues feed back into the analyzer and the diagnosis is re-judged until it **passes AND** `confidence ≥ AI_REFINE_CONFIDENCE_TARGET` (90), capped at `AI_REFINE_MAX_ITERS` (2). The final refined diagnosis is what gets saved. | Enabled together with gate 2                                 | [Live diagnosis judging](#live-diagnosis-judging)                        |
+| 4  | **Offline golden-dataset eval** | Runs the analyzer over `evals/golden_dataset.yaml` and scores all **four** dimensions (adds **correctness** vs. an `expected` reference). Non-zero exit on any failure, so it can **gate CI**.                                                                                  | `poetry run python -m evals`                                 | [Evaluating the AI Analyzer](#evaluating-the-ai-analyzer)                |
+| 5  | **Token/quality telemetry**     | Appends one run-level row co-locating **cost** (tokens, estimated $) with **quality** (judge pass-rate, mean confidence) to `ai_analysis/token_usage.jsonl`, so you can trend whether the judge/refine spend is buying better diagnoses.                                        | Recorded automatically when gates 1–3 run                    | [Token Optimization](#token-optimization)                                |
 
 Gates 1–3 run inside the pytest session on live failures; gate 4 is a standalone offline harness; gate 5 observes
 whatever ran. See [AI Environment Variables](#ai-environment-variables) for the full knob list.
@@ -625,12 +625,12 @@ When enabled, each failed test produces a console log like:
 
 ### Output
 
-| Destination                               | Format | When                        |
-|-------------------------------------------|--------|-----------------------------|
-| Console log                               | Text   | Immediately on failure      |
-| Console summary (🤖 AI Failure Analysis)  | Text   | End of run, after test summary |
-| Allure report (🤖 AI Failure Analysis)    | JSON   | Attached to failed test     |
-| `tests/ai_analysis/failure_analysis.json` | JSON   | End of test session         |
+| Destination                                | Format  | When                           |
+|--------------------------------------------|---------|--------------------------------|
+| Console log                                | Text    | Immediately on failure         |
+| Console summary (🤖 AI Failure Analysis)   | Text    | End of run, after test summary |
+| Allure report (🤖 AI Failure Analysis)     | JSON    | Attached to failed test        |
+| `tests/ai_analysis/failure_analysis.json`  | JSON    | End of test session            |
 
 After execution completes, all diagnoses are re-printed as a dedicated console section — test name, category, confidence (color-coded green/yellow/red by tier), root cause, and suggested fix per failure — so terminal-only runs get the triage summary without opening a report:
 
@@ -669,15 +669,15 @@ attached to the Allure report deployed to GitHub Pages.
 
 ### AI Environment Variables
 
-| Variable               | Description                               | Required   | Default                                      |
-|------------------------|-------------------------------------------|------------|----------------------------------------------|
-| `AI_ANALYSIS_ENABLED`  | Enable AI failure analysis                | No         | `false`                                      |
-| `AI_JUDGE_ENABLED`     | Enable live diagnosis judging             | No         | `false`                                      |
-| `GROQ_API_KEY`         | Groq API key for LLM access               | If enabled | -                                            |
-| `AI_MODEL`             | Analyzer (diagnosis) model on Groq        | No         | `qwen/qwen3.8-27b`                           |
-| `AI_JUDGE_MODEL`       | Judge model on Groq for live judging      | No         | `openai/gpt-oss-120b`                        |
-| `AI_REFINE_MAX_ITERS`  | Max agentic refine passes (judging on)    | No         | `2`                                          |
-| `AI_REFINE_CONFIDENCE_TARGET` | Confidence the refined diagnosis must reach | No  | `90`                                         |
+| Variable                      | Description                                 | Required    | Default                                       |
+|-------------------------------|---------------------------------------------|-------------|-----------------------------------------------|
+| `AI_ANALYSIS_ENABLED`         | Enable AI failure analysis                  | No          | `false`                                       |
+| `AI_JUDGE_ENABLED`            | Enable live diagnosis judging               | No          | `false`                                       |
+| `GROQ_API_KEY`                | Groq API key for LLM access                 | If enabled  | -                                             |
+| `AI_MODEL`                    | Analyzer (diagnosis) model on Groq          | No          | `qwen/qwen3.8-27b`                            |
+| `AI_JUDGE_MODEL`              | Judge model on Groq for live judging        | No          | `openai/gpt-oss-120b`                         |
+| `AI_REFINE_MAX_ITERS`         | Max agentic refine passes (judging on)      | No          | `2`                                           |
+| `AI_REFINE_CONFIDENCE_TARGET` | Confidence the refined diagnosis must reach | No          | `90`                                          |
 
 > **Note:** Groq free tier has rate limits. For large test suites with many failures, analysis may be throttled.
 > The analyzer gracefully handles errors — if an LLM call fails, the test result is unaffected.
