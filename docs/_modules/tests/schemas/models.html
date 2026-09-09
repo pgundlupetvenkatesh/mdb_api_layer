@@ -197,6 +197,34 @@
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">}</span></div>
 
 
+<div class="viewcode-block" id="SearchMovieListItem">
+<a class="viewcode-back" href="../../../tests.html#tests.schemas.models.SearchMovieListItem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SearchMovieListItem</span><span class="p">(</span><span class="n">MovieListItem</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Nested model for a single movie in ``GET /3/search/movie`` results.</span>
+
+<span class="sd">    Search results can include stub catalog entries (e.g. user-submitted</span>
+<span class="sd">    placeholders with no genres, votes or release date). TMDB omits the</span>
+<span class="sd">    corresponding keys entirely for such items rather than sending nulls,</span>
+<span class="sd">    so the fields ``MovieListItem`` requires are made optional here. When a</span>
+<span class="sd">    field *is* present it is still validated with the same strict type and</span>
+<span class="sd">    bounds as the base model; only the presence requirement is relaxed.</span>
+
+<span class="sd">    :param genre_ids: List of genre IDs, or None when omitted.</span>
+<span class="sd">    :param popularity: TMDB popularity score, or None when omitted.</span>
+<span class="sd">    :param release_date: Release date in ``YYYY-MM-DD`` format, or None when omitted.</span>
+<span class="sd">    :param video: Whether the movie has an associated video, or None when omitted.</span>
+<span class="sd">    :param vote_average: Average user rating (0.0–10.0), or None when omitted.</span>
+<span class="sd">    :param vote_count: Total number of user votes, or None when omitted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">genre_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>                      <span class="c1"># may be empty</span>
+    <span class="n">popularity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StrictFloat</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">release_date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>                         <span class="c1"># may be empty</span>
+    <span class="n">video</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StrictBool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">vote_average</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StrictFloat</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">vote_count</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StrictInt</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="paginated_movie_list">
 <a class="viewcode-back" href="../../../tests.html#tests.schemas.models.paginated_movie_list">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">paginated_movie_list</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
@@ -258,11 +286,16 @@
 <span class="sd">    Schema for movie search response from ``GET /3/search/movie``.</span>
 
 <span class="sd">    Validates the paginated response structure containing the movies that</span>
-<span class="sd">    matched a search query. Result items use the shared ``MovieListItem``</span>
-<span class="sd">    model. ``results`` requires at least one item — searches expected to</span>
-<span class="sd">    return no matches are asserted directly in the test instead of via</span>
-<span class="sd">    this schema.</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
+<span class="sd">    matched a search query. Result items use ``SearchMovieListItem`` rather</span>
+<span class="sd">    than the shared ``MovieListItem`` — search results can include stub</span>
+<span class="sd">    catalog entries that omit the genre/vote/release fields, so ``results``</span>
+<span class="sd">    is redeclared here to point at the tolerant item model (Pydantic does not</span>
+<span class="sd">    merge a subclass&#39;s fields into a *nested* model, so the override must</span>
+<span class="sd">    replace the ``results`` annotation itself). ``results`` still requires</span>
+<span class="sd">    at least one item — searches expected to return no matches are asserted</span>
+<span class="sd">    directly in the test instead of via this schema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SearchMovieListItem</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="DiscoverMoviesResponse">
