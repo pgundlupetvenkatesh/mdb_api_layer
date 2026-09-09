@@ -147,6 +147,31 @@ class MovieListItem(BaseModel):
 
     model_config = {"extra": "allow"}
 
+class SearchMovieListItem(MovieListItem):
+    """
+    Nested model for a single movie in ``GET /3/search/movie`` results.
+
+    Search results can include stub catalog entries (e.g. user-submitted
+    placeholders with no genres, votes or release date). TMDB omits the
+    corresponding keys entirely for such items rather than sending nulls,
+    so the fields ``MovieListItem`` requires are made optional here. When a
+    field *is* present it is still validated with the same strict type and
+    bounds as the base model; only the presence requirement is relaxed.
+
+    :param genre_ids: List of genre IDs, or None when omitted.
+    :param popularity: TMDB popularity score, or None when omitted.
+    :param release_date: Release date in ``YYYY-MM-DD`` format, or None when omitted.
+    :param video: Whether the movie has an associated video, or None when omitted.
+    :param vote_average: Average user rating (0.0–10.0), or None when omitted.
+    :param vote_count: Total number of user votes, or None when omitted.
+    """
+    genre_ids: Optional[list[int]] = None                      # may be empty
+    popularity: Optional[StrictFloat] = Field(default=None, ge=0)
+    release_date: Optional[str] = None                         # may be empty
+    video: Optional[StrictBool] = None
+    vote_average: Optional[StrictFloat] = Field(default=None, ge=0, le=10)
+    vote_count: Optional[StrictInt] = Field(default=None, ge=0)
+
 def paginated_movie_list(ge=1):
     """
     Build the base model for a paginated movie-list response.
@@ -197,11 +222,16 @@ class SearchMoviesResponse(paginated_movie_list()):
     Schema for movie search response from ``GET /3/search/movie``.
 
     Validates the paginated response structure containing the movies that
-    matched a search query. Result items use the shared ``MovieListItem``
-    model. ``results`` requires at least one item — searches expected to
-    return no matches are asserted directly in the test instead of via
-    this schema.
+    matched a search query. Result items use ``SearchMovieListItem`` rather
+    than the shared ``MovieListItem`` — search results can include stub
+    catalog entries that omit the genre/vote/release fields, so ``results``
+    is redeclared here to point at the tolerant item model (Pydantic does not
+    merge a subclass's fields into a *nested* model, so the override must
+    replace the ``results`` annotation itself). ``results`` still requires
+    at least one item — searches expected to return no matches are asserted
+    directly in the test instead of via this schema.
     """
+    results: list[SearchMovieListItem] = Field(min_length=1)
 
 class DiscoverMoviesResponse(paginated_movie_list()):
     """
