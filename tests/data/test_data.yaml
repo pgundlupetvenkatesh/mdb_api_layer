@@ -63,8 +63,10 @@ search_movies:
     - query_param: { "query": "Spider-Man", "page": 2 }
       exp_page: 2
     - query_param: { "query": "Inception", "language": "en-US" }
-    # include_adult query must not collide with adult-catalog titles: TMDB returns
-    # those as sparse objects (no release_date/video/vote_*), failing the strict schema
+    # include_adult can surface adult-catalog titles, which TMDB returns as sparse
+    # objects (no genre_ids/popularity/release_date/video/vote_*). The search schema
+    # tolerates these via SearchMovieListItem (tests/schemas/models.py), but the query
+    # is still kept clear of them so the case exercises fully-populated movie objects
     - query_param: { "query": "Interstellar", "include_adult": "true" }
     - query_param: { "query": "Titanic", "region": "US" }
     - query_param: { "query": "The Matrix", "year": "1999" }
